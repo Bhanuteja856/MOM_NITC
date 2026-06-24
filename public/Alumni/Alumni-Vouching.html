@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Batchmates - NITC Alumni</title>
+    <link rel="stylesheet" href="CSS/AlumniStyling.css">
+    <style>
+        .vouch-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .vouch-details h3 { margin-top: 0; color: #0D8ABC; margin-bottom: 5px; }
+        .vouch-details p { margin: 5px 0; color: #555; }
+        .vouch-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 150px;
+        }
+        .btn-know { background: #28a745; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; text-align: center; }
+        .btn-know:hover { background: #218838; }
+        .btn-dont-know { background: #dc3545; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; text-align: center; }
+        .btn-dont-know:hover { background: #c82333; }
+        .empty-state { text-align: center; color: #666; padding: 40px; background: white; border-radius: 8px; font-style: italic; }
+        
+        /* Custom Confirmation Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 15% auto; padding: 30px; width: 90%; max-width: 400px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; }
+        .modal-btn-container { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+        .btn-confirm { flex: 1; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; font-size: 1.05em; transition: 0.2s; }
+        .btn-cancel { flex: 1; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; background: #6c757d; color: white; font-size: 1.05em; transition: 0.2s; }
+        .btn-cancel:hover { background: #5a6268; }
+        @media (max-width: 768px) {
+            .vouch-card { flex-direction: column; align-items: stretch; gap: 15px; text-align: center; }
+            .vouch-card > div[style*="display: flex"] { flex-direction: column; }
+            .vouch-actions { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-alumni.html"></div>
+
+    <div class="main-container">
+        <div class="center-content" style="flex: 1; max-width: 900px; margin: 0 auto; padding-top: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 id="pageMainHeading" style="margin: 0;">Verify Batchmates</h2>
+                <a href="Alumni-Main-Screen.html" style="text-decoration: none; color: #0D8ABC; font-weight: bold;">← Back to Dashboard</a>
+            </div>
+            <div id="infoBoxText" class="info-box" style="background: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #0D8ABC;">
+                The following users claim to be from your batch (<strong><span id="myBatchYear">...</span></strong>) and have requested access to the portal. Please help us verify their identity.
+            </div>
+            <div id="statusMessage" style="display: none; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-weight: bold; text-align: center;"></div>
+            <div id="pendingBatchmatesList">
+                <div class="empty-state">Loading pending requests...</div>
+            </div>
+        </div>
+    </div>
+    <!-- Confirmation Modal -->
+    <div id="vouchConfirmModal" class="modal" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <div id="vouchModalIcon" style="font-size: 50px; margin-bottom: 10px;">❓</div>
+            <h2 style="margin-top: 0; color: #333; margin-bottom: 15px;">Confirm Verification</h2>
+            <p id="vouchConfirmText" style="color: #555; margin-bottom: 25px; line-height: 1.5;"></p>
+            <div class="modal-btn-container">
+                <button id="vouchConfirmBtn" class="btn-confirm">Yes, Confirm</button>
+                <button id="vouchCancelBtn" class="btn-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <!-- Modals are loaded here dynamically -->
+    <div id="modal-placeholder"></div>
+    <div id="footer-placeholder"></div>
+    <script src="../js/load-components.js"></script>
+    <script>
+        const API_URL = window.API_URL;
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.checkAccess()) return;
+            const token = localStorage.getItem('token');
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    if (user.role === 'faculty') {
+                        document.title = 'Verify Alumni - NITC Alumni';
+                        const heading = document.getElementById('pageMainHeading');
+                        if (heading) heading.textContent = 'Verify Alumni';
+                        const infoBox = document.getElementById('infoBoxText');
+                        if (infoBox) {
+                            infoBox.innerHTML = 'The following students have requested access to the portal. Please help us verify their identity.';
+                        }
+                    } else {
+                        const batchYearSpan = document.getElementById('myBatchYear');
+                        if (batchYearSpan) batchYearSpan.textContent = user.batchYear || 'Unknown';
+                    }
+                } catch(e) {}
+            }
+            document.addEventListener('HeaderLoaded', () => {
+                const storedUser = localStorage.getItem('user');
+                if (storedUser) {
+                    try {
+                        const user = JSON.parse(storedUser);
+                        if (user && user.name) {
+                            const nameDisplay = document.getElementById('alumniNameDisplay');
+                            if (nameDisplay) nameDisplay.textContent = user.name;
+                            const pic = document.getElementById('headerProfilePic');
+                            if (pic) pic.src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff`;
+                        }
+                    } catch(e) {}
+                }
+            });
+            function showMessage(msg, isSuccess = true) {
+                const msgDiv = document.getElementById('statusMessage');
+                msgDiv.textContent = msg;
+                msgDiv.style.display = 'block';
+                msgDiv.style.backgroundColor = isSuccess ? '#d4edda' : '#f8d7da';
+                msgDiv.style.color = isSuccess ? '#155724' : '#721c24';
+                setTimeout(() => msgDiv.style.display = 'none', 4000);
+            }
+            async function loadPendingBatchmates() {
+                try {
+                    const response = await fetch(`${API_URL}/pending-batchmates`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await response.json();
+                    
+                    const list = document.getElementById('pendingBatchmatesList');
+                    list.innerHTML = '';     
+                    if (response.ok && data.success) {
+                        if (data.pendingBatchmates.length === 0) {
+                            const emptyMsg = (storedUser && JSON.parse(storedUser).role === 'faculty') 
+                                ? 'No pending student verification requests at this moment. You\'re all caught up!' 
+                                : 'No pending verification requests from your batch at this moment. You\'re all caught up!';
+                            list.innerHTML = `<div class="empty-state">${emptyMsg}</div>`;
+                            return;
+                        }
+                        data.pendingBatchmates.forEach(alumni => {
+                            const card = document.createElement('div');
+                            card.className = 'vouch-card';
+                            const imgSrc = alumni.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(alumni.name)}&background=random`;
+                            card.innerHTML = `
+                                <div style="display: flex; align-items: center; gap: 20px;">
+                                    <img src="${imgSrc}" alt="${alumni.name}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #e0e0e0;">
+                                    <div class="vouch-details">
+                                        <h3>${escapeHtml(alumni.name)}</h3>
+                                        <p><strong>Email:</strong> ${escapeHtml(alumni.email)}</p>
+                                        <p><strong>Reference Provided:</strong> ${escapeHtml(alumni.reference || 'None')}</p>
+                                        <p style="font-size: 0.85em; color: #888; margin-top: 5px;">Requested on: ${new Date(alumni.createdAt).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                                <div class="vouch-actions">
+                                    <button class="btn-know" onclick="submitVouch('${alumni._id}', true)">I Know This Person</button>
+                                    <button class="btn-dont-know" onclick="submitVouch('${alumni._id}', false)">I Don't Know Them</button>
+                                </div>
+                            `;
+                            list.appendChild(card);
+                        });
+                    } else {
+                        list.innerHTML = '<div class="empty-state">Failed to load pending requests.</div>';
+                    }
+                } catch(error) { 
+                    console.error(error);
+                    document.getElementById('pendingBatchmatesList').innerHTML = '<div class="empty-state">Network error. Please try again later.</div>';
+                }
+            }
+            let currentVouchTargetId = null;
+            let currentVouchKnows = null;
+            window.submitVouch = function(targetUserId, knows) {
+                currentVouchTargetId = targetUserId;
+                currentVouchKnows = knows;  
+                const modal = document.getElementById('vouchConfirmModal');
+                const text = document.getElementById('vouchConfirmText');
+                const btn = document.getElementById('vouchConfirmBtn');
+                const icon = document.getElementById('vouchModalIcon');   
+                if (knows) {
+                    icon.textContent = '✅';
+                    text.innerHTML = 'Are you sure you want to indicate that you <strong>KNOW</strong> this person?';
+                    btn.style.backgroundColor = '#28a745';
+                    btn.textContent = 'Yes, I Know That Person';
+                } else {
+                    icon.textContent = '❌';
+                    text.innerHTML = 'Are you sure you want to indicate that you <strong>DO NOT KNOW</strong> this person?';
+                    btn.style.backgroundColor = '#dc3545';
+                    btn.textContent = "Yes, I Don't Know";
+                }  
+                modal.style.display = 'block';
+            };
+            document.getElementById('vouchCancelBtn').addEventListener('click', () => {
+                document.getElementById('vouchConfirmModal').style.display = 'none';
+            });
+            document.getElementById('vouchConfirmBtn').addEventListener('click', async () => {
+                document.getElementById('vouchConfirmModal').style.display = 'none';   
+                try {
+                    const response = await fetch(`${API_URL}/legacy-vouch`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ targetUserId: currentVouchTargetId, knows: currentVouchKnows })
+                    });        
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        showMessage('Your response has been recorded. Thank you!');
+                        loadPendingBatchmates();
+                    } else {
+                        showMessage(data.message || 'Failed to submit response.', false);
+                    }
+                } catch(err) { 
+                    showMessage('Network error occurred.', false); 
+                }
+            });
+            loadPendingBatchmates();
+        });
+    </script>
+</body>
+</html>

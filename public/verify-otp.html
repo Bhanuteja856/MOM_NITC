@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Verify OTP - NITC Alumni Network</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Shared Header will be injected here -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header.html"></div>
+
+    <h2>Verify Your Email</h2>
+
+    <div class="info-box">
+      We've sent a 6-digit OTP to <b id="emailDisplay"></b>. Enter it below to verify.
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <div class="otp-container">
+      <input type="text" maxlength="1" class="otp-input">
+      <input type="text" maxlength="1" class="otp-input">
+      <input type="text" maxlength="1" class="otp-input">
+      <input type="text" maxlength="1" class="otp-input">
+      <input type="text" maxlength="1" class="otp-input">
+      <input type="text" maxlength="1" class="otp-input">
+    </div>
+
+    <button class="btn" id="verifyBtn">Verify OTP</button>
+
+    <p class="link-text">Didn't receive? <a href="signup.html">Try again</a></p>
+  </div>
+
+  <script src="js/load-components.js"></script>
+  <script src="js/3d-effects.js" defer></script>
+  <script src="js/verifyotp.js"></script>
+</body>
+</html>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="light dark">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage ID Cards - Super Admin</title>
+    <link rel="stylesheet" href="../CSS/SuperAdminStyling.css">
+    <style>
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .tab-btn { padding: 10px 20px; border: none; background: transparent; cursor: pointer; font-size: 1.1em; font-weight: bold; color: #666; transition: color 0.3s; }
+        .tab-btn.active { color: #4a148c; border-bottom: 3px solid #4a148c; margin-bottom: -12px; }
+        .dark-mode .tab-btn { color: #9ca3af; }
+        .dark-mode .tab-btn.active { color: #ce93d8; border-color: #ce93d8; }
+        .bulk-actions { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #e9ecef; }
+        .dark-mode .bulk-actions { background-color: #1e293b; border-color: #334155; }
+        .dark-mode .bulk-actions label, .dark-mode .bulk-actions span { color: #e2e8f0 !important; }
+        .btn-preview { background-color: #17a2b8; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-preview:hover { background-color: #138496; }
+        .btn-sanction { background-color: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-reject { background-color: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-sanction:hover { background-color: #218838; }
+        .btn-reject:hover { background-color: #c82333; }
+        .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid #e9ecef; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e9ecef; vertical-align: middle; }
+        th { background-color: #f8f9fa; color: #495057; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f1f3f5; }
+        .dark-mode tr:hover { background-color: #2c3e50 !important; }
+        .dark-mode .table-wrapper { background-color: #1e293b; border-color: #343a40; }
+        .dark-mode th { background-color: #111827 !important; color: #d1d5db !important; border-color: #343a40 !important; }
+        .dark-mode td { border-color: #343a40 !important; }
+        .dark-mode td[style*="color: #666"] { color: #9ca3af !important; }
+        .dark-mode td[style*="color:#0D8ABC"] { color: #60a5fa !important; }
+        .dark-mode .tabs { border-color: #334155; }
+        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; }
+        #searchInput { background-color: #ffffff; color: #333333; border-color: #ccc; }
+        #searchInput::placeholder { color: #999999; }
+        .dark-mode #searchInput { background-color: #1e293b; border-color: #334155; color: #e2e8f0; }
+        .dark-mode #searchInput + #clearSearchBtn { color: #9ca3af; }
+        .dark-mode #searchInput::placeholder { color: #64748b; }
+        .status-Pending { background: #fff3cd; color: #856404; }
+        .status-Sanctioned { background: #d4edda; color: #155724; }
+        .status-Rejected { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-superadmin.html"></div>
+    <script src="../../js/load-components.js"></script>
+
+    <div class="main-container">
+        <div class="center-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="margin: 0; color: #4a148c;">ID Card Sanctioning</h2>
+                <a href="Super-Admin-Main-Screen.html" style="text-decoration: none; color: #4a148c; font-weight: bold;">← Back to Home</a>
+            </div>
+            <p style="color: #666; margin-top: 0; margin-bottom: 25px;">Review and sanction digital Alumni ID cards for registered and verified users.</p>
+
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('Pending')">Pending Requests</button>
+                <button class="tab-btn" onclick="switchTab('Sanctioned')">Sanctioned</button>
+                <button class="tab-btn" onclick="switchTab('Rejected')">Rejected</button>
+            </div>
+
+            <div style="margin-bottom: 20px; position: relative;">
+                <svg style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: #aaa;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="searchInput" placeholder="Search by name, alumni ID, or batch..." style="width: 100%; padding: 12px 40px 12px 40px; border: 1px solid #ccc; border-radius: 25px; box-sizing: border-box;">
+                <span id="clearSearchBtn" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-weight: bold; font-size: 1.5em; display: none;" title="Clear search">&times;</span>
+            </div>
+
+            <div class="bulk-actions" id="bulkActionsSection">
+                <label style="font-weight: bold; color: #333; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="selectAllCheckbox" style="width: 18px; height: 18px;"> Select All Page
+                </label>
+                <div style="height: 20px; width: 1px; background: #ccc; margin: 0 10px;"></div>
+                <span style="font-weight: bold; color: #555;">Bulk Actions:</span>
+                <button class="btn-sanction" onclick="bulkUpdate('Sanctioned')">Sanction Selected</button>
+                <button class="btn-reject" onclick="bulkUpdate('Rejected')">Reject Selected</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"></th>
+                            <th>Profile</th>
+                            <th>Name</th>
+                            <th>Alumni ID</th>
+                            <th>Batch</th>
+                            <th>Status</th>
+                            <th style="text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alumniTableBody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px;"><div class="spinner" style="width: 32px; height: 32px; border-width: 3px; margin: 0 auto;"></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="customConfirmModal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+        <div style="background-color: #fff; margin: 15% auto; padding: 25px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <div id="confirmModalIcon" style="font-size: 40px; margin-bottom: 10px;">❓</div>
+            <h3 style="margin-top: 0; color: #4a148c; font-size: 1.3em;">Confirm Action</h3>
+            <p id="confirmModalMessage" style="color: #555; margin-bottom: 25px; font-size: 1.1em; line-height: 1.4;"></p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button onclick="executeConfirm()" style="flex: 1; padding: 10px 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; background-color: #28a745; color: white; font-size: 1em; transition: 0.3s;">Yes, Continue</button>
+                <button onclick="closeConfirmModal()" style="flex: 1; padding: 10px 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; background-color: #dc3545; color: white; font-size: 1em; transition: 0.3s;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ID Card Preview Modal -->
+    <div id="idCardPreviewModal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7);">
+        <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
+            <div style="position: relative;">
+                <span onclick="closeIdCardPreview()" style="position: absolute; top: -35px; right: 0; color: #fff; font-size: 30px; cursor: pointer; font-weight: bold;">&times;</span>
+                <div style="width: 540px; height: 320px; background: linear-gradient(135deg, #0D8ABC, #003366); border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); overflow: hidden; position: relative; color: white; font-family: 'Arial', sans-serif; display: flex; flex-direction: column;">
+                    <div style="background: rgba(255,255,255,0.1); padding: 12px; text-align: center; border-bottom: 2px solid #ffd54f;">
+                        <h2 style="margin: 0; font-size: 1.2em; letter-spacing: 1px; color: #fff;">NITC MCA ALUMNI</h2>
+                        <p style="margin: 2px 0 0 0; font-size: 0.7em; color: #bae6fd; font-weight: bold;">NATIONAL INSTITUTE OF TECHNOLOGY CALICUT</p>
+                    </div>
+                    <div style="display: flex; flex: 1; padding: 20px; align-items: center; gap: 25px;">
+                        <div style="text-align: center;">
+                            <img id="previewIdCardImage" src="#" style="width: 130px; height: 130px; border-radius: 10px; border: 3px solid #ffd54f; object-fit: cover; background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                            <div style="margin-top: 15px;">
+                                <small style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Alumni ID</small>
+                                <strong id="previewIdCardNumber" style="font-size: 1.1em; letter-spacing: 1px; color: #ffd54f;">MCAXXXXX</strong>
+                            </div>
+                        </div>
+                        <div style="flex: 1;">
+                            <h3 id="previewIdCardName" style="margin: 0 0 10px 0; font-size: 1.5em; color: #fff; text-transform: uppercase; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 10px;">Name</h3>
+                            <div style="margin-bottom: 15px;">
+                                <small style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Program</small>
+                                <strong style="font-size: 1em; color: #fff;">Master of Computer Applications</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                                <div>
+                                    <small style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Batch</small>
+                                    <strong id="previewIdCardBatch" style="font-size: 1em; color: #fff;">XXXX</strong>
+                                </div>
+                                <div style="text-align: right;">
+                                    <small style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Validity</small>
+                                    <strong style="font-size: 1em; color: #fff;">LIFETIME</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="background: #ffd54f; color: #003366; text-align: center; padding: 8px 0; font-weight: bold; font-size: 0.85em; letter-spacing: 3px;">
+                        OFFICIAL ALUMNI CARD
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script>
+        let allAlumni = [];
+        let currentTab = 'Pending';
+        const API_URL = window.API_URL || '/api/auth';
+        let confirmCallback = null;
+
+        // Custom popup functionality
+        function customConfirm(message, callback) {
+            document.getElementById('confirmModalMessage').textContent = message;
+            document.getElementById('customConfirmModal').style.display = 'block';
+            confirmCallback = callback;
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('customConfirmModal').style.display = 'none';
+            confirmCallback = null;
+        }
+
+        function executeConfirm() {
+            document.getElementById('customConfirmModal').style.display = 'none';
+            if (confirmCallback) confirmCallback();
+            confirmCallback = null;
+        }
+
+        // ID Card Preview functionality
+        window.previewIdCard = function(id) {
+            const alumni = allAlumni.find(a => a._id === id);
+            if (!alumni) return;
+            
+            document.getElementById('previewIdCardImage').src = alumni.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(alumni.name)}&background=0D8ABC&color=fff&size=150`;
+            document.getElementById('previewIdCardName').textContent = alumni.name;
+            document.getElementById('previewIdCardBatch').textContent = alumni.batchYear || 'N/A';
+            document.getElementById('previewIdCardNumber').textContent = alumni.alumniId || 'PENDING';
+            
+            document.getElementById('idCardPreviewModal').style.display = 'block';
+        };
+
+        window.closeIdCardPreview = function() {
+            document.getElementById('idCardPreviewModal').style.display = 'none';
+        };
+
+        window.addEventListener('click', (e) => {
+            const previewModal = document.getElementById('idCardPreviewModal');
+            if (e.target === previewModal) closeIdCardPreview();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.checkAccess()) return;
+            loadAlumniData();
+            
+            document.getElementById('selectAllCheckbox').addEventListener('change', function() {
+                document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = this.checked);
+            });
+
+            const searchInput = document.getElementById('searchInput');
+            const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+            searchInput.addEventListener('input', () => {
+                if (searchInput.value) {
+                    clearSearchBtn.style.display = 'block';
+                } else {
+                    clearSearchBtn.style.display = 'none';
+                }
+                renderTable();
+            });
+
+            clearSearchBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                clearSearchBtn.style.display = 'none';
+                renderTable();
+            });
+        });
+
+        document.addEventListener('HeaderLoaded', () => {
+            const storedUser = localStorage.getItem('superAdminUser');
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    if (user && user.name) {
+                        const nameDisplay = document.getElementById('superAdminNameDisplay');
+                        if (nameDisplay) nameDisplay.textContent = user.name;
+                        document.getElementById('headerProfilePic').src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=4a148c&color=fff`;
+                    }
+                } catch(e) {}
+            }
+        });
+
+        async function loadAlumniData() {
+            try {
+                const token = localStorage.getItem('adminToken') || localStorage.getItem('superAdminToken');
+                const response = await fetch(`${API_URL}/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    allAlumni = data.users.filter(u => u.userType === 'alumni' && u.isRegistered === true && u.isVerified === true);
+                    renderTable();
+                }
+            } catch (err) {
+                console.error("Error loading users:", err);
+            }
+        }
+
+        window.switchTab = function(status) {
+            currentTab = status;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('bulkActionsSection').style.display = status === 'Pending' ? 'flex' : 'none';
+            document.getElementById('selectAllCheckbox').checked = false;
+            
+            renderTable();
+        };
+
+        function renderTable() {
+            const tbody = document.getElementById('alumniTableBody');
+            tbody.innerHTML = '';
+            
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            let filtered = allAlumni.filter(a => (a.idCardStatus || 'Pending') === currentTab);
+
+            if (searchTerm) {
+                filtered = filtered.filter(alumni => {
+                    const searchString = `${alumni.name || ''} ${alumni.alumniId || ''} ${alumni.batchYear || ''}`.toLowerCase();
+                    return searchString.includes(searchTerm);
+                });
+            }
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #666; padding: 40px; font-style: italic;">No ${currentTab.toLowerCase()} ID card requests found matching your criteria.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(alumni => {
+                const imgSrc = alumni.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(alumni.name)}&background=random`;
+                let actionsHtml = '';
+                
+                if (currentTab === 'Pending') {
+                    actionsHtml = `
+                        <button class="btn-sanction" style="padding: 5px 10px; font-size: 0.85em;" onclick="updateStatus('${alumni._id}', 'Sanctioned')">Sanction</button>
+                        <button class="btn-reject" style="padding: 5px 10px; font-size: 0.85em;" onclick="updateStatus('${alumni._id}', 'Rejected')">Reject</button>
+                    `;
+                } else if (currentTab === 'Sanctioned') {
+                    actionsHtml = `<button class="btn-reject" style="padding: 5px 10px; font-size: 0.85em;" onclick="updateStatus('${alumni._id}', 'Rejected')">Revoke Card</button>`;
+                } else {
+                    actionsHtml = `<button class="btn-sanction" style="padding: 5px 10px; font-size: 0.85em;" onclick="updateStatus('${alumni._id}', 'Sanctioned')">Approve Card</button>`;
+                }
+
+                actionsHtml = `<button class="btn-preview" style="padding: 5px 10px; font-size: 0.85em;" onclick="previewIdCard('${alumni._id}')">Preview</button>` + actionsHtml;
+
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr>
+                        <td>${currentTab === 'Pending' ? `<input type="checkbox" class="row-checkbox" value="${alumni._id}" style="width:18px;height:18px;">` : ''}</td>
+                        <td><img src="${imgSrc}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"></td>
+                        <td style="font-weight:bold;">${window.escapeHtml(alumni.name)}</td>
+                        <td style="color:#0D8ABC;font-weight:bold;">${window.escapeHtml(alumni.alumniId) || 'N/A'}</td>
+                        <td>${window.escapeHtml(alumni.batchYear) || 'N/A'}</td>
+                        <td><span class="status-badge status-${currentTab}">${currentTab}</span></td>
+                        <td style="text-align:center; display:flex; gap:5px; justify-content:center;">${actionsHtml}</td>
+                    </tr>
+                `);
+            });
+        }
+
+        window.updateStatus = async function(id, status) {
+            customConfirm(`Are you sure you want to mark this ID card as ${status}?`, async () => {
+                const token = localStorage.getItem('adminToken') || localStorage.getItem('superAdminToken');
+                try {
+                    const res = await fetch(`${API_URL}/alumni/${id}/id-card-status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ status }) });
+                    if(res.ok) loadAlumniData();
+                } catch(e) { alert('Error updating status'); }
+            });
+        };
+
+        window.bulkUpdate = async function(status) {
+            const checked = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+            if (checked.length === 0) return alert('Please select at least one alumni.');
+            
+            customConfirm(`Are you sure you want to mark ${checked.length} selected ID cards as ${status}?`, async () => {
+                const token = localStorage.getItem('adminToken') || localStorage.getItem('superAdminToken');
+                try {
+                    const res = await fetch(`${API_URL}/alumni/bulk-id-card-status`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ ids: checked, status })
+                    });
+                    if(res.ok) { document.getElementById('selectAllCheckbox').checked = false; loadAlumniData(); }
+                } catch(e) { alert('Error updating bulk status'); }
+            });
+        };
+    </script>
+</body>
+</html>

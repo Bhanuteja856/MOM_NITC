@@ -1,0 +1,190 @@
+<style>
+    /* Shared Notification Bell Styles */
+    .notification-bell {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        margin-right: 20px;
+        color: inherit;
+        transition: color 0.3s ease;
+    }
+    .notification-bell:hover {
+        color: #ffeb3b; /* Highlights yellow on hover */
+    }
+    /* Removes the focus outline for mouse clicks, but keeps it for keyboard navigation (Fixes accessibility errors) */
+    .notification-bell:focus:not(:focus-visible) {
+        outline: none;
+    }
+    .notification-badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        background-color: #e53935;
+        color: white;
+        border-radius: 50%;
+        padding: 2px 6px;
+        font-size: 11px;
+        font-weight: bold;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .notification-dropdown {
+        display: none;
+        position: absolute;
+        top: 40px;
+        right: -10px;
+        background-color: white;
+        min-width: 300px;
+        max-height: 480px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        z-index: 1000;
+        overflow-x: hidden;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        text-align: left;
+        color: #333;
+        cursor: default;
+    }
+    .notification-dropdown.show {
+        display: block;
+    }
+    .notification-header {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #eee;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .notification-item {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        font-size: 0.9em;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .notification-item:hover {
+        background-color: #f1f8ff;
+    }
+    .notification-time {
+        display: block;
+        font-size: 0.8em;
+        color: #888;
+        margin-top: 5px;
+    }
+    
+    /* New: Bell Ringing Animation */
+    @keyframes ring {
+        0% { transform: rotate(0); }
+        10% { transform: rotate(15deg); }
+        20% { transform: rotate(-10deg); }
+        30% { transform: rotate(5deg); }
+        40% { transform: rotate(-5deg); }
+        50%, 100% { transform: rotate(0); }
+    }
+    .notification-bell.has-unread svg {
+        animation: ring 2s ease infinite;
+        color: #e53935;
+    }
+    
+    /* New: Profile Menu Polish */
+    .profile-menu {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        position: relative; /* This is the key fix */
+    }
+    /* Ensure dropdown appears BELOW the profile icon */
+    .dropdown-content {
+        top: calc(100% + 10px) !important; /* Position below the header + 10px gap */
+        bottom: auto !important; /* Override any conflicting 'bottom' property */
+        right: 0;
+        left: auto;
+    }
+
+    .profile-icon { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .profile-menu:hover .profile-icon { transform: scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+    .profile-caret { transition: transform 0.3s ease; color: #666; }
+    .profile-menu:hover .profile-caret { transform: rotate(180deg); color: #0D8ABC; }
+    .dark-mode .profile-caret { color: #aaa; }
+    .dark-mode .profile-menu:hover .profile-caret { color: #60a5fa; }
+
+    @keyframes slideInDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Change Profile Menu to Click-Based instead of Hover */
+    .profile-menu:hover .dropdown-content { display: none; }
+    .dropdown-content.show { display: block !important; animation: slideInDown 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    .profile-menu:focus:not(:focus-visible) { outline: none; }
+
+    @media (max-width: 768px) {
+        header { padding: 12px 15px !important; }
+        .welcome-msg { font-size: 1.1rem !important; line-height: 1.3; }
+        .hide-on-mobile { display: none !important; }
+        .notification-bell { margin-right: 15px; }
+        .profile-icon { width: 38px; height: 38px; }
+        .notification-dropdown { right: -50px; min-width: 280px; }
+    }
+</style>
+<header>
+    <div class="welcome-msg" id="welcomeMessage">
+        Welcome, <span id="alumniNameDisplay">Alumni</span><span class="hide-on-mobile"> to the MCA Alumni Network</span>
+    </div>
+    
+    <div style="display: flex; align-items: center;">
+        <!-- Notification Bell -->
+        <div class="notification-bell" id="notificationBell" tabindex="0" aria-label="Notifications" onblur="setTimeout(() => document.getElementById('notificationDropdown').classList.remove('show'), 200)" onclick="document.getElementById('notificationDropdown').classList.toggle('show');">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span class="notification-badge" id="notificationCount" style="display: none;">0</span>
+            
+            <!-- Dropdown Menu -->
+            <div class="notification-dropdown" id="notificationDropdown" onclick="event.stopPropagation();">
+                <div class="notification-header">
+                    Notifications
+                    <span style="font-size: 0.8em; color: #0D8ABC; cursor: pointer; font-weight: normal; display: none;" onclick="window.markNotificationsRead ? window.markNotificationsRead() : (localStorage.setItem('notificationsLastRead', Date.now()), document.querySelectorAll('.notification-item').forEach(i => { i.style.backgroundColor=''; i.style.fontWeight=''; }), document.getElementById('notificationCount').style.display='none', document.getElementById('notificationBell').classList.remove('has-unread'), this.style.display='none');">Mark all read</span>
+                </div>
+                <div class="notification-item" style="text-align:center;color:#888;cursor:default;">
+                    Loading notifications...
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Menu -->
+        <div class="profile-menu" tabindex="0" aria-expanded="false" aria-haspopup="true">
+        <img src="https://ui-avatars.com/api/?name=Alumni&background=0D8ABC&color=fff" alt="Profile" class="profile-icon" id="headerProfilePic">
+        <svg class="profile-caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        <div class="dropdown-content" id="profileDropdown" role="menu">
+            <a href="/Alumni/Alumni-Main-Screen.html" id="navDashboardLink">Dashboard</a>
+            <a href="/Alumni/Alumni-Information.html" id="navProfileLink">My Profile</a>
+            <a href="/Alumni/postevents.html">Post Events</a>
+            <a href="/Alumni/view-events.html">View the Events</a>
+            <a href="#Invitational-registration" id="navInviteLink">Invite Batchmates</a>
+            <a href="/Alumni/Alumni-Vouching.html" id="navVerifyLink">Verify Batchmates</a>
+            <a href="/Alumni/gallary.html">Gallery</a>
+
+            <!-- Admin Menus for Faculty (Hidden by default) -->
+            <a href="../Admin/Admin/Admin-Main-Screen.html" data-menu="Dashboard" class="admin-menu" style="display: none;">Admin Dashboard</a>
+            <a href="../Admin/Admin/Admin-Information.html" data-menu="My Profile" class="admin-menu" style="display: none;">Admin Profile</a>
+            <a href="../Admin/Admin/Manage-Alumni-Admin.html" data-menu="Manage Alumni" class="admin-menu" style="display: none;">Manage Alumni</a>
+            <a href="../Admin/Admin/event-creation.html" data-menu="Event Creation" class="admin-menu" style="display: none;">Event Creation</a>
+            <a href="../Admin/Admin/Alumni-Approval.html" data-menu="Alumni Approval" class="admin-menu" style="display: none;">Alumni Approval</a>
+            <a href="../Admin/Admin/event-approval.html" data-menu="Event Approval" class="admin-menu" style="display: none;">Event Approval</a>
+            <a href="../Admin/Admin/Manage-Announcements.html" data-menu="Announcements" class="admin-menu" style="display: none;">Announcements</a>
+            <a href="../Admin/Admin/Manage-ID-Cards.html" data-menu="Manage ID Cards" class="admin-menu" style="display: none;">Manage ID Cards</a>
+            <a href="../Admin/Admin/Admin-gallery.html" data-menu="Manage Gallery" class="admin-menu" style="display: none;">Manage Gallery</a>
+            <a href="../Admin/Admin/Admin-Videos.html" data-menu="Manage Videos" class="admin-menu" style="display: none;">Manage Videos</a>
+
+            <!-- <a href="EXAMPLE">TRAIL</a> -->
+            <a href="#" id="logoutBtn" style="color: #c51414;">Logout</a>
+        </div>
+    </div>
+</header>

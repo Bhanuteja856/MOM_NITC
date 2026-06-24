@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - MCA Alumni Network</title>
+    <link rel="icon" type="image/jpeg" href="logo.png"/>
+    <link rel="apple-touch-icon" href="logo.png"/>
+    <link rel="stylesheet" href="css/landing.css">
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            background: url('Gemini_Generated_Image_chfbd0chfbd0chfb.png') no-repeat center center fixed !important;
+            background-size: cover !important;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .header {
+            flex-wrap: wrap;
+            position: relative;
+        }
+        
+        /* Navigation Styling */
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .nav-item {
+            text-decoration: none;
+            color: #444;
+            font-weight: bold;
+            font-size: 1.05em;
+            transition: color 0.3s;
+        }
+        .nav-item:hover, .nav-item.active {
+            color: #0D8ABC;
+        }
+        .btn-outline {
+            padding: 8px 25px;
+            background-color: transparent;
+            color: #0D8ABC;
+            border: 2px solid #0D8ABC;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.05em;
+            transition: all 0.3s;
+        }
+        .btn-outline:hover { background-color: #f4f6f8; transform: translateY(-2px); }
+        .btn-primary {
+            padding: 10px 25px;
+            background-color: #0D8ABC;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.05em;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(13, 138, 188, 0.3);
+        }
+        .btn-primary:hover { background-color: #0b739e; transform: translateY(-2px); }
+
+        .hamburger { display: none; cursor: pointer; color: #0D8ABC; }
+
+        .about-container {
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 50px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 40px;
+        }
+
+        .side-gallery-section {
+            flex: 1.2;
+            max-width: 420px;
+            min-width: 320px;
+            height: 650px;
+            overflow: hidden;
+            background: #f8fbff;
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid #e1eef8;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .side-gallery-scroller {
+            height: 100%;
+        }
+
+        .side-image-card {
+            margin-bottom: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .side-image-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        }
+
+        .side-image-card img {
+            width: 100%;
+            display: block;
+            border-radius: 12px;
+        }
+
+        .content-section {
+            flex: 2;
+        }
+
+        /* Dark Mode Overrides */
+        .dark-mode .header { background-color: #1a1a1a !important; border-bottom: 1px solid #333; }
+        .dark-mode .nav-item { color: #e0e0e0; }
+        .dark-mode .nav-item:hover, .dark-mode .nav-item.active { color: #60a5fa; }
+        .dark-mode .btn-outline { color: #60a5fa; border-color: #60a5fa; }
+        .dark-mode .btn-outline:hover { background-color: rgba(96, 165, 250, 0.1); }
+        .dark-mode .btn-primary { background-color: #60a5fa; color: #121212; box-shadow: 0 4px 10px rgba(96, 165, 250, 0.3); }
+        .dark-mode .btn-primary:hover { background-color: #3b82f6; }
+        .dark-mode .hamburger { color: #60a5fa; }
+        .dark-mode .about-container { background-color: #1e1e1e !important; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .dark-mode #aboutUsContentDisplay { color: #e0e0e0 !important; }
+        .dark-mode .content-section h2 { color: #60a5fa !important; }
+        .dark-mode .side-image-card { box-shadow: 0 8px 25px rgba(0,0,0,0.5); }
+        .dark-mode .side-gallery-section {
+            background: #252525;
+            border-color: #333;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+
+        @media (max-width: 900px) {
+            .hamburger { display: block; position: relative; z-index: 3002; }
+            .nav-links { 
+                position: absolute; top: calc(100% + 10px); right: 20px; width: 250px; height: auto;
+                background-color: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 20px;
+                display: flex; flex-direction: column; justify-content: flex-start; align-items: stretch; gap: 15px;
+                z-index: 3000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease; transform: translateY(-10px);
+            }
+            .nav-links.show { opacity: 1; visibility: visible; transform: translateY(0); }
+            .dark-mode .nav-links { background-color: #1a1a1a; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid #333; }
+            .nav-item, .btn-outline, .btn-primary { text-align: center; }
+            .about-container {
+                flex-direction: column;
+                margin: 30px 15px;
+                padding: 30px 20px;
+            }
+            .side-gallery-section { max-width: 100%; height: 500px; padding: 20px; margin: 0 0 20px 0; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <h1>MCA Alumni Network</h1>
+        </div>
+        <div class="hamburger" id="hamburgerMenu">
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </div>
+        <div class="nav-links" id="navLinks">
+            <a href="index.html" class="nav-item">Home</a>
+            <a href="about-us.html" class="nav-item active">About Us</a>
+            <a href="login.html" class="btn-outline" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                Login
+            </a>
+            <a href="signup.html" class="btn-primary" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                Register
+            </a>
+        </div>
+    </header>
+
+    <div class="scroller-container">
+        <!-- Event Scroller -->
+        <marquee behavior="scroll" direction="left" class="event-scroller" id="eventsTicker">
+            🌟 Upcoming Event: Annual Alumni Meet 2026 - Register Now! &nbsp; | &nbsp; 🎤 Tech Talk: Future of AI by John Doe (Batch 2018) on 15th May &nbsp; | &nbsp; 💼 Placement Drive Preparation Workshop
+        </marquee>
+    </div>
+
+    <main style="display: flex; flex: 1;">
+        <div class="about-container">
+            <!-- Separate Gallery Section (Left Side) -->
+            <div class="side-gallery-section">
+                <!-- <h2 style="color: #0D8ABC; margin-top: 0; margin-bottom: 25px; text-align: center; font-size: 2.8em;">Gallery</h2> -->
+                <div id="sideImagesWrapper" style="position: relative; width: 100%; height: calc(100% - 60px); overflow: hidden; border-radius: 8px;">
+                    <div class="side-gallery-scroller" id="sideImagesList" style="display: flex; flex-direction: column; transition: transform 0.6s ease-in-out; height: 100%;">
+                        <p style="color: #666; text-align: center;">Loading images...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About Us Content Section (Right Side) -->
+            <div class="content-section">
+                <h2 style="color: #0D8ABC; margin-top: 0; margin-bottom: 30px; text-align: center; font-size: 2.8em;">About Us</h2>
+                <div id="aboutUsContentDisplay" style="color: #444; font-size: 1.15em; line-height: 1.8; white-space: pre-wrap; text-align: justify;">Loading our story...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Enlarged Image Modal -->
+    <div id="enlargedViewContainer" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); overflow: auto; cursor: pointer;">
+        <span id="closeEnlargedBtn" style="position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; font-weight: bold; transition: color 0.3s; z-index: 2001;" onmouseover="this.style.color='#d9534f'" onmouseout="this.style.color='#fff'">&times;</span>
+        <div style="display: flex; justify-content: center; align-items: center; min-height: 100%; padding: 20px; box-sizing: border-box;">
+            <img id="enlargedImage" src="#" alt="Enlarged View" style="max-width: 100%; max-height: 90vh; border-radius: 8px; object-fit: contain; box-shadow: 0 5px 25px rgba(0,0,0,0.5); cursor: default;" onclick="event.stopPropagation();">
+        </div>
+    </div>
+
+    <div id="footer-placeholder" data-footer="/Headers_Footers_common/footer.html"></div>
+    <script src="js/load-components.js"></script>
+    <script src="js/about-us.js"></script> <!-- Optional if you want to abstract out the JS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Hamburger Menu Logic
+            const hamburgerMenu = document.getElementById('hamburgerMenu');
+            const navLinks = document.getElementById('navLinks');
+            if (hamburgerMenu && navLinks) {
+                hamburgerMenu.addEventListener('click', () => navLinks.classList.toggle('show'));
+                navLinks.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => navLinks.classList.remove('show'));
+                });
+            }
+
+            // HTML sanitization helper
+            const eHtml = (str) => {
+                if (!str) return "";
+                return str.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            };
+
+            // Fetch About Us Content
+            const display = document.getElementById('aboutUsContentDisplay');
+            try {
+                const response = await fetch('/api/auth/about-us');
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    // Load About Us rich text content
+                    if (data.content) {
+                        display.innerHTML = data.content;
+                    } else {
+                        display.innerHTML = "Welcome to the NITC MCA Alumni Portal. Connect, collaborate, and grow with your fellow alumni.";
+                    }
+                    // Load Side Images
+                    if (data.sideImages && data.sideImages.length > 0) {
+                        loadSideImages(data.sideImages);
+                    } else {
+                        document.getElementById('sideImagesList').innerHTML = '<p style="color: #666; text-align: center;">Images not available.</p>';
+                    }
+                } else {
+                    display.innerHTML = "Welcome to the NITC MCA Alumni Portal. Connect, collaborate, and grow with your fellow alumni.";
+                }
+            } catch (error) {
+                display.innerHTML = "Welcome to the NITC MCA Alumni Portal. Connect, collaborate, and grow with your fellow alumni. (Unable to reach server)";
+            }
+
+            function loadSideImages(sideImages) {
+                const listContainer = document.getElementById('sideImagesList');
+                listContainer.innerHTML = ''; // Clear loading text
+
+                sideImages.forEach(img => {
+                    const card = document.createElement('div');
+                    card.className = 'side-image-card';
+                    card.style.minHeight = '100%'; // Forces each image to take up the full view before sliding
+                    card.style.width = '100%';
+                    card.style.margin = '0';
+                    card.innerHTML = `
+                        <img src="${eHtml(img.imageUrl)}" alt="Gallery Image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px; cursor: pointer;" onclick="viewEnlargedImage('${eHtml(img.imageUrl)}')">
+                    `;
+                    listContainer.appendChild(card);
+                });
+
+                // Setup the vertical sliding logic
+                if (sideImages.length > 1) {
+                    let currentIndex = 0;
+                    let slideInterval;
+                    
+                    const startSlide = () => {
+                        slideInterval = setInterval(() => {
+                            currentIndex++;
+                            if (currentIndex >= sideImages.length) {
+                                currentIndex = 0; // Loop back to the first image
+                            }
+                            listContainer.style.transform = `translateY(-${currentIndex * 100}%)`;
+                        }, 3500); // Adjust this number to make the images stay on screen longer/shorter
+                    };
+
+                    startSlide();
+                    const wrapper = document.getElementById('sideImagesWrapper');
+                    wrapper.addEventListener('mouseover', () => clearInterval(slideInterval)); // Pause on hover
+                    wrapper.addEventListener('mouseout', startSlide); // Resume on mouse out
+                }
+            }
+
+            // Enlarge Image Logic
+            window.viewEnlargedImage = function(imageUrl) {
+                document.getElementById('enlargedImage').src = imageUrl;
+                document.getElementById('enlargedViewContainer').style.display = 'block';
+            };
+            document.getElementById('closeEnlargedBtn').addEventListener('click', () => {
+                document.getElementById('enlargedViewContainer').style.display = 'none';
+            });
+            document.getElementById('enlargedViewContainer').addEventListener('click', () => {
+                document.getElementById('enlargedViewContainer').style.display = 'none';
+            });
+
+            // Load the events ticker using the global function from load-components.js
+            if (typeof window.updateEventsTicker === 'function') {
+                window.updateEventsTicker();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alumni Approval - Admin</title>
+    <link rel="stylesheet" href="../CSS/AdminStyling.css">
+    <link rel="stylesheet" href="../CSS/Admin-main-screen.css">
+    <style>
+        .approval-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .approval-details h3 { margin-top: 0; color: #0D8ABC; margin-bottom: 5px; }
+        .approval-details p { margin: 5px 0; color: #555; }
+        .approval-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 130px;
+        }
+        .btn-approve { background: #28a745; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; text-align: center; }
+        .btn-approve:hover { background: #218838; }
+        .btn-reject { background: #dc3545; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; text-align: center; }
+        .btn-reject:hover { background: #c82333; }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 10% auto; padding: 25px; width: 90%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        @media (max-width: 768px) {
+            .approval-card { flex-direction: column; align-items: stretch; gap: 15px; }
+            .approval-card > div[style*="display: flex"] { flex-direction: column; text-align: center; }
+            .approval-actions { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Shared Admin Header injected here -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-admin.html"></div>
+    <script src="../../js/load-components.js"></script>
+
+    <div class="main-container">
+        <div class="center-content" style="flex: 1; max-width: 900px; margin: 0 auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Pending Alumni Registrations</h2>
+                <a href="Admin-Main-Screen.html" style="text-decoration: none; color: #0D8ABC; font-weight: bold;">← Back to Home</a>
+            </div>
+            
+            <div id="statusMessage" style="display: none; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-weight: bold; text-align: center;"></div>
+            
+            <div id="pendingAlumniList">
+                <p style="text-align: center; color: #666;">Loading pending requests...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Approval Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px;">
+            <div style="font-size: 50px; color: #28a745; margin-bottom: 10px;">✅</div>
+            <h2 style="margin-top: 0; color: #333; margin-bottom: 15px;">Confirm Approval</h2>
+            <p style="color: #555; margin-bottom: 25px; line-height: 1.5;">Are you sure you want to approve this alumni registration? They will be granted full access to the portal.</p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button id="confirmYesBtn" class="btn-approve" style="flex: 1; padding: 12px; font-size: 1.05em;">Yes, Approve</button>
+                <button id="confirmNoBtn" class="btn-reject" style="flex: 1; background: #6c757d; padding: 12px; font-size: 1.05em;" onmouseover="this.style.background='#5a6268'" onmouseout="this.style.background='#6c757d'">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Reject Modal -->
+    <div id="confirmRejectModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px;">
+            <div style="font-size: 50px; color: #dc3545; margin-bottom: 10px;">❌</div>
+            <h2 style="margin-top: 0; color: #333; margin-bottom: 15px;">Confirm Rejection</h2>
+            <p style="color: #555; margin-bottom: 25px; line-height: 1.5;">Are you sure you want to reject and delete this registration request? This action cannot be undone.</p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button id="confirmRejectYesBtn" class="btn-reject" style="flex: 1; padding: 12px; font-size: 1.05em;">Yes, Reject</button>
+                <button id="confirmRejectNoBtn" class="btn-approve" style="flex: 1; background: #6c757d; padding: 12px; font-size: 1.05em;" onmouseover="this.style.background='#5a6268'" onmouseout="this.style.background='#6c757d'">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.checkAccess()) return;
+            const adminUser = localStorage.getItem('adminUser');
+            const adminToken = localStorage.getItem('adminToken');
+            
+
+            const API_URL = '/api/auth';
+            let pendingAlumni = [];
+            let currentApprovingId = null;
+
+            document.addEventListener('HeaderLoaded', () => {
+                if (adminUser) {
+                    try {
+                        const user = JSON.parse(adminUser);
+                        if (user && user.name) {
+                            document.getElementById('headerProfilePic').src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=c62828&color=fff`;
+                        }
+                    } catch(e) {}
+                }
+            });
+
+            function showMessage(msg, isSuccess = true) {
+                const msgDiv = document.getElementById('statusMessage');
+                msgDiv.textContent = msg;
+                msgDiv.style.display = 'block';
+                msgDiv.style.backgroundColor = isSuccess ? '#d4edda' : '#f8d7da';
+                msgDiv.style.color = isSuccess ? '#155724' : '#721c24';
+                setTimeout(() => msgDiv.style.display = 'none', 4000);
+            }
+
+            async function loadPendingAlumni() {
+                try {
+                    const response = await fetch(`${API_URL}/users`, {
+                        headers: { 'Authorization': `Bearer ${adminToken}` }
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        pendingAlumni = data.users.filter(u => u.userType === 'alumni' && !u.isVerified && u.rollNumber && u.rollNumber.startsWith('PENDING-'));
+                        
+                        const list = document.getElementById('pendingAlumniList');
+                        list.innerHTML = '';
+                        
+                        if (pendingAlumni.length === 0) {
+                            list.innerHTML = '<p style="text-align: center; color: #666; padding: 30px; background: white; border-radius: 8px;">No pending registrations found.</p>';
+                            return;
+                        }
+
+                        pendingAlumni.forEach(alumni => {
+                            const card = document.createElement('div');
+                            card.className = 'approval-card';
+                            const imgSrc = alumni.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(alumni.name)}&background=random`;
+                            const positiveVouches = alumni.positiveVouches || 0;
+                            const negativeVouches = alumni.negativeVouches || 0;
+                            const pendingBadge = `<svg style="width: 20px; height: 20px; margin-left: 8px; vertical-align: middle;" viewBox="0 0 24 24" fill="#dc3545" title="Pending Verification"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>`;
+                            card.innerHTML = `
+                                <div style="display: flex; align-items: center; gap: 20px;">
+                                    <img src="${imgSrc}" alt="${alumni.name}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #e0e0e0;">
+                                    <div class="approval-details">
+                                        <h3 style="display: flex; align-items: center; margin-top: 0; margin-bottom: 5px;">${alumni.name}${pendingBadge}</h3>
+                                        <p><strong>Email:</strong> ${alumni.email}</p>
+                                        <p><strong>Graduation Year:</strong> ${alumni.batchYear || 'N/A'}</p>
+                                        <p><strong>Reference:</strong> ${alumni.reference || 'None provided'}</p>
+                                        <p><strong>Batchmate Vouches:</strong> <span style="color: #28a745; font-weight: bold;">${positiveVouches} Yes</span> / <span style="color: #dc3545; font-weight: bold;">${negativeVouches} No</span></p>
+                                        <p style="font-size: 0.85em; color: #888; margin-top: 5px;">Requested on: ${new Date(alumni.createdAt || Date.now()).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                                <div class="approval-actions">
+                                    <button class="btn-approve" onclick="approveAlumni('${alumni._id}')">Approve</button>
+                                    <button class="btn-reject" onclick="rejectAlumni('${alumni._id}')">Reject</button>
+                                </div>
+                            `;
+                            list.appendChild(card);
+                        });
+                    }
+                } catch(error) { showMessage("Failed to load requests", false); }
+            }
+
+            window.approveAlumni = function(id) {
+                currentApprovingId = id;
+                document.getElementById('confirmModal').style.display = 'block';
+            };
+            
+            document.getElementById('confirmNoBtn').addEventListener('click', () => {
+                document.getElementById('confirmModal').style.display = 'none';
+            });
+
+            document.getElementById('confirmYesBtn').addEventListener('click', async () => {
+                document.getElementById('confirmModal').style.display = 'none';
+                const id = currentApprovingId;
+                const alumni = pendingAlumni.find(u => u._id === id);
+                if (!alumni) return;
+                
+                let newRollNumber = alumni.rollNumber;
+                if (newRollNumber && newRollNumber.startsWith('PENDING-')) {
+                    newRollNumber = newRollNumber.replace('PENDING-', 'APPROVED-');
+                }
+
+                try {
+                    const res = await fetch(`${API_URL}/alumni/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` }, body: JSON.stringify({ isVerified: true, rollNumber: newRollNumber }) });
+                    if (res.ok) { showMessage('Alumni approved successfully!'); loadPendingAlumni(); }
+                    else { const data = await res.json(); showMessage(data.message || 'Approval failed.', false); }
+                } catch(err) { showMessage('Network error.', false); }
+            });
+
+            let currentRejectingId = null;
+            window.rejectAlumni = function(id) {
+                currentRejectingId = id;
+                document.getElementById('confirmRejectModal').style.display = 'block';
+            };
+            document.getElementById('confirmRejectNoBtn').addEventListener('click', () => { document.getElementById('confirmRejectModal').style.display = 'none'; });
+            document.getElementById('confirmRejectYesBtn').addEventListener('click', async () => {
+                document.getElementById('confirmRejectModal').style.display = 'none';
+                const id = currentRejectingId;
+                try {
+                    const res = await fetch(`${API_URL}/alumni/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${adminToken}` } });
+                    if (res.ok) { showMessage('Request rejected and deleted successfully.'); loadPendingAlumni(); }
+                } catch(err) { showMessage('Network error.', false); }
+            });
+
+            loadPendingAlumni();
+        });
+    </script>
+</body>
+</html>

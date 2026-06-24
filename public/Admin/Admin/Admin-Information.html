@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Information - NITC Portal</title>
+    <link rel="stylesheet" href="../CSS/AdminStyling.css">
+    <link rel="stylesheet" href="../CSS/Informations.css">
+</head>
+<body>
+    <!-- Shared Admin Header injected here -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-admin.html"></div>
+    <script src="../../js/load-components.js"></script>
+
+    <div class="container">
+        
+        <div id="statusMessage"></div>
+
+        <!-- Name at the top -->
+        <h1 class="page-title" id="pageTitle">Update Your Information</h1>
+
+        <form id="adminInfoForm">
+            <!-- Top Section: Image Area -->
+            <div class="profile-header">
+                <div>
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=c62828&color=fff&size=150" alt="Profile Picture Preview" class="image-preview" id="previewImg">
+                </div>
+                <div class="upload-section">
+                    <label for="profileImage">Choose New Image</label>
+                    <input type="file" id="profileImage" accept="image/jpeg, image/png, image/gif">
+                    <p>Allowed formats: JPG, PNG, GIF</p>
+                    <p>Maximum size: 2MB</p>
+                </div>
+            </div>
+
+            <!-- Bottom Section: Information Fields -->
+            <div class="form-section">
+                <h3>Account Information</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" placeholder="e.g. John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email" style="display: flex; align-items: center; gap: 5px;">Email Address <span title="Locked by system">🔒</span></label>
+                        <input type="email" id="email" placeholder="Loading email..." readonly style="background-color: #f0f0f0; cursor: not-allowed;" title="Email is tied to your account and cannot be changed.">
+                    </div>
+                    <div class="form-group">
+                        <label for="role">System Role</label>
+                        <input type="text" id="role" placeholder="Admin" readonly style="background-color: #f0f0f0; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label for="department">Department</label>
+                        <input type="text" id="department" placeholder="e.g. MCA">
+                    </div>
+                    <div class="form-group">
+                        <label for="accountCreated">Account Created</label>
+                        <input type="text" id="accountCreated" placeholder="Loading date..." readonly style="background-color: #f0f0f0; cursor: not-allowed;" title="Date this account was created">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Contact & Location</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="phone">Phone / Extension</label>
+                        <input type="tel" id="phone" placeholder="e.g. +91 9876543210 or Ext. 1234">
+                    </div>
+                    <div class="form-group">
+                        <label for="officeLocation">Campus Office Location</label>
+                        <input type="text" id="officeLocation" placeholder="e.g. Room 302, IT Building">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="bio">Short Bio (About you)</label>
+                        <textarea id="bio" rows="4" placeholder="Write a short summary about your role and responsibilities..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <a href="javascript:history.back()" class="btn btn-secondary">Cancel</a>
+                <button type="button" id="changePasswordBtn" class="btn btn-secondary" style="background-color: #f57c00; color: white;">Change Password</button>
+                <button type="submit" class="btn btn-primary" style="background-color: #c62828;">Save Information</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6);">
+        <div class="modal-content" style="background-color: white; margin: 10% auto; padding: 25px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <span class="close" id="closeCpModalBtn" style="color: #888; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+            <h3 style="margin-top: 0; color: #c62828;">Change Password</h3>
+            <div id="cpMessage" style="margin-bottom: 15px; font-size: 0.9em; display: none; padding: 10px; border-radius: 4px;"></div>
+
+            <div id="cpStep1">
+                <p style="font-size: 0.9em; color: #555; margin-bottom: 15px;">Click below to send an OTP to your registered email address.</p>
+                <button type="button" id="sendCpOtpBtn" class="btn btn-primary" style="width: 100%; padding: 12px; background-color: #c62828; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Send OTP</button>
+            </div>
+
+            <div id="cpStep2" style="display: none;">
+                <p style="font-size: 0.9em; color: #28a745; margin-bottom: 15px;">✓ OTP sent to your email.</p>
+                <form id="changePasswordForm">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="font-weight: bold; font-size: 0.9em; color: #333;">Enter 6-digit OTP</label>
+                        <input type="text" id="cpOtp" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 25px;">
+                        <label style="font-weight: bold; font-size: 0.9em; color: #333;">New Password</label>
+                        <div style="position: relative;">
+                            <input type="password" id="cpNewPassword" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; padding-right: 40px;">
+                            <span onclick="var input = this.previousElementSibling; var isPass = input.type === 'password'; input.type = isPass ? 'text' : 'password'; this.querySelector('.eye-open').style.display = isPass ? 'none' : 'block'; this.querySelector('.eye-closed').style.display = isPass ? 'block' : 'none';" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center; color: #666;">
+                                <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <svg class="eye-closed" style="display: none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </span>
+                        </div>
+                    </div>
+                    <button type="submit" id="submitCpBtn" class="btn btn-primary" style="width: 100%; padding: 12px; background-color: #c62828; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Verify & Change Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals and Footer are loaded here dynamically -->
+    <div id="modal-placeholder"></div>
+    <div id="footer-placeholder"></div>
+
+    <script>
+        const API_URL = window.API_URL;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.checkAccess()) return;
+            const pageTitle = document.getElementById('pageTitle');
+            const previewImg = document.getElementById('previewImg');
+            const fileInput = document.getElementById('profileImage');
+            const fullNameInput = document.getElementById('fullName');
+            const emailInput = document.getElementById('email');
+            const roleInput = document.getElementById('role');
+            const deptInput = document.getElementById('department');
+            const phoneInput = document.getElementById('phone');
+            const officeLocationInput = document.getElementById('officeLocation');
+            const bioInput = document.getElementById('bio');
+            const accountCreatedInput = document.getElementById('accountCreated');
+            
+            // Try loading user from local storage
+            const storedUser = localStorage.getItem('adminUser');
+            const token = localStorage.getItem('adminToken');
+            let currentUser = null;
+            
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    currentUser = user;
+                    if (user && user.name) {
+                        pageTitle.textContent = user.name;
+                        fullNameInput.value = user.name;
+                        const avatarColor = user.role === 'super_admin' ? '4a148c' : 'c62828';
+                        previewImg.src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=${avatarColor}&color=fff&size=150`;
+                    }
+                    if (user && user.email) emailInput.value = user.email;
+                if (user && user.role) {
+                    if (user.role === 'super_admin') roleInput.value = 'Super Admin';
+                    else if (user.role === 'faculty') roleInput.value = 'Faculty';
+                    else roleInput.value = 'Administrator';
+                }
+                    if (user && user.department) deptInput.value = user.department;
+                    if (user && user.phone) phoneInput.value = user.phone;
+                    if (user && user.officeLocation) officeLocationInput.value = user.officeLocation;
+                    if (user && user.bio) bioInput.value = user.bio;
+                    
+                    // Extract the creation timestamp directly from the MongoDB ObjectId
+                    const userId = user.id || user._id;
+                    if (userId && userId.length === 24) {
+                        const timestamp = parseInt(userId.substring(0, 8), 16) * 1000;
+                        accountCreatedInput.value = new Date(timestamp).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                    } else {
+                        accountCreatedInput.value = 'Unknown';
+                    }
+                } catch(e) {
+                    console.error("Error parsing user data");
+                }
+            }
+
+            // Image Preview Logic
+            let base64Image = currentUser?.profileImage || null;
+            fileInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert("File is too large! Please select an image under 2MB.");
+                        fileInput.value = ''; 
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        base64Image = e.target.result;
+                        previewImg.src = e.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            document.addEventListener('HeaderLoaded', () => {
+                if (currentUser && currentUser.name) {
+                    const pic = document.getElementById('headerProfilePic');
+                    if (pic) {
+                        let avatarColor = 'c62828';
+                        if (currentUser.role === 'super_admin') avatarColor = '4a148c';
+                        if (currentUser.role === 'faculty') avatarColor = '0D8ABC';
+                        pic.src = currentUser.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=${avatarColor}&color=fff`;
+                        
+                        if (currentUser.role === 'faculty') {
+                            const style = document.createElement('style');
+                            style.innerHTML = `
+                                .submit-btn, .btn-primary, .btn-approve { background-color: #0D8ABC !important; }
+                                .submit-btn:hover, .btn-primary:hover, .btn-approve:hover { background-color: #0b739e !important; }
+                                #logoutBtn { color: #0D8ABC !important; }
+                                h1, h2, h3, .page-title { color: #0D8ABC !important; }
+                                .profile-header img { border: 3px solid #0D8ABC !important; }
+                            `;
+                            document.head.appendChild(style);
+                        }
+                    }
+                }
+            });
+
+            // Form Submit Logic
+            document.getElementById('adminInfoForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                let userId = currentUser ? (currentUser.id || currentUser._id) : null;
+                
+                // Bulletproof fallback: Extract ID directly from the JWT Token if missing from localStorage
+                if (!userId && token) {
+                    try {
+                        let base64Url = token.split('.')[1];
+                        let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        while (base64.length % 4) {
+                            base64 += '=';
+                        }
+                        let payload = JSON.parse(window.atob(base64));
+                        userId = payload.id || payload._id;
+                    } catch(e) { console.error('Error decoding token', e); }
+                }
+
+                if (!userId) return alert('No user session found! Please log out and log back in.');
+
+                const statusDiv = document.getElementById('statusMessage');
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Saving...';
+
+                const name = fullNameInput.value.trim();
+                const department = deptInput.value.trim();
+                const phone = phoneInput.value.trim();
+                const officeLocation = officeLocationInput.value.trim();
+                const bio = bioInput.value.trim();
+
+                try {
+                    const response = await fetch(`${API_URL}/admin/${userId}/profile`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ name, department, phone, officeLocation, bio, profileImage: base64Image })
+                    });
+
+                    // Catch HTML error responses from the server (like 413 Payload Too Large)
+                    if (!response.ok && !response.headers.get('content-type')?.includes('application/json')) {
+                        const text = await response.text();
+                        throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
+                    }
+
+                    const data = await response.json();
+                    
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                    
+                    if (response.ok && data.success) {
+                        if (localStorage.getItem('superAdminUser')) {
+                            localStorage.setItem('superAdminUser', JSON.stringify(data.admin));
+                        } else {
+                            localStorage.setItem('adminUser', JSON.stringify(data.admin));
+                        }
+                        
+                        statusDiv.textContent = 'Admin profile updated successfully!';
+                        statusDiv.className = 'success-msg';
+                        statusDiv.style.display = 'block';
+                        window.scrollTo(0, 0);
+
+                        setTimeout(() => statusDiv.style.display = 'none', 5000);
+                    } else {
+                        statusDiv.textContent = data.message || 'Failed to update profile.';
+                        statusDiv.className = 'error-msg';
+                        statusDiv.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error("Error updating profile:", error);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                    statusDiv.textContent = error.message.includes('Server Error') ? error.message : 'Network error. Please try again.';
+                    statusDiv.className = 'error-msg';
+                    statusDiv.style.display = 'block';
+                }
+            });
+
+            // ==========================================
+            // CHANGE PASSWORD MODAL LOGIC
+            // ==========================================
+            const cpModal = document.getElementById('changePasswordModal');
+            const openCpBtn = document.getElementById('changePasswordBtn');
+            const closeCpBtn = document.getElementById('closeCpModalBtn');
+            const sendCpOtpBtn = document.getElementById('sendCpOtpBtn');
+            const cpStep1 = document.getElementById('cpStep1');
+            const cpStep2 = document.getElementById('cpStep2');
+            const changePasswordForm = document.getElementById('changePasswordForm');
+            const cpMessage = document.getElementById('cpMessage');
+
+            openCpBtn.addEventListener('click', () => {
+                cpModal.style.display = 'block';
+                cpStep1.style.display = 'block';
+                cpStep2.style.display = 'none';
+                cpMessage.style.display = 'none';
+                changePasswordForm.reset();
+            });
+
+            closeCpBtn.addEventListener('click', () => cpModal.style.display = 'none');
+            window.addEventListener('click', (e) => {
+                if (e.target === cpModal) cpModal.style.display = 'none';
+            });
+
+            function showCpMessage(msg, type) {
+                cpMessage.style.display = 'block';
+                cpMessage.textContent = msg;
+                cpMessage.style.backgroundColor = type === 'success' ? '#d4edda' : '#f8d7da';
+                cpMessage.style.color = type === 'success' ? '#155724' : '#721c24';
+            }
+
+            // Send OTP
+            sendCpOtpBtn.addEventListener('click', async () => {
+                const email = emailInput.value.trim();
+                if (!email) return alert('Email not found.');
+
+                sendCpOtpBtn.textContent = 'Sending...';
+                sendCpOtpBtn.disabled = true;
+
+                try {
+                    const response = await fetch(`${API_URL}/admin/send-otp`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        showCpMessage('OTP sent to your email!', 'success');
+                        cpStep1.style.display = 'none';
+                        cpStep2.style.display = 'block';
+                    } else {
+                        showCpMessage(data.message || 'Failed to send OTP', 'error');
+                    }
+                } catch (error) {
+                    showCpMessage('Network error. Check server.', 'error');
+                } finally {
+                    sendCpOtpBtn.textContent = 'Send OTP';
+                    sendCpOtpBtn.disabled = false;
+                }
+            });
+
+            // Submit OTP and New Password
+            changePasswordForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const otp = document.getElementById('cpOtp').value.trim();
+                const newPassword = document.getElementById('cpNewPassword').value.trim();
+                const email = emailInput.value.trim();
+                const submitBtn = document.getElementById('submitCpBtn');
+
+                if (newPassword.length < 6) return showCpMessage('Password must be at least 6 characters.', 'error');
+
+                submitBtn.textContent = 'Changing...';
+                submitBtn.disabled = true;
+
+                try {
+                    const response = await fetch(`${API_URL}/admin/change-password`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, otp, newPassword })
+                    });
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        showCpMessage('Password changed successfully!', 'success');
+                        setTimeout(() => cpModal.style.display = 'none', 2000);
+                    } else {
+                        showCpMessage(data.message || 'Failed to change password', 'error');
+                    }
+                } catch (error) {
+                    showCpMessage('Network error', 'error');
+                } finally {
+                    submitBtn.textContent = 'Verify & Change Password';
+                    submitBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

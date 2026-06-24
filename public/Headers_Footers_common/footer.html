@@ -1,0 +1,521 @@
+<style>
+    .premium-footer {
+        background-color: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        padding: 60px 30px 30px 30px;
+        margin-top: 60px;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #475569;
+        transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+        position: relative;
+    }
+
+    .footer-grid {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 2.2fr 1fr 1fr 1.8fr;
+        gap: 40px;
+        margin-bottom: 40px;
+    }
+
+    .footer-section h4 {
+        color: #0f172a;
+        font-size: 1.1em;
+        font-weight: 700;
+        margin-top: 0;
+        margin-bottom: 22px;
+        position: relative;
+        padding-bottom: 8px;
+        letter-spacing: 0.5px;
+        transition: color 0.3s;
+    }
+
+    .footer-section h4::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 30px;
+        height: 2px;
+        background-color: #0D8ABC;
+        border-radius: 2px;
+        transition: width 0.3s ease;
+    }
+
+    .footer-section:hover h4::after {
+        width: 45px;
+    }
+
+    .footer-about-logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 15px;
+        text-decoration: none;
+    }
+
+    .footer-about-logo .logo-badge {
+        background: linear-gradient(135deg, #0d8abc 0%, #1e40af 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 0.9em;
+        box-shadow: 0 4px 10px rgba(13, 138, 188, 0.2);
+    }
+
+    .footer-about-logo .logo-text {
+        font-size: 1.15em;
+        font-weight: 700;
+        color: #0D8ABC;
+    }
+
+    .footer-about p {
+        line-height: 1.6;
+        font-size: 0.92em;
+        margin-bottom: 22px;
+    }
+
+    /* Newsletter Form */
+    .footer-newsletter {
+        margin-top: 20px;
+    }
+
+    .footer-newsletter p {
+        font-size: 0.85em;
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 8px;
+        transition: color 0.3s;
+    }
+
+    .newsletter-form {
+        display: flex;
+        gap: 0;
+        max-width: 300px;
+        background-color: #ffffff;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 3px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .newsletter-form:focus-within {
+        border-color: #0D8ABC;
+        box-shadow: 0 0 0 3px rgba(13, 138, 188, 0.15);
+    }
+
+    .newsletter-form input {
+        flex: 1;
+        border: none;
+        outline: none;
+        padding: 8px 12px;
+        font-size: 0.85em;
+        color: #334155;
+        background: transparent;
+    }
+
+    .newsletter-form button {
+        background-color: #0D8ABC;
+        color: white;
+        border: none;
+        outline: none;
+        border-radius: 6px;
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .newsletter-form button:hover {
+        background-color: #0c7aa8;
+    }
+
+    .newsletter-form button:active {
+        transform: scale(0.95);
+    }
+
+    .footer-links-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .footer-links-list li {
+        margin-bottom: 12px;
+        font-size: 0.9em;
+    }
+
+    .footer-links-list a {
+        color: #64748b;
+        text-decoration: none;
+        transition: color 0.2s, transform 0.2s, padding-left 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .footer-links-list a::before {
+        content: '→';
+        opacity: 0;
+        margin-left: -10px;
+        transition: opacity 0.2s, margin-left 0.2s;
+        color: #0D8ABC;
+        font-weight: bold;
+    }
+
+    .footer-links-list a:hover {
+        color: #0D8ABC;
+        padding-left: 12px;
+    }
+
+    .footer-links-list a:hover::before {
+        opacity: 1;
+        margin-left: 0;
+    }
+
+    .footer-contact-info {
+        font-size: 0.9em;
+        line-height: 1.6;
+    }
+
+    .footer-contact-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .footer-contact-item a {
+        color: inherit;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .footer-contact-item a:hover {
+        color: #0D8ABC;
+    }
+
+    .footer-contact-item svg {
+        margin-top: 3px;
+        flex-shrink: 0;
+        color: #0D8ABC;
+        transition: transform 0.3s;
+    }
+
+    .footer-contact-item:hover svg {
+        transform: scale(1.15);
+    }
+
+    .footer-social-icons {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .footer-social-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background-color: #f1f5f9;
+        color: #475569;
+        transition: background-color 0.25s, color 0.25s, transform 0.25s, box-shadow 0.25s;
+        text-decoration: none;
+        border: 1px solid #e2e8f0;
+    }
+
+    .footer-social-btn:hover {
+        background: linear-gradient(135deg, #0d8abc 0%, #1e40af 100%);
+        color: #ffffff;
+        transform: translateY(-4px);
+        box-shadow: 0 4px 12px rgba(13, 138, 188, 0.35);
+        border-color: transparent;
+    }
+
+    .footer-bottom {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding-top: 25px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        font-size: 0.85em;
+        color: #64748b;
+        transition: border-top-color 0.3s, color 0.3s;
+    }
+
+    .footer-bottom-links {
+        display: flex;
+        gap: 20px;
+    }
+
+    .footer-bottom-links span {
+        font-weight: 500;
+        letter-spacing: 0.2px;
+    }
+
+    /* Back To Top Button */
+    #backToTopBtn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background-color: #0D8ABC;
+        color: white;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(10px);
+        transition: opacity 0.3s, visibility 0.3s, transform 0.3s, background-color 0.2s, box-shadow 0.2s;
+        z-index: 999;
+    }
+
+    #backToTopBtn.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    #backToTopBtn:hover {
+        background-color: #0c7aa8;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    }
+
+    #backToTopBtn:active {
+        transform: scale(0.95);
+    }
+
+    /* Dark Mode Overrides */
+    body.dark-mode .premium-footer {
+        background-color: #0b0f19;
+        border-top-color: #1e293b;
+        color: #94a3b8;
+    }
+
+    body.dark-mode .footer-section h4 {
+        color: #f8fafc;
+    }
+
+    body.dark-mode .footer-newsletter p {
+        color: #f8fafc;
+    }
+
+    body.dark-mode .newsletter-form {
+        background-color: #0f172a;
+        border-color: #1e293b;
+    }
+
+    body.dark-mode .newsletter-form input {
+        color: #f8fafc;
+    }
+
+    body.dark-mode .footer-links-list a {
+        color: #94a3b8;
+    }
+
+    body.dark-mode .footer-links-list a:hover {
+        color: #38bdf8;
+    }
+
+    body.dark-mode .footer-social-btn {
+        background-color: #0f172a;
+        color: #94a3b8;
+        border-color: #1e293b;
+    }
+
+    body.dark-mode .footer-social-btn:hover {
+        background: linear-gradient(135deg, #38bdf8 0%, #0369a1 100%);
+        color: #ffffff;
+        border-color: transparent;
+    }
+
+    body.dark-mode .footer-bottom {
+        border-top-color: #1e293b;
+        color: #64748b;
+    }
+
+    body.dark-mode .footer-contact-item a:hover {
+        color: #38bdf8;
+    }
+
+    /* Responsive Layout Adaptations */
+    @media (max-width: 992px) {
+        .footer-grid {
+            grid-template-columns: 1.5fr 1.2fr;
+            gap: 30px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .footer-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .footer-grid {
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        .premium-footer {
+            padding: 40px 20px 25px 20px;
+        }
+
+        .footer-bottom {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .footer-bottom-links {
+            justify-content: center;
+        }
+
+        #backToTopBtn {
+            bottom: 20px;
+            right: 20px;
+            width: 38px;
+            height: 38px;
+        }
+    }
+</style>
+
+<footer class="premium-footer">
+    <div class="footer-grid">
+        <!-- Section 1: About & Newsletter -->
+        <div class="footer-section footer-about">
+            <a href="/index.html" class="footer-about-logo">
+                <span class="logo-badge">NITC</span>
+                <span class="logo-text">MCA Alumni</span>
+            </a>
+            <p>Connecting MCA alumni worldwide to foster collaboration, mentorship, and lifelong relationships within
+                the NIT Calicut community.</p>
+
+            <!-- <div class="footer-newsletter">
+                <p>Subscribe for Portal Updates</p>
+                <form class="newsletter-form"
+                    onsubmit="event.preventDefault(); alert('Subscribed successfully!'); this.reset();">
+                    <input type="email" placeholder="Your email address" required>
+                    <button type="submit" aria-label="Subscribe">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </form>
+            </div> -->
+            <div class="footer-social-icons">
+                <a href="https://linkedin.com" target="_blank" class="footer-social-btn" title="LinkedIn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                        <rect x="2" y="9" width="4" height="12"></rect>
+                        <circle cx="4" cy="4" r="2"></circle>
+                    </svg>
+                </a>
+                <a href="https://github.com" target="_blank" class="footer-social-btn" title="GitHub">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22">
+                        </path>
+                    </svg>
+                </a>
+                <a href="https://twitter.com" target="_blank" class="footer-social-btn" title="Twitter/X">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z">
+                        </path>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <!-- Section 2: Explore Links -->
+        <div class="footer-section">
+            <h4>Explore</h4>
+            <ul class="footer-links-list">
+                <li><a href="/index.html">Home</a></li>
+                <li><a href="/about-us.html">About Us</a></li>
+                <li><a href="/login.html">Login</a></li>
+                <li><a href="/signup.html">Register</a></li>
+            </ul>
+        </div>
+
+        <!-- Section 3: Shortcuts -->
+        <div class="footer-section">
+            <h4>Portal Utilities</h4>
+            <ul class="footer-links-list">
+                <li><a href="/Alumni/gallary.html">Gallery</a></li>
+                <li><a href="/Alumni/view-events.html">Events Directory</a></li>
+                <li><a href="/Alumni/post-magazines.html">Newsletters</a></li>
+                <li><a href="/legacy-signup.html">Legacy Register</a></li>
+            </ul>
+        </div>
+
+        <!-- Section 4: Contact -->
+        <div class="footer-section">
+            <h4>Contact Info</h4>
+            <div class="footer-contact-info">
+                <div class="footer-contact-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <a href="https://maps.google.com/?q=Department+of+Computer+Science+and+Engineering+NIT+Calicut"
+                        target="_blank">Department of Computer Science & Engineering, NIT Calicut, Kozhikode, Kerala -
+                        673601</a>
+                </div>
+                <div class="footer-contact-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    <a href="mailto:citra@nitc.ac.in">citra@nitc.ac.in</a>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+    <!-- Bottom copyright -->
+    <div class="footer-bottom">
+        <div>
+            &copy; <span id="currentYear"></span> NITC MCA Alumni Network. All Rights Reserved.
+        </div>
+        <div class="footer-bottom-links">
+            <span>Designed & Developed by CITRA, NIT Calicut</span>
+        </div>
+    </div>
+</footer>
+<!-- Floating Back to Top Button -->
+<button id="backToTopBtn" title="Back to Top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+</button>

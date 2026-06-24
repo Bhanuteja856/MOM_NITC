@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Add Alumni - Admin</title>
+    <link rel="stylesheet" href="../CSS/AdminStyling.css">
+    <link rel="stylesheet" href="../CSS/Admin-main-screen.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        .form-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .instructions {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+            color: #333;
+            border-left: 4px solid #0D8ABC;
+        }
+        .instructions code {
+            background: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            color: #c62828;
+            font-weight: bold;
+        }
+        .file-upload-wrapper {
+            border: 2px dashed #0D8ABC;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px;
+            background: #f8fbff;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        .file-upload-wrapper:hover {
+            background: #eef5ff;
+            border-color: #0b739e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(13, 138, 188, 0.1);
+        }
+        .submit-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1em;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        .submit-btn:hover:not(:disabled) {
+            background-color: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
+        }
+        .submit-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+        .results-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success-text { color: #155724; background-color: #d4edda; padding: 10px; border-radius: 4px; margin-bottom: 10px;}
+        .error-text { color: #721c24; background-color: #f8d7da; padding: 10px; border-radius: 4px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+    <!-- Shared Admin Header injected here -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-admin.html"></div>
+    <script src="../../js/load-components.js"></script>
+
+    <div class="main-container">
+        <div class="center-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; max-width: 800px; margin-left: auto; margin-right: auto;">
+                <h2 style="margin: 0;">Upload CSV File</h2>
+                <a href="javascript:history.back()" style="text-decoration: none; color: #0D8ABC; font-weight: bold;">← Back</a>
+            </div>
+
+            <div class="form-section">
+                <div class="instructions">
+                    <p style="margin-top:0;"><strong>Instructions:</strong> Please upload a `.csv` or `.xlsx` file containing the alumni data. The first row must be the header containing the following exact column names (order does not matter):</p>
+                    <p><code>Name</code>, <code>RollNumber</code>, <code>BatchYear</code>, <code>Gender</code>, <code>Email</code>, <code>Password</code></p>
+                    <p style="margin-bottom:0;"><em>Note: Name and RollNumber are required. If Email or Password are left blank, the alumni account will remain "Unregistered" until they complete setup on the Sign Up page.</em></p>
+                </div>
+
+                <div class="file-upload-wrapper" onclick="document.getElementById('csvFileInput').click()">
+                    <p style="margin: 0; font-size: 1.1em; color: #0D8ABC;"><strong>Click here to select a .CSV or .XLSX file</strong></p>
+                    <p id="fileNameDisplay" style="margin: 10px 0 0 0; color: #666; font-size: 0.9em;">No file chosen</p>
+                    <input type="file" id="csvFileInput" accept=".csv, .xlsx, .xls" style="display: none;">
+                </div>
+
+                <button class="submit-btn" id="processBtn" disabled>Process & Upload Alumni</button>
+
+                <div id="resultsBox" class="results-box">
+                    <div id="successSummary" class="success-text"></div>
+                    <div id="errorSummary" class="error-text"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.API_URL;
+        const adminToken = localStorage.getItem('adminToken');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.checkAccess()) return;
+
+        document.addEventListener('HeaderLoaded', () => {
+            const storedUser = localStorage.getItem('adminUser');
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    const color = user.role === 'super_admin' ? '4a148c' : 'c62828';
+                    document.getElementById('headerProfilePic').src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=${color}&color=fff`;
+                } catch(e) {}
+            }
+            });
+        });
+
+        // Handle File Selection
+        const fileInput = document.getElementById('csvFileInput');
+        const processBtn = document.getElementById('processBtn');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        let parsedAlumniData = [];
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && (file.name.toLowerCase().endsWith('.csv') || file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls'))) {
+                fileNameDisplay.textContent = `Selected: ${file.name}`;
+                processBtn.disabled = false;
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
+                        parsedAlumniData = parseExcelJSON(json);
+                    } catch(err) {
+                        alert("Error parsing file. Please check the file format.");
+                        parsedAlumniData = [];
+                        processBtn.disabled = true;
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                fileNameDisplay.textContent = 'Please select a valid .csv or .xlsx file';
+                processBtn.disabled = true;
+                parsedAlumniData = [];
+            }
+        });
+
+        // Drag and Drop Logic
+        const dropZone = document.querySelector('.file-upload-wrapper');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = '#eef5ff';
+            dropZone.style.borderColor = '#0b739e';
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = '#f8fbff';
+            dropZone.style.borderColor = '#0D8ABC';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = '#f8fbff';
+            dropZone.style.borderColor = '#0D8ABC';
+
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                // Manually trigger the change event
+                const event = new Event('change');
+                fileInput.dispatchEvent(event);
+            }
+        });
+
+        // Parse Excel JSON Logic
+        function parseExcelJSON(jsonArray) {
+            const result = [];
+            jsonArray.forEach(row => {
+                const obj = {};
+                const normalizedRow = {};
+                for (let key in row) {
+                    const normalizedKey = key.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+                    normalizedRow[normalizedKey] = String(row[key] || '').trim();
+                }
+                
+                obj.name = normalizedRow['name'] || null;
+                obj.rollNumber = normalizedRow['rollnumber'] || normalizedRow['roll'] || null;
+                obj.batchYear = normalizedRow['batchyear'] || normalizedRow['batch'] || normalizedRow['year'] || null;
+                obj.gender = normalizedRow['gender'] || null;
+                obj.email = normalizedRow['email'] || null;
+                obj.password = normalizedRow['password'] || null;
+                
+                // Relax frontend validation slightly so backend can show precise missing field errors
+                if (obj.name || obj.rollNumber) {
+                    result.push(obj);
+                }
+            });
+            return result;
+        }
+
+        // Handle API Upload
+        processBtn.addEventListener('click', async () => {
+            if (parsedAlumniData.length === 0) {
+                return alert("No valid alumni records found in the CSV. Please check the format.");
+            }
+            
+            processBtn.disabled = true;
+            processBtn.textContent = `Uploading ${parsedAlumniData.length} records...`;
+            document.getElementById('resultsBox').style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_URL}/bulk-add-alumni`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ alumniList: parsedAlumniData })
+                });
+
+                const data = await response.json();
+                document.getElementById('resultsBox').style.display = 'block';
+                document.getElementById('successSummary').innerHTML = `<strong>Success:</strong> Successfully added ${data.results.successful} alumni.`;
+                
+                if (data.results.failed > 0) {
+                    document.getElementById('errorSummary').innerHTML = `<strong>Failed:</strong> ${data.results.failed} records failed.<br> <ul style="margin-top:5px; padding-left:20px;"><li>${data.results.errors.join('</li><li>')}</li></ul>`;
+                } else {
+                    document.getElementById('errorSummary').innerHTML = '';
+                    
+                    // Hide the success message after 3 seconds if there are no errors
+                    setTimeout(() => {
+                        document.getElementById('resultsBox').style.display = 'none';
+                    }, 3000);
+                }
+            } catch (err) {
+                alert("Network error occurred while uploading batch.");
+            } finally {
+                processBtn.textContent = 'Process & Upload Alumni';
+                fileInput.value = ''; // Reset file input
+                fileNameDisplay.textContent = 'No file chosen';
+            }
+        });
+    </script>
+</body>
+</html>

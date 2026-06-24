@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alumni Gallery - NITC</title>
+    <link rel="stylesheet" href="CSS/AlumniStyling.css">
+    <link rel="stylesheet" href="CSS/GalleryStyling.css">
+    <link rel="stylesheet" href="/css/global-dashboard.css">
+    <style>
+        /* Stylish Gallery Buttons */
+        .gallery-btn-container {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-stylish {
+            flex: 1;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-delete-stylish {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn-delete-stylish:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Image Modal Styles */
+        .image-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            overflow: auto;
+        }
+
+        .image-modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 900px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+            animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #888;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #d9534f;
+        }
+
+        /* Category Toggle Buttons */
+        .category-toggle-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 25px;
+            padding: 5px 0;
+        }
+
+        .category-toggle-btn {
+            background-color: #f8fafc;
+            color: #64748b;
+            border: 1.5px solid #e2e8f0;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+            user-select: none;
+        }
+
+        .category-toggle-btn:hover {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+
+        .category-toggle-btn.active {
+            background-color: #0D8ABC;
+            color: white;
+            border-color: #0D8ABC;
+            box-shadow: 0 4px 12px rgba(13, 138, 188, 0.35);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- MASTER PAGE PLACEHOLDERS -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-alumni.html"></div>
+
+
+    <!-- Scrolling Ticker -->
+    <div class="scrolling-ticker">
+        <div class="ticker-content" id="eventsTicker">
+            ⭐ Upcoming Event: Annual Alumni Meet 2026 - Nov 15th &nbsp; | &nbsp; ⭐ Webinar on Tech Trends - Dec 2nd
+            &nbsp; | &nbsp; ⭐ Registration open for Mentorship Program!
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-container">
+
+        <!-- Center Content (Gallery) -->
+        <div class="center-content">
+
+            <!-- Gallery Grid on the left -->
+            <div class="gallery-main-view">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                    <h2 style="margin: 0;">Alumni Gallery</h2>
+                    <input type="text" id="searchInput" placeholder="Search caption, batch, details..."
+                        style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; min-width: 250px;">
+                </div>
+                <!-- Category Filter Toggles -->
+                <div class="category-toggle-container" id="categoryToggles">
+                    <button class="category-toggle-btn active" data-category="All">All Categories</button>
+                    <button class="category-toggle-btn" data-category="Batch">Batch</button>
+                    <button class="category-toggle-btn" data-category="Occasion">Occasion</button>
+                    <button class="category-toggle-btn" data-category="Campus Life">Campus Life</button>
+                    <button class="category-toggle-btn" data-category="Achievements">Achievements</button>
+                    <button class="category-toggle-btn" data-category="Others">Others</button>
+                </div>
+                <div class="gallery-grid" id="galleryGrid">
+                    <!-- Images will be displayed here dynamically -->
+                </div>
+
+                <!-- Modal Enlarged View -->
+                <div id="enlargedViewContainer" class="image-modal">
+                    <div class="image-modal-content">
+                        <span class="close-modal" id="closeEnlargedBtn">&times;</span>
+                        <div style="text-align: center; margin-top: 10px;">
+                            <img id="enlargedImage" src="#" alt="Enlarged View"
+                                style="max-width: 100%; max-height: 70vh; border-radius: 4px; object-fit: contain; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        </div>
+                        <div id="enlargedCaption"
+                            style="font-size: 1em; color: #444; margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 4px; border-left: 4px solid #0D8ABC; text-align: left;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modals are loaded here dynamically -->
+    <div id="modal-placeholder" data-modal="/Headers_Footers_common/invite-modal.html"></div>
+
+    <!-- Load the Master Page Script -->
+    <script src="../js/load-components.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.checkAccess()) return;
+
+            // User Data Handling
+            const storedUser = localStorage.getItem('user');
+
+            document.addEventListener('HeaderLoaded', () => {
+                if (storedUser) {
+                    try {
+                        const user = JSON.parse(storedUser);
+                        if (user && user.name) {
+                            document.getElementById('alumniNameDisplay').textContent = user.name;
+                            document.getElementById('headerProfilePic').src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff`;
+                        }
+                    } catch (e) {
+                        console.error("Error parsing user data", e);
+                    }
+                }
+            });
+
+            const galleryGrid = document.getElementById('galleryGrid');
+            const categoryToggles = document.getElementById('categoryToggles');
+            const searchInput = document.getElementById('searchInput');
+            let selectedCategory = 'All';
+
+            const API_URL = window.API_URL;
+            const token = localStorage.getItem('token');
+            let galleryImages = [];
+            let currentUserId = null;
+
+            // Extract user ID from token to check ownership
+            if (token) {
+                try {
+                    const base64Url = token.split('.')[1];
+                    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                    const payload = JSON.parse(window.atob(base64));
+                    currentUserId = payload.id || payload._id;
+                } catch (e) { }
+            }
+
+
+            // Handle category toggle button clicks
+            categoryToggles.addEventListener('click', (e) => {
+                const btn = e.target.closest('.category-toggle-btn');
+                if (!btn) return;
+
+                categoryToggles.querySelectorAll('.category-toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                selectedCategory = btn.dataset.category;
+                renderGallery();
+            });
+
+            searchInput.addEventListener('input', renderGallery);
+
+            function renderGallery() {
+                galleryGrid.innerHTML = '';
+
+                const searchTerm = searchInput.value.toLowerCase().trim();
+
+                // Explicit frontend filter: Alumni only see images that are NOT marked invisible
+                let filteredImages = galleryImages.filter(img => img.isVisible !== false);
+
+                if (selectedCategory !== 'All') {
+                    filteredImages = filteredImages.filter(img => (img.category || 'Others') === selectedCategory);
+                }
+
+                if (searchTerm) {
+                    filteredImages = filteredImages.filter(img => {
+                        const searchString = `${img.caption || ''} ${img.category || ''} ${img.categoryDetail || ''} ${img.postedBy || ''}`.toLowerCase();
+                        return searchString.includes(searchTerm);
+                    });
+                }
+
+                if (filteredImages.length === 0) {
+                    galleryGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #666;">No pictures found for this category.</p>';
+                    return;
+                }
+
+                filteredImages.forEach((image) => {
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item';
+
+                    // Only show delete buttons if the logged-in user uploaded this image
+                    let actionsHtml = '';
+                    if (currentUserId === image.uploaderId) {
+                        actionsHtml = `
+                            <div class="gallery-btn-container" style="padding: 10px; margin: 0; border-top: 1px solid #f1f5f9;">
+                                <button class="btn-stylish btn-delete-stylish" onclick="event.stopPropagation(); deleteImage('${image._id}')" style="margin: 0; width: 100%;">Delete</button>
+                            </div>
+                        `;
+                    }
+
+                    item.innerHTML = `
+                        <div class="gallery-image-container" onclick="viewEnlargedImage('${image._id}')" title="Click to enlarge">
+                            <img src="${image.imageUrl}" alt="Gallery Image">
+                        </div>
+                        ${actionsHtml}
+                    `;
+
+                    galleryGrid.appendChild(item);
+                });
+            }
+
+
+            // Make delete function globally accessible
+            window.deleteImage = async function (id) {
+                if (confirm('Are you sure you want to delete this picture?')) {
+                    try {
+                        const response = await fetch(`${API_URL}/gallery/${id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (response.ok) {
+                            loadGallery();
+                        } else { alert("Failed to delete image."); }
+                    } catch (error) { console.error("Error deleting image", error); }
+                }
+            }
+
+            // View enlarged image functionality
+            window.viewEnlargedImage = function (id) {
+                const imageToView = galleryImages.find(img => img._id === id);
+                if (imageToView) {
+                    document.getElementById('enlargedImage').src = imageToView.imageUrl;
+                    const captionText = escapeHtml(imageToView.caption) || '<em>No caption provided</em>';
+
+                    let displayCategory = escapeHtml(imageToView.category) || 'Others';
+                    if (imageToView.categoryDetail) {
+                        displayCategory += `: ${escapeHtml(imageToView.categoryDetail)}`;
+                    }
+
+                    document.getElementById('enlargedCaption').innerHTML = `<strong>Category:</strong> <span class="category-badge">${displayCategory}</span><br/><br/><strong>Caption:</strong><br/>${captionText}`;
+                    document.getElementById('enlargedViewContainer').style.display = 'block';
+                }
+            };
+
+            // Close enlarged view
+            document.getElementById('closeEnlargedBtn').addEventListener('click', () => {
+                document.getElementById('enlargedViewContainer').style.display = 'none';
+            });
+
+            // Close enlarged view when clicking outside the image
+            window.addEventListener('click', (e) => {
+                if (e.target === document.getElementById('enlargedViewContainer')) {
+                    document.getElementById('enlargedViewContainer').style.display = 'none';
+                }
+            });
+
+            async function loadGallery() {
+                try {
+                    const response = await fetch(`${API_URL}/gallery`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        galleryImages = data.images;
+                        renderGallery();
+                    }
+                } catch (error) {
+                    console.error('Failed to load gallery', error);
+                }
+            }
+
+            // Initial render
+            loadGallery();
+            updateEventsTicker();
+        });
+    </script>
+    <div id="footer-placeholder" data-footer="/Headers_Footers_common/footer.html"></div>
+</body>
+
+</html>

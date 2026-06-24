@@ -1,0 +1,483 @@
+<style>
+    /* Shared Notification Bell Styles */
+    .notification-bell {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        margin-right: 20px;
+        color: inherit;
+        transition: color 0.3s ease;
+    }
+
+    .notification-bell:hover {
+        color: #ffeb3b;
+        /* Highlights yellow on hover */
+    }
+
+    /* Removes the focus outline for mouse clicks, but keeps it for keyboard navigation (Fixes accessibility errors) */
+    .notification-bell:focus:not(:focus-visible) {
+        outline: none;
+    }
+
+    .notification-badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        background-color: #e53935;
+        color: white;
+        border-radius: 50%;
+        padding: 2px 6px;
+        font-size: 11px;
+        font-weight: bold;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .notification-dropdown {
+        display: none;
+        position: absolute;
+        top: 40px;
+        right: -10px;
+        background-color: white;
+        min-width: 300px;
+        max-height: 480px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        z-index: 1000;
+        overflow-x: hidden;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        text-align: left;
+        color: #333;
+        cursor: default;
+    }
+
+    .notification-dropdown.show {
+        display: block;
+        animation: slideInDown 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .notification-header {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #eee;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .notification-item {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        font-size: 0.9em;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .notification-item:hover {
+        background-color: #f1f8ff;
+    }
+
+    .notification-time {
+        display: block;
+        font-size: 0.8em;
+        color: #888;
+        margin-top: 5px;
+    }
+
+    .profile-menu {
+        cursor: pointer;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+
+    .slide-out-panel {
+        position: fixed;
+        top: 0;
+        right: -340px;
+        width: 320px;
+        height: 100vh;
+        background-color: #fff;
+        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
+        z-index: 10000;
+        transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    .slide-out-panel.show {
+        right: 0;
+        left: auto;
+    }
+
+    .slide-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+        /* Keep horizontal padding */
+        height: 64px;
+        /* Match main header height (10px padding + 38px icon + 10px padding) */
+        background: linear-gradient(135deg, #003366, #2200ff);
+        color: white;
+        box-sizing: border-box;
+    }
+
+    .slide-panel-header h3 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .close-panel-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        font-size: 20px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.3s, transform 0.3s;
+    }
+
+    .close-panel-btn:hover {
+        background: rgba(255, 255, 255, 0.4);
+        transform: rotate(90deg);
+    }
+
+    .panel-content {
+        padding: 20px 10px;
+    }
+
+    .slide-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: transparent;
+        /* Changed to remove the dimming effect */
+        z-index: 9999;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .slide-overlay.show {
+        display: block;
+        opacity: 1;
+    }
+
+    .slide-out-panel a {
+        padding: 12px 20px;
+        text-decoration: none;
+        color: #444;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .slide-out-panel a::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 0;
+        background: rgba(74, 20, 140, 0.08);
+        transition: width 0.3s ease;
+        z-index: -1;
+    }
+
+    .slide-out-panel a:hover::before {
+        width: 100%;
+    }
+
+    .slide-out-panel a:hover {
+        color: #4a148c;
+        transform: translateX(6px);
+    }
+
+    .slide-out-panel a svg {
+        transition: transform 0.3s ease;
+    }
+
+    .slide-out-panel a:hover svg {
+        transform: scale(1.2);
+    }
+
+    body {
+        transition: padding-right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    body.panel-open {
+        padding-right: 320px;
+        overflow-x: hidden;
+    }
+
+    /* Dark Mode Support for Slide Panel */
+    body.dark-mode .slide-out-panel {
+        background-color: #1a1a1a;
+        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    body.dark-mode .slide-out-panel a {
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .slide-out-panel a:hover {
+        color: #ce93d8;
+    }
+
+    body.dark-mode .slide-out-panel a::before {
+        background: rgba(206, 147, 216, 0.15);
+    }
+
+    .profile-menu:focus:not(:focus-visible) {
+        outline: none;
+    }
+
+    body.panel-open .profile-menu {
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    @media (max-width: 768px) {
+        header {
+            padding: 12px 15px !important;
+        }
+
+        .welcome-msg {
+            font-size: 1.1rem !important;
+            line-height: 1.3;
+        }
+
+        .hide-on-mobile {
+            display: none !important;
+        }
+
+        .notification-bell {
+            margin-right: 15px;
+        }
+
+        .profile-icon {
+            width: 38px;
+            height: 38px;
+        }
+
+        .notification-dropdown {
+            right: -50px;
+            min-width: 280px;
+        }
+
+        body.panel-open {
+            padding-right: 0;
+        }
+
+        .slide-out-panel {
+            width: 300px;
+            right: -320px;
+        }
+    }
+</style>
+<header>
+    <div class="welcome-msg" id="welcomeMessage">
+        Welcome, <span id="superAdminNameDisplay">Super Admin</span><span class="hide-on-mobile"> to the MCA Alumni
+            Network</span>
+    </div>
+    <div style="display: flex; align-items: center;">
+
+        <!-- Slide Overlay -->
+        <div class="slide-overlay" id="slideOverlay" onclick="toggleProfilePanel()"></div>
+
+        <!-- Notification Bell -->
+        <div class="notification-bell" id="notificationBell" tabindex="0" aria-label="Notifications"
+            onblur="setTimeout(() => document.getElementById('notificationDropdown').classList.remove('show'), 200)"
+            onclick="document.getElementById('notificationDropdown').classList.toggle('show');">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span class="notification-badge" id="notificationCount" style="display: none;">0</span>
+            <!-- Dropdown Menu -->
+            <div class="notification-dropdown" id="notificationDropdown" onclick="event.stopPropagation();">
+                <div class="notification-header">
+                    Notifications
+                    <span style="font-size: 0.8em; color: #4a148c; cursor: pointer; font-weight: normal; display: none;"
+                        onclick="window.markNotificationsRead ? window.markNotificationsRead() : (localStorage.setItem('notificationsLastRead', Date.now()), document.querySelectorAll('.notification-item').forEach(i => { i.style.backgroundColor=''; i.style.fontWeight=''; }), document.getElementById('notificationCount').style.display='none', this.style.display='none');">Mark
+                        all read</span>
+                </div>
+                <div class="notification-item" style="text-align:center;color:#888;cursor:default;">
+                    Loading notifications...
+                </div>
+            </div>
+        </div>
+        <!-- Profile Menu -->
+        <div class="profile-menu" tabindex="0" aria-expanded="false" aria-haspopup="true"
+            onclick="toggleProfilePanel()">
+            <img src="https://ui-avatars.com/api/?name=Super+Admin&background=4a148c&color=fff" alt="Profile"
+                class="profile-icon" id="headerProfilePic">
+        </div>
+        <!-- Slide-out Menu -->
+        <div class="slide-out-panel" id="profileSlidePanel">
+            <div class="slide-panel-header">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <img src="https://ui-avatars.com/api/?name=Super+Admin&background=4a148c&color=fff" alt="Profile"
+                        class="profile-icon" id="slideProfilePic" style="border: 2px solid rgba(255,255,255,0.3);">
+                    <h3>Menu</h3>
+                </div>
+                <button class="close-panel-btn" onclick="toggleProfilePanel()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                style="display:none;"
+                onload="const main = document.getElementById('headerProfilePic'); const slide = document.getElementById('slideProfilePic'); if(main && slide && !slide.dataset.synced) { slide.dataset.synced = 'true'; slide.src = main.src; new MutationObserver(() => slide.src = main.src).observe(main, { attributes: true, attributeFilter: ['src'] }); } this.remove();">
+            <div class="panel-content" id="profileDropdown" role="menu">
+                <a href="/Admin/SuperAdmin/Super-Admin-Main-Screen.html">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Dashboard
+                </a>
+                <!-- <a href="#" onclick="if(window.showAnalytics) { window.showAnalytics(); toggleProfilePanel(); return false; } else { window.location.href='Super-Admin-Main-Screen.html'; return false; }">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    Analytics
+                </a> -->
+                <a href="/Admin/SuperAdmin/Super-Admin-information.html">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    My Profile
+                </a>
+                <a href="/Admin/SuperAdmin/Manage-Admins.html">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Manage Admins
+                </a>
+                <a href="/Admin/SuperAdmin/Manage-Role-Permissions.html">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    Role Permissions
+                </a>
+                <a href="/Admin/SuperAdmin/Manage-Alumni.html">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Manage Alumni
+                </a>
+                <a href="/Admin/SuperAdmin/Alumni-Approval.html">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <polyline points="17 11 19 13 23 9"></polyline>
+                    </svg>
+                    Alumni Approval
+                </a>
+                <a href="/Admin/SuperAdmin/Super-admin-event-creation.html">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                        <line x1="12" y1="14" x2="12" y2="18"></line>
+                        <line x1="10" y1="16" x2="14" y2="16"></line>
+                    </svg>
+                    Manage Events
+                </a>
+                <a href="/Admin/SuperAdmin/Super-Admin-Manage-Announcements.html">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0">
+                        </path>
+                    </svg>
+                    Manage Announcements
+                </a>
+                <a href="/Admin/SuperAdmin/Manage-ID-Cards.html">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect>
+                        <line x1="7" y1="15" x2="17" y2="15"></line>
+                        <circle cx="12" cy="10" r="2"></circle>
+                    </svg>
+                    Manage ID Cards
+                </a>
+                <a href="/Admin/SuperAdmin/Super-admin-gallery.html">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    Manage Gallery
+                </a>
+                <a href="/Admin/SuperAdmin/Super-Admin-Videos.html">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                    </svg>
+                    Manage Videos
+                </a>
+                <a href="#" id="logoutBtn" style="color: #d32f2f;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</header>

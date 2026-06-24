@@ -1,0 +1,315 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Magazine - NITC Alumni</title>
+    <link rel="stylesheet" href="CSS/AlumniStyling.css">
+    <link rel="stylesheet" href="CSS/PostEventStyling.css">
+</head>
+<body>
+
+    <!-- MASTER PAGE PLACEHOLDERS -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-alumni.html"></div>
+    
+    <!-- Scrolling Ticker -->
+    <div class="scrolling-ticker">
+        <div class="ticker-content" id="eventsTicker">
+            ⭐ Upcoming Event: Annual Alumni Meet 2026 - Nov 15th &nbsp; | &nbsp; ⭐ Webinar on Tech Trends - Dec 2nd &nbsp; | &nbsp; ⭐ Registration open for Mentorship Program!
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-container">
+        
+        <!-- Center Content (Post Magazine Form) -->
+        <div class="center-content">
+            <h2>Publish a Magazine or Newsletter</h2>
+            
+            <div id="successMessage" class="success-message">
+                Magazine posted successfully! It will be reviewed by admins.
+            </div>
+
+            <div class="post-event-container">
+                <form id="postMagazineForm" class="event-form">
+                    
+                    <div class="form-group">
+                        <label for="magazineTitle">Magazine Title / Edition *</label>
+                        <input type="text" id="magazineTitle" required placeholder="E.g., TechZine 2026 - Spring Edition">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="magazineDate">Publication Date *</label>
+                        <input type="date" id="magazineDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="magazineLink">Read Link (Google Drive, Issuu, etc.) *</label>
+                        <input type="url" id="magazineLink" required placeholder="https://...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="magazineDescription">Description / Key Highlights *</label>
+                        <textarea id="magazineDescription" required placeholder="Briefly describe the contents of this issue..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="magazineCover">Cover Image (Optional)</label>
+                        <input type="file" id="magazineCover" accept="image/*">
+                        <img id="imagePreview" class="image-preview" src="#" alt="Cover Preview">
+                    </div>
+
+                    <div>
+                        <button type="submit" class="submit-btn" id="submitMagazineBtn">Post Magazine</button>
+                        <button type="button" class="cancel-edit-btn" id="cancelEditBtn">Cancel Edit</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="my-events-section" style="margin-top: 40px;">
+                <h2>My Posted Magazines</h2>
+                <div id="myMagazinesList" class="my-events-list">
+                    <!-- Magazines will be dynamically injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar (Announcements) -->
+        <div class="right-sidebar">
+            <h3><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><path d="m3 11 18-9v18L3 13"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>Admin Announcements</h3>
+            <div id="announcementsList">
+                <p style="color: #666; font-style: italic;">Loading announcements...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modals are loaded here dynamically -->
+    <div id="modal-placeholder"></div>
+
+    <!-- Load the Master Page Script -->
+    <script src="../js/load-components.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.checkAccess()) return;
+            const API_URL = window.API_URL;
+            const token = localStorage.getItem('token');
+
+            let localMagazinesCache = [];
+
+            // Retrieve User from LocalStorage
+            const storedUser = localStorage.getItem('user');
+            let currentUser = { name: "Alumni", _id: null };
+            
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    if (user && user.name) {
+                        currentUser = user;
+                    }
+                } catch(e) {
+                    console.error("Error parsing user data", e);
+                }
+            }
+
+            document.addEventListener('HeaderLoaded', () => {
+                if (currentUser && currentUser.name !== "Alumni") {
+                    document.getElementById('alumniNameDisplay').textContent = currentUser.name;
+                    document.getElementById('headerProfilePic').src = currentUser.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=0D8ABC&color=fff`;
+                }
+            });
+
+            // Image Preview Logic
+            const imageInput = document.getElementById('magazineCover');
+            const imagePreview = document.getElementById('imagePreview');
+            let base64Image = null;
+            let editingMagazineId = null;
+
+            imageInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Quick validation to prevent crashing the server
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert("File is too large! Please select an image under 5MB.");
+                        imageInput.value = ''; 
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        base64Image = event.target.result;
+                        imagePreview.src = base64Image;
+                        imagePreview.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    base64Image = null;
+                    imagePreview.style.display = 'none';
+                    imagePreview.src = '#';
+                }
+            });
+
+            // Form Submission Logic
+            const form = document.getElementById('postMagazineForm');
+            const successMessage = document.getElementById('successMessage');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitBtn = document.getElementById('submitMagazineBtn');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Saving...';
+                submitBtn.disabled = true;
+
+                const payload = {
+                    postedBy: currentUser.name,
+                    title: document.getElementById('magazineTitle').value.trim(),
+                    publicationDate: document.getElementById('magazineDate').value,
+                    readLink: document.getElementById('magazineLink').value.trim(),
+                    description: document.getElementById('magazineDescription').value.trim(),
+                    coverImage: base64Image,
+                };
+
+                try {
+                    let response;
+                    if (editingMagazineId) {
+                        response = await fetch(`${API_URL}/magazines/${editingMagazineId}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify(payload)
+                        });
+                        successMessage.textContent = 'Magazine updated successfully! It is now pending re-approval.';
+                    } else {
+                        response = await fetch(`${API_URL}/magazines`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify(payload)
+                        });
+                        successMessage.textContent = 'Magazine posted successfully! It will be reviewed by admins.';
+                    }
+
+                    if (!response.ok && !response.headers.get('content-type')?.includes('application/json')) {
+                        const text = await response.text();
+                        throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
+                    }
+
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        successMessage.style.display = 'block';
+                        form.reset();
+                        imagePreview.style.display = 'none';
+                        base64Image = null;
+                        editingMagazineId = null;
+                        document.getElementById('submitMagazineBtn').textContent = 'Post Magazine';
+                        document.getElementById('cancelEditBtn').style.display = 'none';
+                        
+                        renderMyMagazines();
+                        setTimeout(() => successMessage.style.display = 'none', 4000);
+                    } else {
+                        alert(data.message || 'Failed to save magazine.');
+                    }
+                } catch (error) {
+                    console.error("Error saving magazine:", error);
+                    alert(`Error: ${error.message}. Please check the browser console for more details.`);
+                } finally {
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                }
+            });
+
+            document.getElementById('cancelEditBtn').addEventListener('click', () => {
+                editingMagazineId = null;
+                form.reset();
+                imagePreview.style.display = 'none';
+                base64Image = null;
+                document.getElementById('submitMagazineBtn').textContent = 'Post Magazine';
+                document.getElementById('cancelEditBtn').style.display = 'none';
+            });
+
+            async function renderMyMagazines() {
+                try {
+                    const response = await fetch(`${API_URL}/magazines`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        localMagazinesCache = data.magazines;
+                        const myMagazines = localMagazinesCache.filter(mag => mag.uploaderId === currentUser.id);
+                        const myMagazinesList = document.getElementById('myMagazinesList');
+                        myMagazinesList.innerHTML = '';
+
+                        if (myMagazines.length === 0) {
+                            myMagazinesList.innerHTML = '<p class="no-events-msg">You have not posted any magazines yet.</p>';
+                            return;
+                        }
+
+                        myMagazines.forEach(mag => {
+                            const card = document.createElement('div');
+                            card.className = 'my-event-card';
+                            card.innerHTML = `
+                                <div class="my-event-details">
+                                    <h4>${escapeHtml(mag.title)}</h4>
+                                    <p>Published: ${new Date(mag.publicationDate).toLocaleDateString()} | Status: <strong>${escapeHtml(mag.status)}</strong></p>
+                                    <p><a href="${escapeHtml(mag.readLink)}" target="_blank" style="color: #003366; text-decoration: underline;">Read Link</a></p>
+                                </div>
+                                <div>
+                                    ${mag.status === 'Approved' ? '' : `<button class="edit-event-btn" onclick="editMyMagazine('${mag._id}')">Edit</button>`}
+                                    <button class="delete-event-btn" onclick="deleteMyMagazine('${mag._id}')">Delete</button>
+                                </div>
+                            `;
+                            myMagazinesList.appendChild(card);
+                        });
+                    }
+                } catch(error) {
+                    console.error("Failed to fetch magazines", error);
+                }
+            }
+
+            window.editMyMagazine = function(id) {
+                const magToEdit = localMagazinesCache.find(m => m._id === id);
+                
+                if (magToEdit) {
+                    editingMagazineId = id;
+                    document.getElementById('magazineTitle').value = magToEdit.title;
+                    document.getElementById('magazineDate').value = new Date(magToEdit.publicationDate).toISOString().split('T')[0];
+                    document.getElementById('magazineLink').value = magToEdit.readLink;
+                    document.getElementById('magazineDescription').value = magToEdit.description;
+                    
+                    if (magToEdit.coverImage) {
+                        base64Image = magToEdit.coverImage;
+                        imagePreview.src = base64Image;
+                        imagePreview.style.display = 'block';
+                    }
+                    
+                    document.getElementById('submitMagazineBtn').textContent = 'Update Magazine';
+                    document.getElementById('cancelEditBtn').style.display = 'inline-block';
+                    document.querySelector('.center-content').scrollIntoView({ behavior: 'smooth' });
+                }
+            };
+
+            window.deleteMyMagazine = async function(id) {
+                if (confirm('Are you sure you want to delete this magazine submission?')) {
+                    try {
+                        const response = await fetch(`${API_URL}/magazines/${id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (response.ok) {
+                            renderMyMagazines();
+                        } else {
+                            const data = await response.json();
+                            alert(data.message || 'Failed to delete magazine.');
+                        }
+                    } catch(error) { console.error("Error deleting magazine", error); }
+                }
+            };
+
+            // Initial render
+            renderMyMagazines();
+            updateEventsTicker();
+        window.loadSideBarAnnouncements();
+        });
+    </script>
+    <div id="footer-placeholder"></div>
+</body>
+</html>

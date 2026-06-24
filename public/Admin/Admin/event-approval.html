@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Approval - Admin</title>
+    <link rel="stylesheet" href="../CSS/AdminStyling.css">
+    <link rel="stylesheet" href="../CSS/Admin-main-screen.css">
+    <style>
+        .approval-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .approval-details h3 {
+            margin-top: 0;
+            color: #0D8ABC;
+        }
+
+        .approval-details p {
+            margin: 5px 0;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .approval-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 130px;
+            margin-left: 20px;
+        }
+
+        .btn-approve {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-approve:hover {
+            background: #218838;
+        }
+
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-reject:hover {
+            background: #c82333;
+        }
+
+        .btn-edit {
+            background: #ffc107;
+            color: #333;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-edit:hover {
+            background: #e0a800;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 25px;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 8px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        @media (max-width: 768px) {
+            .approval-card {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .approval-actions {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            form>div[style*="display: flex"] {
+                flex-direction: column;
+                gap: 10px !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Shared Admin Header injected here -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-admin.html"></div>
+    <script src="../../js/load-components.js"></script>
+
+    <div class="main-container">
+        <div class="center-content" style="flex: 1; max-width: 900px; margin: 0 auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Pending Events</h2>
+                <a href="Admin-Main-Screen.html" style="text-decoration: none; color: #0D8ABC; font-weight: bold;">←
+                    Back to Home</a>
+            </div>
+
+            <div id="statusMessage"
+                style="display: none; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-weight: bold; text-align: center;">
+            </div>
+
+            <div id="pendingEventsList" style="margin-bottom: 40px;">
+                <!-- Events populated via JS -->
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Approved Events</h2>
+            </div>
+
+            <div id="approvedEventsList">
+                <!-- Events populated via JS -->
+            </div>
+        </div>
+    </div>
+    <!-- Edit & Approve Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span id="closeModal"
+                style="float: right; font-size: 28px; font-weight: bold; color: #888; cursor: pointer;">&times;</span>
+            <h2 style="margin-top: 0; color: #0D8ABC; margin-bottom: 20px;">Review & Approve Event</h2>
+            <form id="editEventForm">
+                <div class="form-group">
+                    <label>Event Name</label>
+                    <input type="text" id="editTitle" required>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Date</label>
+                        <input type="date" id="editDate" required>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Time</label>
+                        <input type="time" id="editTime" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Location / Virtual Link</label>
+                    <input type="text" id="editLocation" required>
+                </div>
+                <div class="form-group">
+                    <label>Target Audience / Eligibility</label>
+                    <input type="text" id="editEligibility" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="editDescription" rows="5" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Contact Info</label>
+                    <input type="text" id="editContact">
+                </div>
+                <button type="submit" class="btn-approve"
+                    style="width: 100%; padding: 12px; font-size: 1.1em; margin-top: 10px;">Save Changes & Approve
+                    Event</button>
+            </form>
+        </div>
+    </div>
+    <!-- Reject Modal -->
+    <div id="rejectModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span id="closeRejectModal"
+                style="float: right; font-size: 28px; font-weight: bold; color: #888; cursor: pointer;">&times;</span>
+            <h2 style="margin-top: 0; color: #dc3545; margin-bottom: 20px;">Reject Event</h2>
+            <form id="rejectEventForm">
+                <p style="margin-bottom: 15px; color: #555;">Please provide a reason for rejecting this event. An email
+                    will be sent to the user.</p>
+                <div class="form-group">
+                    <label>Reason for Rejection *</label>
+                    <textarea id="rejectReason" rows="4" required
+                        placeholder="E.g. The event details are incomplete..."></textarea>
+                </div>
+                <button type="submit" class="btn-reject" id="submitRejectBtn"
+                    style="width: 100%; padding: 12px; font-size: 1.1em; margin-top: 10px;">Confirm Rejection</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.checkAccess()) return;
+            const adminUser = localStorage.getItem('adminUser');
+            const adminToken = localStorage.getItem('adminToken');
+            
+            // Restrict edit event date to today or future dates
+            const editDateInput = document.getElementById('editDate');
+            if (editDateInput) {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                editDateInput.min = `${yyyy}-${mm}-${dd}`;
+            }
+
+            const API_URL = window.API_URL;
+            document.addEventListener('HeaderLoaded', () => {
+                if (adminUser) {
+                    try {
+                        const user = JSON.parse(adminUser);
+                        if (user && user.name) {
+                            let avatarColor = 'c62828';
+                            if (user.role === 'faculty') avatarColor = '0D8ABC';
+
+                            document.getElementById('headerProfilePic').src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=${avatarColor}&color=fff`;
+
+                            if (user.role === 'faculty') {
+                                const style = document.createElement('style');
+                                style.innerHTML = `
+                                    .submit-btn, .btn-primary, .btn-approve { background-color: #0D8ABC !important; }
+                                    .submit-btn:hover, .btn-primary:hover, .btn-approve:hover { background-color: #0b739e !important; }
+                                    #logoutBtn { color: #0D8ABC !important; }
+                                    h1, h2, h3, .page-title { color: #0D8ABC !important; }
+                                `;
+                                document.head.appendChild(style);
+
+                                // Update breadcrumb link
+                                const backLinks = document.querySelectorAll('a[href="Admin-Main-Screen.html"]');
+                                backLinks.forEach(link => {
+                                    link.href = '../../Alumni/Alumni-Main-Screen.html';
+                                    if (!link.classList.contains('cancel-btn')) {
+                                        link.textContent = '← Back to Dashboard';
+                                    }
+                                });
+                            }
+                        }
+                    } catch (e) { }
+                }
+            });
+
+            let currentEditingId = null;
+            let localPendingEvents = [];
+
+            function showMessage(msg, isSuccess = true) {
+                const msgDiv = document.getElementById('statusMessage');
+                msgDiv.textContent = msg;
+                msgDiv.style.display = 'block';
+                msgDiv.style.backgroundColor = isSuccess ? '#d4edda' : '#f8d7da';
+                msgDiv.style.color = isSuccess ? '#155724' : '#721c24';
+                setTimeout(() => {
+                    msgDiv.style.display = 'none';
+                }, 3000);
+            }            // Download Registrations CSV Function
+            window.downloadRegistrations = async function (eventId) {
+                try {
+                    const response = await fetch(`${API_URL}/events/${eventId}/registrations/download`, {
+                        headers: {
+                            'Authorization': `Bearer ${adminToken}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const data = await response.json().catch(() => ({}));
+                        alert(data.message || 'Failed to download registrations.');
+                        return;
+                    }
+
+                    const blob = await response.blob();
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = 'event_registrations.csv';
+                    if (contentDisposition && contentDisposition.includes('filename=')) {
+                        const matches = contentDisposition.match(/filename="?([^"]+)"?/);
+                        if (matches && matches[1]) {
+                            filename = matches[1];
+                        }
+                    }
+
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                } catch (err) {
+                    console.error("Download error", err);
+                    alert('Error downloading file. Please check connection.');
+                }
+            };
+
+            async function renderPendingEvents() {
+                const list = document.getElementById('pendingEventsList');
+                const approvedList = document.getElementById('approvedEventsList');
+                try {
+                    const response = await fetch(`${API_URL}/events`, {
+                        headers: { 'Authorization': `Bearer ${adminToken}` }
+                    });
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        localPendingEvents = data.events.filter(e => e.status !== 'Approved');
+                        const approvedEvents = data.events.filter(e => e.status === 'Approved');
+
+                        // 1. Render Pending Events
+                        list.innerHTML = '';
+                        if (localPendingEvents.length === 0) {
+                            list.innerHTML = '<p style="text-align: center; color: #666; padding: 30px; background: white; border-radius: 8px;">No pending events to review.</p>';
+                        } else {
+                            localPendingEvents.forEach(event => {
+                                const card = document.createElement('div');
+                                card.className = 'approval-card';
+                                card.innerHTML = `
+                                    <div class="approval-details">
+                                        <h3>${escapeHtml(event.title)}</h3>
+                                        <p><strong>Posted By:</strong> ${escapeHtml(event.postedBy)}</p>
+                                        <p><strong>Date & Time:</strong> ${escapeHtml(event.date)} at ${escapeHtml(event.time)}</p>
+                                        <p><strong>Location:</strong> ${escapeHtml(event.location)}</p>
+                                        <p><strong>Description:</strong> ${escapeHtml(event.description).substring(0, 150)}${event.description.length > 150 ? '...' : ''}</p>
+                                    </div>
+                                    <div class="approval-actions">
+                                        <button class="btn-edit" onclick="openEditModal('${event._id}')">Review & Edit</button>
+                                        <button class="btn-approve" onclick="quickApprove('${event._id}')">Approve Now</button>
+                                        <button class="btn-reject" onclick="openRejectModal('${event._id}')">Reject</button>
+                                    </div>
+                                `;
+                                list.appendChild(card);
+                            });
+                        }
+
+                        // 2. Render Approved Events
+                        approvedList.innerHTML = '';
+                        if (approvedEvents.length === 0) {
+                            approvedList.innerHTML = '<p style="text-align: center; color: #666; padding: 30px; background: white; border-radius: 8px;">No approved events found.</p>';
+                        } else {
+                            approvedEvents.forEach(event => {
+                                const card = document.createElement('div');
+                                card.className = 'approval-card';
+                                card.innerHTML = `
+                                    <div class="approval-details">
+                                        <h3>${escapeHtml(event.title)}</h3>
+                                        <p><strong>Posted By:</strong> ${escapeHtml(event.postedBy)}</p>
+                                        <p><strong>Date & Time:</strong> ${escapeHtml(event.date)} at ${escapeHtml(event.time)}</p>
+                                        <p><strong>Location:</strong> ${escapeHtml(event.location)}</p>
+                                        <p><strong>Description:</strong> ${escapeHtml(event.description).substring(0, 150)}${event.description.length > 150 ? '...' : ''}</p>
+                                    </div>
+                                    <div class="approval-actions">
+                                        <button class="btn-approve" style="background-color: #0D8ABC;" onclick="downloadRegistrations('${event._id}')">Get Data</button>
+                                        <button class="btn-reject" onclick="openRejectModal('${event._id}')">Delete / Reject</button>
+                                    </div>
+                                `;
+                                approvedList.appendChild(card);
+                            });
+                        }
+                    }
+                } catch (error) {
+                    showMessage("Failed to load events", false);
+                }
+            }
+
+            function escapeHtml(unsafe) {
+                if (!unsafe) return "";
+                return unsafe.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            }
+
+            window.openEditModal = function (id) {
+                const event = localPendingEvents.find(e => e._id === id);
+                if (!event) return;
+
+                currentEditingId = id;
+                document.getElementById('editTitle').value = event.title || '';
+                document.getElementById('editDate').value = event.date || '';
+                document.getElementById('editTime').value = event.time || '';
+                document.getElementById('editLocation').value = event.location || '';
+                document.getElementById('editEligibility').value = event.eligibility || '';
+                document.getElementById('editDescription').value = event.description || '';
+                document.getElementById('editContact').value = event.contact || '';
+
+                document.getElementById('editModal').style.display = 'block';
+            };
+
+            document.getElementById('closeModal').addEventListener('click', () => {
+                document.getElementById('editModal').style.display = 'none';
+            });
+
+            // Save and Approve from Modal
+            document.getElementById('editEventForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const payload = {
+                    title: document.getElementById('editTitle').value.trim(),
+                    date: document.getElementById('editDate').value,
+                    time: document.getElementById('editTime').value,
+                    location: document.getElementById('editLocation').value.trim(),
+                    eligibility: document.getElementById('editEligibility').value.trim(),
+                    description: document.getElementById('editDescription').value.trim(),
+                    contact: document.getElementById('editContact').value.trim(),
+                    status: 'Approved'
+                };
+                try {
+                    const response = await fetch(`${API_URL}/events/${currentEditingId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        document.getElementById('editModal').style.display = 'none';
+                        showMessage('Event approved successfully!');
+                        renderPendingEvents();
+                    } else { showMessage('Failed to update event.', false); }
+                } catch (error) { showMessage('Network error.', false); }
+            });
+
+            window.quickApprove = async function (id) {
+                try {
+                    const response = await fetch(`${API_URL}/events/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                        body: JSON.stringify({ status: 'Approved' })
+                    });
+                    if (response.ok) {
+                        showMessage('Event approved successfully!');
+                        renderPendingEvents();
+                    } else {
+                        showMessage('Failed to approve event.', false);
+                    }
+                } catch (error) { showMessage("Network error approving event.", false); }
+            };
+
+            let currentRejectingId = null;
+
+            window.openRejectModal = function (id) {
+                currentRejectingId = id;
+                document.getElementById('rejectReason').value = '';
+                document.getElementById('rejectModal').style.display = 'block';
+            };
+
+            document.getElementById('closeRejectModal').addEventListener('click', () => {
+                document.getElementById('rejectModal').style.display = 'none';
+                currentRejectingId = null;
+            });
+
+            document.getElementById('rejectEventForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const reason = document.getElementById('rejectReason').value.trim();
+                const submitBtn = document.getElementById('submitRejectBtn');
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Rejecting & Sending Email...';
+
+                try {
+                    const response = await fetch(`${API_URL}/events/${currentRejectingId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${adminToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ reason })
+                    });
+
+                    if (response.ok) {
+                        showMessage('Event rejected and email sent successfully!', true);
+                        document.getElementById('rejectModal').style.display = 'none';
+                        renderPendingEvents();
+                    } else {
+                        showMessage('Failed to reject event.', false);
+                    }
+                } catch (error) {
+                    showMessage("Network error rejecting event.", false);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Confirm Rejection';
+                    currentRejectingId = null;
+                }
+            });
+
+            renderPendingEvents();
+        });
+    </script>
+</body>
+
+</html>

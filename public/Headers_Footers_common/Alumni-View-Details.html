@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alumni Profile - NITC Portal</title>
+    <link rel="stylesheet" href="CSS/AlumniStyling.css">
+    <style>
+        body {
+            background-color: #f4f6f8;
+        }
+        .profile-card-view {
+            display: flex;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            overflow: hidden;
+            flex-wrap: wrap;
+        }
+        .profile-card-left {
+            flex: 1;
+            padding: 30px;
+            background: #003366;
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 280px;
+        }
+        .profile-card-left img {
+            width: 180px;
+            height: 220px;
+            border-radius: 10px;
+            border: 4px solid white;
+            object-fit: cover;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .profile-card-left h2 {
+            margin: 10px 0 5px 0;
+            font-size: 1.8em;
+        }
+        .profile-card-left p {
+            margin: 0;
+            font-size: 1em;
+            color: #d1e3ff;
+        }
+        .profile-card-right {
+            flex: 2.5;
+            padding: 30px;
+        }
+        .detail-section {
+            margin-bottom: 25px;
+        }
+        .detail-section h3 {
+            color: #003366;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .detail-item {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 5px;
+            border-left: 3px solid #0D8ABC;
+        }
+        .detail-item label {
+            display: block;
+            font-weight: bold;
+            color: #555;
+            font-size: 0.85em;
+            margin-bottom: 4px;
+        }
+        .detail-item span {
+            color: #333;
+            font-size: 1em;
+            word-wrap: break-word;
+        }
+        .detail-item a {
+            color: #0056b3;
+            text-decoration: none;
+        }
+        .detail-item a:hover {
+            text-decoration: underline;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        .sub-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .sub-list li {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        .sub-list li strong {
+            color: #333;
+        }
+        .loading-state {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #666;
+        }
+        @media (max-width: 768px) {
+            .profile-card-left {
+                min-width: 100%;
+                padding: 20px;
+            }
+            .profile-card-right {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Dynamic Master Page Header Injection -->
+    <div id="header-placeholder"></div>
+    <script>
+        // Determine the correct header based on the referring context
+        let headerContext = sessionStorage.getItem('viewContext');
+        if (document.referrer) {
+            if (document.referrer.includes('SuperAdmin') || document.referrer.includes('Super-Admin')) headerContext = 'superAdmin';
+            else if (document.referrer.includes('Admin')) headerContext = 'admin';
+            else headerContext = 'alumni';
+            sessionStorage.setItem('viewContext', headerContext);
+        }
+
+        const headerPlaceholder = document.getElementById('header-placeholder');
+        if (headerContext === 'superAdmin') headerPlaceholder.setAttribute('data-header', '/Headers_Footers_common/header-superadmin.html');
+        else if (headerContext === 'admin') headerPlaceholder.setAttribute('data-header', '/Headers_Footers_common/header-admin.html');
+        else headerPlaceholder.setAttribute('data-header', '/Headers_Footers_common/header-alumni.html');
+    </script>
+    <script src="../js/load-components.js"></script>
+
+    <!-- Preserved Back Button -->
+    <div style="padding: 12px 20px; background: white; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px;">
+        <h3 style="margin: 0; margin-left: 20px; color: #333; font-size: 1.2em;">Alumni Profile Details</h3>
+        <a href="javascript:history.back()" style="text-decoration: none; font-weight: bold; font-size: 1.1em; color: #0D8ABC; transition: opacity 0.3s; margin-right: 20px;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">← Back</a>
+    </div>
+
+    <div class="container" id="profileContainer">
+        <!-- Content will be populated by JavaScript -->
+        <div class="loading-state">Loading alumni details...</div>
+    </div>
+
+    <div id="modal-placeholder" data-modal="/Headers_Footers_common/invite-modal.html"></div>
+    <div id="footer-placeholder" data-footer="/Headers_Footers_common/footer.html"></div>
+    <script>
+        const API_URL = window.API_URL;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!window.checkAccess()) return;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const alumniId = urlParams.get('id');
+            const profileContainer = document.getElementById('profileContainer');
+
+            if (!alumniId) {
+                profileContainer.innerHTML = '<div class="loading-state" style="color: red;">No Alumni ID provided.</div>';
+                return;
+            }
+
+        // Profile Header Logic
+        const storedAlumni = localStorage.getItem('user');
+        const storedAdmin = localStorage.getItem('adminUser');
+        const storedSuperAdmin = localStorage.getItem('superAdminUser');
+
+        let viewContext = sessionStorage.getItem('viewContext') || 'alumni';
+
+        let currentUser = null;
+        let bgColor = '0D8ABC';
+        let role = 'alumni';
+        let token = null;
+
+        if (viewContext === 'superAdmin' && storedSuperAdmin) {
+            currentUser = JSON.parse(storedSuperAdmin);
+            bgColor = '4a148c';
+            role = 'superAdmin';
+            token = localStorage.getItem('superAdminToken');
+        } else if (viewContext === 'admin' && storedAdmin) {
+            currentUser = JSON.parse(storedAdmin);
+            bgColor = 'c62828';
+            role = 'admin';
+            token = localStorage.getItem('adminToken');
+        } else if (viewContext === 'alumni' && storedAlumni) {
+            currentUser = JSON.parse(storedAlumni);
+            bgColor = '0D8ABC';
+            role = 'alumni';
+            token = localStorage.getItem('token');
+        } else if (storedSuperAdmin) { // Fallback
+            currentUser = JSON.parse(storedSuperAdmin);
+            bgColor = '4a148c';
+            role = 'superAdmin';
+            token = localStorage.getItem('superAdminToken');
+        } else if (storedAdmin) { // Fallback
+            currentUser = JSON.parse(storedAdmin);
+            bgColor = 'c62828';
+            role = 'admin';
+            token = localStorage.getItem('adminToken');
+        } else if (storedAlumni) { // Fallback
+            currentUser = JSON.parse(storedAlumni);
+            bgColor = '0D8ABC';
+            role = 'alumni';
+            token = localStorage.getItem('token');
+        }
+
+        document.addEventListener('HeaderLoaded', () => {
+            if (currentUser && currentUser.name) {
+                const headerPic = document.getElementById('headerProfilePic');
+                if (headerPic) {
+                    headerPic.src = currentUser.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=${bgColor}&color=fff`;
+                }
+                
+                const nameDisplay = document.getElementById('superAdminNameDisplay') || document.getElementById('adminNameDisplay') || document.getElementById('alumniNameDisplay');
+                if (nameDisplay) nameDisplay.textContent = currentUser.name;
+            }
+        });
+
+            try {
+                const response = await fetch(`${API_URL}/users`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch alumni data.');
+
+                const data = await response.json();
+                if (data.success) {
+                    const alumni = data.users.find(u => u._id === alumniId);
+                    if (alumni) {
+                        renderAlumniProfile(alumni);
+                    } else {
+                        profileContainer.innerHTML = '<div class="loading-state" style="color: red;">Alumni not found.</div>';
+                    }
+                } else {
+                    throw new Error(data.message || 'Could not retrieve alumni list.');
+                }
+
+            } catch (error) {
+                console.error('Error fetching alumni details:', error);
+                profileContainer.innerHTML = `<div class="loading-state" style="color: red;">Error: ${error.message}</div>`;
+            }
+        });
+        function renderAlumniProfile(alumni) {
+            const profileContainer = document.getElementById('profileContainer');
+            const escapeHtml = (str) => {
+                if (!str) return '';
+                const div = document.createElement('div');
+                div.appendChild(document.createTextNode(str));
+                return div.innerHTML;
+            };
+            const hasValue = (val) => val && val !== 'null' && val !== 'undefined' && String(val).trim() !== '';
+            const profileImage = alumni.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(alumni.name)}&background=0D8ABC&color=fff&size=150`;
+            const verifiedBadge = (!alumni.rollNumber || !alumni.rollNumber.startsWith('PENDING-')) ? `<svg style="width: 20px; height: 20px; margin-left: 8px; vertical-align: middle;" viewBox="0 0 24 24" fill="#28a745" title="Verified Alumni"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>` : `<svg style="width: 20px; height: 20px; margin-left: 8px; vertical-align: middle;" viewBox="0 0 24 24" fill="#dc3545" title="Pending Verification"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>`;
+            let previousCompaniesHtml = '';
+            if (Array.isArray(alumni.previousCompanies) && alumni.previousCompanies.length > 0) {
+                let items = '';
+                alumni.previousCompanies.forEach(comp => {
+                    if (hasValue(comp.companyName) || hasValue(comp.yearsWorked)) {
+                        const cName = escapeHtml(comp.companyName) || 'Unknown Company';
+                        const yWorked = escapeHtml(comp.yearsWorked) || 'Unknown Duration';
+                        items += `<li><strong>${cName}</strong> (${yWorked})</li>`;
+                    }
+                });
+                if (items) {
+                    previousCompaniesHtml = `
+                        <div class="detail-section">
+                            <h3>Work Experience</h3>
+                            <ul class="sub-list">${items}</ul>
+                        </div>
+                    `;
+                }
+            }
+
+            let keyProjectsHtml = '';
+            if (Array.isArray(alumni.keyProjects) && alumni.keyProjects.length > 0) {
+                let items = '';
+                alumni.keyProjects.forEach(proj => {
+                    if (hasValue(proj.projectName) || hasValue(proj.roleDescription)) {
+                        const pName = escapeHtml(proj.projectName) || 'Unknown Project';
+                        const pRole = escapeHtml(proj.roleDescription) || 'Unknown Role';
+                        items += `<li><strong>${pName}:</strong> ${pRole}</li>`;
+                    }
+                });
+                if (items) {
+                    keyProjectsHtml = `
+                        <div class="detail-section">
+                            <h3>Key Projects</h3>
+                            <ul class="sub-list">${items}</ul>
+                        </div>
+                    `;
+                }
+            }
+
+            let batchHtml = hasValue(alumni.batchYear) ? `<p>Batch of ${escapeHtml(alumni.batchYear)}</p><br>` : '';
+            let bioHtml = hasValue(alumni.bio) ? `<div><label>Bio : </label><span>${escapeHtml(alumni.bio)}</span></div><br>` : '';
+            let startupsHtml = hasValue(alumni.startups) ? `<div><label>Startups : </label><span>${escapeHtml(alumni.startups)}</span></div>` : '';
+
+            const renderField = (label, value, type = 'text') => {
+                if (!hasValue(value)) return '';
+                const safeVal = escapeHtml(value);
+                let content = `<span>${safeVal}</span>`;
+                if (type === 'email') content = `<span><a href="mailto:${safeVal}">${safeVal}</a></span>`;
+                else if (type === 'link') content = `<span><a href="${safeVal}" target="_blank" rel="noopener noreferrer">${safeVal}</a></span>`;
+                return `<div class="detail-item"><label>${label}</label>${content}</div>`;
+            };
+
+            const locationValue = [alumni.city, alumni.country].filter(hasValue).join(', ');
+            const skillsValue = Array.isArray(alumni.skills) ? alumni.skills.filter(hasValue).join(', ') : alumni.skills;
+
+            const personalGrid = [
+                renderField('Alumni ID', alumni.alumniId),
+                renderField('Email Address', alumni.email, 'email'),
+                renderField('Phone Number', alumni.phone),
+                renderField('Gender', alumni.gender),
+                renderField('Roll Number', alumni.rollNumber),
+                renderField('Current Location', locationValue),
+                renderField('LinkedIn Profile', alumni.linkedin || alumni.linkedIn, 'link')
+            ].join('');
+
+            const personalSection = personalGrid ? `
+                <div class="detail-section">
+                    <h3>Personal & Contact Information</h3>
+                    <div class="detail-grid">${personalGrid}</div>
+                </div>
+            ` : '';
+
+            const professionalGrid = [
+                renderField('Current Company', alumni.currentCompany || alumni.company),
+                renderField('Designation', alumni.designation),
+                renderField('Key Skills', skillsValue),
+                renderField('Projects Dealt With', alumni.noOfProjects)
+            ].join('');
+
+            const professionalSection = professionalGrid ? `
+                <div class="detail-section">
+                    <h3>Professional Details</h3>
+                    <div class="detail-grid">${professionalGrid}</div>
+                </div>
+            ` : '';
+
+            profileContainer.innerHTML = `
+                <div class="profile-card-view">
+                    <div class="profile-card-left">
+                        <img src="${profileImage}" alt="Profile picture of ${escapeHtml(alumni.name)}">
+                        <h2 style="display: flex; align-items: center; justify-content: center;">${escapeHtml(alumni.name)}${verifiedBadge}</h2>
+                        ${alumni.alumniId ? `<p style="margin: 5px 0 15px 0; font-weight: bold; color: #ffd54f; font-size: 1.1em; letter-spacing: 1px;">${escapeHtml(alumni.alumniId)}</p>` : ''}
+                        ${batchHtml}
+                        ${bioHtml}
+                        ${startupsHtml}
+                    </div>
+                    <div class="profile-card-right">
+                        ${personalSection}
+                        ${professionalSection}
+                        ${previousCompaniesHtml}
+                        ${keyProjectsHtml}
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

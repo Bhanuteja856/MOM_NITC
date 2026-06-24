@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%- typeof title != 'undefined' ? title : 'NITC Alumni Portal' %></title>
+  
+  <!-- Child pages will inject their specific CSS here automatically -->
+  <%- style %>
+</head>
+<body>
+
+  <!-- PAGE SPECIFIC CONTENT IS INJECTED HERE -->
+  <%- body %>
+
+  <!-- SHARED COMPONENTS: Written only once! -->
+  <%- include('partials/invite-modal') %>
+
+  <!-- Child pages will inject their specific JS here automatically -->
+  <%- script %>
+</body>
+</html>

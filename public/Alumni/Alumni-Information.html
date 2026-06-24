@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alumni Information - NITC Portal</title>
+    <link rel="stylesheet" href="CSS/AlumniStyling.css">
+    <link rel="stylesheet" href="CSS/Informations.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <style>
+        .dynamic-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .dynamic-row .form-group { margin-bottom: 0; flex: 1; }
+        .remove-btn { background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    
+    <!-- Loading Spinner Overlay -->
+    <div id="loadingOverlay" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.9); flex-direction: column; justify-content: center; align-items: center;">
+        <div class="spinner" style="border: 6px solid #f3f3f3; border-top: 6px solid #0D8ABC; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px;"></div>
+        <h3 id="loadingText" style="color: #0D8ABC; margin: 0;">Processing...</h3>
+    </div>
+    <style>
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+    
+    <!-- Crop Modal -->
+    <div id="cropModal" class="modal" role="dialog" aria-modal="true" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); overflow: auto;">
+        <div class="modal-content" style="background-color: #fff; margin: 5% auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px; text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.5);">
+            <h3 id="cropModalTitle" style="margin-top: 0; color: #0D8ABC;">Adjust Picture</h3>
+            <p id="cropModalText" style="color: #666; font-size: 0.9em; margin-bottom: 15px;"></p>
+            <div style="max-height: 50vh; overflow: hidden; margin-bottom: 20px; background: #f0f0f0;">
+                <img id="cropperImage" src="#" style="max-width: 100%;">
+            </div>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button type="button" id="cancelCropBtn" class="btn btn-secondary" style="padding: 10px 25px;">Cancel</button>
+                <button type="button" id="confirmCropBtn" class="btn btn-primary" style="background-color: #0D8ABC; padding: 10px 25px;">Confirm Crop</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared Alumni Header injected here -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-alumni.html"></div>
+    <script src="../js/load-components.js"></script>
+
+    <!-- Preserved Back Button -->
+    <div style="padding: 12px 20px; background: white; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px;">
+        <h3 style="margin: 0; margin-left: 20px; color: #333; font-size: 1.2em;">Profile Setup</h3>
+        <a href="Alumni-Main-Screen.html" style="text-decoration: none; font-weight: bold; font-size: 1.1em; color: #0D8ABC; transition: opacity 0.3s; margin-right: 20px;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">← Back to Dashboard</a>
+    </div>
+
+    <div class="container">
+        
+        <div id="statusMessage"></div>
+
+        <!-- Name at the top -->
+        <h1 class="page-title" id="pageTitle">Update Your Information</h1>
+
+        <form id="alumniInfoForm">
+            <!-- Top Section: Image Area -->
+            <div class="profile-header">
+                <div>
+                    <img src="https://ui-avatars.com/api/?name=Alumni&background=0D8ABC&color=fff&size=150" alt="Profile Picture Preview" class="image-preview" id="previewImg">
+                </div>
+                <div class="upload-section">
+                    <label for="profileImage">Choose New Image</label>
+                    <input type="file" id="profileImage" accept="image/jpeg, image/png, image/gif">
+                    <p>Allowed formats: JPG, PNG, GIF</p>
+                    <p>Maximum size: 5MB</p>
+                </div>
+            </div>
+
+            <!-- Bottom Section: Information Fields -->
+            <div class="form-section">
+                <h3>Personal Information</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" placeholder="e.g. John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email" style="display: flex; align-items: center; gap: 5px;">Email Address <span title="Locked by system">🔒</span></label>
+                        <!-- Keep email read-only if it's used as the primary identifier -->
+                        <input type="email" id="email" placeholder="Loading email..." readonly title="Email is tied to your account and cannot be changed.">
+                    </div>
+                    <div class="form-group">
+                        <label for="alumniId" style="display: flex; align-items: center; gap: 5px;">Alumni ID <span title="Locked by system">🔒</span></label>
+                        <input type="text" id="alumniId" placeholder="Loading ID..." readonly title="System generated Alumni ID" style="background-color: #f0f0f0; cursor: not-allowed; font-weight: bold; color: #0D8ABC;">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" placeholder="+91 9876543210">
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender">
+                            <option value="" disabled selected>Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                            <option value="Prefer not to say">Prefer not to say</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="batchOfStudying">Batch of Studying</label>
+                        <input type="text" id="batchOfStudying" placeholder="e.g. 2023-2026">
+                    </div>
+                    <div class="form-group">
+                        <label for="accountCreated">Account Created</label>
+                        <input type="text" id="accountCreated" placeholder="Loading date..." readonly style="background-color: #f0f0f0; cursor: not-allowed;" title="Date this account was created">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Professional Details</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="company">Current Company / Organization</label>
+                        <input type="text" id="company" placeholder="e.g. Google, Microsoft">
+                    </div>
+                    <div class="form-group">
+                        <label for="designation">Designation / Role</label>
+                        <input type="text" id="designation" placeholder="e.g. Software Engineer">
+                    </div>
+                    <div class="form-group">
+                        <label for="noOfProjects">No. of Projects Dealt With</label>
+                        <input type="number" id="noOfProjects" placeholder="e.g. 5" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="startups">Startups Running Now</label>
+                        <input type="text" id="startups" placeholder="e.g. Tech Innovators Inc.">
+                    </div>
+                    
+                    <div class="form-group full-width" id="skillsContainer">
+                        <label>Key Skills (One word per field)</label>
+                        <div id="skillsList" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                            <!-- Dynamic skill fields will be added here -->
+                        </div>
+                        <div>
+                            <button type="button" class="add-btn" id="addSkillBtn" style="background-color: #17a2b8; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer;">+ Add Skill</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group full-width" id="previousCompaniesContainer">
+                        <label>Previous Companies</label>
+                        <div id="companyList">
+                            <!-- Dynamic rows will be added here -->
+                        </div>
+                        <div>
+                            <button type="button" class="add-btn" id="addCompanyBtn">+ Add Previous Company</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width" id="keyProjectsContainer">
+                        <label>Key Projects Dealt With</label>
+                        <div id="projectList">
+                            <!-- Dynamic rows will be added here -->
+                        </div>
+                        <div>
+                            <button type="button" class="add-btn" id="addProjectBtn" style="background-color: #6f42c1;">+ Add Key Project</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Social Media & Location</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="linkedin">LinkedIn Profile URL</label>
+                        <input type="url" id="linkedin" placeholder="https://linkedin.com/in/username">
+                    </div>
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" id="city" placeholder="e.g. Bangalore">
+                    </div>
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <input type="text" id="country" placeholder="e.g. India">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="bio">Short Bio (About you)</label>
+                        <textarea id="bio" rows="4" placeholder="Write a short professional summary..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+        <div class="form-section" id="digitalIdCardSection" style="display: none;">
+            <h3 style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                Digital Alumni Card
+                <button type="button" onclick="printDigitalId()" style="background: #28a745; color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🖨️ Download / Print</button>
+            </h3>
+            <div style="display: flex; justify-content: center; padding: 20px; background: #f8fbff; border-radius: 8px; border: 1px dashed #cce0ff; margin-top: 20px;">
+                <div id="printableIdCard" style="width: 540px; height: 320px; background: linear-gradient(135deg, #0D8ABC, #003366); border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); overflow: hidden; position: relative; color: white; font-family: 'Arial', sans-serif; display: flex; flex-direction: column;">
+                    <div style="background: rgba(255,255,255,0.1); padding: 12px; text-align: center; border-bottom: 2px solid #ffd54f;">
+                        <h2 style="margin: 0; font-size: 1.2em; letter-spacing: 1px; color: #fff;">NITC MCA ALUMNI</h2>
+                        <p style="margin: 2px 0 0 0; font-size: 0.7em; color: #bae6fd; font-weight: bold;">NATIONAL INSTITUTE OF TECHNOLOGY CALICUT</p>
+                    </div>
+                    <div style="display: flex; flex: 1; padding: 20px; align-items: center; gap: 25px;">
+                        <div style="text-align: center;">
+                            <img id="idCardImage" src="#" style="width: 130px; height: 130px; border-radius: 10px; border: 3px solid #ffd54f; object-fit: cover; background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                            <div style="margin-top: 15px;">
+                                <small style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Alumni ID</small>
+                                <strong id="idCardNumber" style="font-size: 1.1em; letter-spacing: 1px; color: #ffd54f;">MCAXXXXX</strong>
+                            </div>
+                        </div>
+                        <div style="flex: 1;">
+                            <h3 id="idCardName" style="margin: 0 0 10px 0; font-size: 1.5em; color: #fff; text-transform: uppercase; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 10px;">Name</h3>
+                            <div style="margin-bottom: 15px;">
+                                <small style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Program</small>
+                                <strong style="font-size: 1em; color: #fff;">Master of Computer Applications</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                                <div>
+                                    <small style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Batch</small>
+                                    <strong id="idCardBatch" style="font-size: 1em; color: #fff;">XXXX</strong>
+                                </div>
+                                <div style="text-align: right;">
+                                    <small style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Validity</small>
+                                    <strong style="font-size: 1em; color: #fff;">LIFETIME</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="background: #ffd54f; color: #003366; text-align: center; padding: 8px 0; font-weight: bold; font-size: 0.85em; letter-spacing: 3px;">
+                        OFFICIAL ALUMNI CARD
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            <div class="actions">
+                <a href="Alumni-Main-Screen.html" class="btn btn-secondary">Cancel</a>
+                <button type="button" id="changePasswordBtn" class="btn btn-secondary" style="background-color: #f57c00; color: white;">Change Password</button>
+                <button type="submit" class="btn btn-primary">Save Information</button>
+            </div>
+        </form>
+
+        <hr style="margin: 40px 0; border: 1px solid #eee;">
+        <h1 class="page-title">Upload to Alumni Gallery</h1>
+        <div class="form-section">
+            <h3>Share a Picture with the Network</h3>
+            <div style="padding: 20px; border: 1px dashed #ccc; border-radius: 8px;">
+                <input type="file" id="galleryImageInput" accept="image/*" style="width: 100%; margin-bottom: 15px; padding: 10px; border: 1px dashed #ccc; border-radius: 4px; box-sizing: border-box; background-color: #f9f9f9; cursor: pointer;">
+                <div class="image-preview-container" id="galleryPreviewContainer" style="display: none; text-align: center; margin-bottom: 15px;">
+                    <img id="galleryImagePreview" src="#" alt="Image Preview" style="max-width: 100%; max-height: 300px; border-radius: 4px; object-fit: contain;">
+                </div>
+                <select id="galleryImageCategory" style="width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
+                    <option value="" disabled selected>-- Select a Category * --</option>
+                    <option value="Batch">Batch</option>
+                    <option value="Occasion">Occasion</option>
+                    <option value="Campus Life">Campus Life</option>
+                    <option value="Achievements">Achievements</option>
+                    <option value="Others">Others</option>
+                </select>
+                <input type="text" id="galleryCategoryDetailInput" placeholder="Enter category details..." style="display: none; width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                <input type="text" id="galleryImageCaption" placeholder="Enter a caption for your image..." style="width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <button id="galleryUploadBtn" type="button" class="btn btn-primary" style="flex: 1; background-color: #0D8ABC;">Upload Picture to Gallery</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal" role="dialog" aria-modal="true" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6);">
+        <div class="modal-content" style="background-color: white; margin: 10% auto; padding: 25px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <span class="close" id="closeCpModalBtn" style="color: #888; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+            <h3 style="margin-top: 0; color: #0D8ABC;">Change Password</h3>
+            <div id="cpMessage" style="margin-bottom: 15px; font-size: 0.9em; display: none; padding: 10px; border-radius: 4px;"></div>
+
+            <div id="cpStep1">
+                <p style="font-size: 0.9em; color: #555; margin-bottom: 15px;">Click below to send an OTP to your registered email address.</p>
+                <button type="button" id="sendCpOtpBtn" class="btn btn-primary" style="width: 100%; padding: 12px; background-color: #0D8ABC; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Send OTP</button>
+            </div>
+
+            <div id="cpStep2" style="display: none;">
+                <p style="font-size: 0.9em; color: #28a745; margin-bottom: 15px;">✓ OTP sent to your email.</p>
+                <form id="changePasswordForm">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="font-weight: bold; font-size: 0.9em; color: #333;">Enter 6-digit OTP</label>
+                        <input type="text" id="cpOtp" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 25px;">
+                        <label style="font-weight: bold; font-size: 0.9em; color: #333;">New Password</label>
+                        <div style="position: relative;">
+                            <input type="password" id="cpNewPassword" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; padding-right: 40px;">
+                            <span onclick="var input = this.previousElementSibling; var isPass = input.type === 'password'; input.type = isPass ? 'text' : 'password'; this.querySelector('.eye-open').style.display = isPass ? 'none' : 'block'; this.querySelector('.eye-closed').style.display = isPass ? 'block' : 'none';" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center; color: #666;">
+                                <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <svg class="eye-closed" style="display: none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </span>
+                        </div>
+                    </div>
+                    <button type="submit" id="submitCpBtn" class="btn btn-primary" style="width: 100%; padding: 12px; background-color: #0D8ABC; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Verify & Change Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals and Footer are loaded here dynamically -->
+    <div id="modal-placeholder"></div>
+    <div id="footer-placeholder"></div>
+
+    <script>
+        const API_URL = window.API_URL;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!checkAccess()) return;
+
+            const pageTitle = document.getElementById('pageTitle');
+            const previewImg = document.getElementById('previewImg');
+            const fileInput = document.getElementById('profileImage');
+            const fullNameInput = document.getElementById('fullName');
+            const emailInput = document.getElementById('email');
+            const accountCreatedInput = document.getElementById('accountCreated');
+
+            // Dynamic Previous Companies Logic
+            const addCompanyBtn = document.getElementById('addCompanyBtn');
+            const companyList = document.getElementById('companyList');
+
+            function addCompanyRow(companyName = '', yearsWorked = '') {
+                const row = document.createElement('div');
+                row.className = 'dynamic-row';
+                
+                row.innerHTML = `
+                    <div class="form-group">
+                        <label>Company Name</label>
+                        <input type="text" placeholder="e.g. Amazon" value="${escapeHtml(companyName)}">
+                    </div>
+                    <div class="form-group">
+                        <label>Years Worked</label>
+                        <input type="text" placeholder="e.g. 2018 - 2021" value="${escapeHtml(yearsWorked)}">
+                    </div>
+                    <button type="button" class="remove-btn">Remove</button>
+                `;
+
+                row.querySelector('.remove-btn').addEventListener('click', () => row.remove());
+                companyList.appendChild(row);
+            }
+
+            addCompanyBtn.addEventListener('click', () => {
+                addCompanyRow();
+            });
+
+            // Dynamic Key Projects Logic
+            const addProjectBtn = document.getElementById('addProjectBtn');
+            const projectList = document.getElementById('projectList');
+
+            function addProjectRow(projectName = '', roleDescription = '') {
+                const row = document.createElement('div');
+                row.className = 'dynamic-row';
+                
+                row.innerHTML = `
+                    <div class="form-group">
+                        <label>Project Name</label>
+                        <input type="text" placeholder="e.g. E-commerce Platform" value="${escapeHtml(projectName)}">
+                    </div>
+                    <div class="form-group">
+                        <label>Role / Description</label>
+                        <input type="text" placeholder="e.g. Lead Developer" value="${escapeHtml(roleDescription)}">
+                    </div>
+                    <button type="button" class="remove-btn">Remove</button>
+                `;
+
+                row.querySelector('.remove-btn').addEventListener('click', () => row.remove());
+                projectList.appendChild(row);
+            }
+            addProjectBtn.addEventListener('click', () => {
+                addProjectRow();
+            });
+            // Dynamic Skills Logic
+            const addSkillBtn = document.getElementById('addSkillBtn');
+            const skillsList = document.getElementById('skillsList');
+            function addSkillField(skillValue = '') {
+                const wrapper = document.createElement('div');
+                wrapper.style.display = 'flex';
+                wrapper.style.gap = '5px';
+                wrapper.style.alignItems = 'center';            
+                wrapper.innerHTML = `
+                    <input type="text" placeholder="e.g. Java" value="${escapeHtml(skillValue)}" pattern="^\\S+$" title="Please enter only one word. No spaces allowed." style="width: 150px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    <button type="button" class="remove-btn" style="background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">X</button>
+                `;
+                wrapper.querySelector('.remove-btn').addEventListener('click', () => wrapper.remove());
+                skillsList.appendChild(wrapper);
+            }
+            addSkillBtn.addEventListener('click', () => {
+                addSkillField();
+            });        
+            // Try loading user from local storage
+            const storedUser = localStorage.getItem('user');
+            const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('superAdminToken');
+
+            let currentUser = null;
+            let cropper = null;
+            let currentCropperTarget = null; // 'profile' or 'gallery'
+
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    currentUser = user;
+                    if (user && user.name) {
+                        pageTitle.textContent = user.name;
+                        fullNameInput.value = user.name;
+                        previewImg.src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff&size=150`;
+                    }
+                    if (user && user.email) {
+                        emailInput.value = user.email;
+                    }
+                    if (user && user.alumniId) {
+                        document.getElementById('alumniId').value = user.alumniId;
+                    }
+                    if (user && user.phone) document.getElementById('phone').value = user.phone;
+                    if (user && user.gender) document.getElementById('gender').value = user.gender;
+                    if (user && user.batchYear) document.getElementById('batchOfStudying').value = user.batchYear;
+                    if (user && (user.currentCompany || user.company)) document.getElementById('company').value = user.currentCompany || user.company;
+                    if (user && user.designation) document.getElementById('designation').value = user.designation;
+                    if (user && user.noOfProjects) document.getElementById('noOfProjects').value = user.noOfProjects;
+                    if (user && user.startups) document.getElementById('startups').value = user.startups;
+                    if (user && (user.linkedIn || user.linkedin)) document.getElementById('linkedin').value = user.linkedIn || user.linkedin;
+                    if (user && user.city) document.getElementById('city').value = user.city;
+                    if (user && user.country) document.getElementById('country').value = user.country;
+                    if (user && user.bio) document.getElementById('bio').value = user.bio;
+                    // Extract the creation timestamp directly from the MongoDB ObjectId
+                    const userId = user.id || user._id;
+                    if (userId && userId.length === 24) {
+                        const timestamp = parseInt(userId.substring(0, 8), 16) * 1000;
+                        accountCreatedInput.value = new Date(timestamp).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                    } else {
+                        accountCreatedInput.value = 'Unknown';
+                    }
+                    // Load dynamic arrays if available
+                    if (user && user.skills) {
+                        let skillsArray = [];
+                        if (Array.isArray(user.skills)) {
+                            skillsArray = user.skills;
+                        } else if (typeof user.skills === 'string') {
+                            skillsArray = user.skills.split(',').map(s => s.trim()).filter(s => s);
+                        }
+                        skillsArray.forEach(skill => addSkillField(skill));
+                    }
+                    if (user && Array.isArray(user.previousCompanies)) {
+                        user.previousCompanies.forEach(comp => {
+                            addCompanyRow(comp.companyName, comp.yearsWorked);
+                        });
+                    }
+                    if (user && Array.isArray(user.keyProjects)) {
+                        user.keyProjects.forEach(proj => {
+                            addProjectRow(proj.projectName, proj.roleDescription);
+                        });
+                    }
+                    
+                    // Show ID Card if sanctioned
+                    if (user && user.idCardStatus === 'Sanctioned') {
+                        document.getElementById('digitalIdCardSection').style.display = 'block';
+                        document.getElementById('idCardImage').src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff&size=150`;
+                        document.getElementById('idCardName').textContent = user.name;
+                        document.getElementById('idCardBatch').textContent = user.batchYear || 'N/A';
+                        document.getElementById('idCardNumber').textContent = user.alumniId || 'PENDING';
+                    }
+                } catch(e) {
+                    console.error("Error parsing user data");
+                }
+            }
+
+            document.addEventListener('HeaderLoaded', () => {
+                if (currentUser && currentUser.name) {
+                    const pic = document.getElementById('headerProfilePic');
+                    if (pic) pic.src = currentUser.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=0D8ABC&color=fff`;
+                    const nameDisplay = document.getElementById('alumniNameDisplay');
+                    if (nameDisplay) nameDisplay.textContent = currentUser.name;
+                }
+                
+            });
+            // Image Preview Logic
+            let base64Image = currentUser?.profileImage || null;
+            fileInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert("File is too large! Please select an image under 5MB.");
+                        fileInput.value = ''; // clear
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('cropperImage').src = e.target.result;
+                        document.getElementById('cropModalTitle').textContent = 'Adjust Profile Picture';
+                        document.getElementById('cropModalText').textContent = 'Please crop your image to focus on your face (1:1 Square aspect ratio).';
+                        document.getElementById('cropModal').style.display = 'block';
+                        currentCropperTarget = 'profile';
+                        if (cropper) cropper.destroy();
+                        cropper = new Cropper(document.getElementById('cropperImage'), {
+                            aspectRatio: 1, viewMode: 1, autoCropArea: 1, responsive: true
+                        });
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Form Submit Logic (Mock)
+            document.getElementById('alumniInfoForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                let userId = currentUser ? (currentUser.id || currentUser._id) : null;
+                
+                // Bulletproof fallback: Extract ID directly from the JWT Token if missing from localStorage
+                if (!userId && token) {
+                    try {
+                        let base64Url = token.split('.')[1];
+                        let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        while (base64.length % 4) {
+                            base64 += '=';
+                        }
+                        let payload = JSON.parse(window.atob(base64));
+                        userId = payload.id || payload._id;
+                    } catch(e) { console.error('Error decoding token', e); }
+                }
+
+                if (!userId) {
+                    alert('Session expired or invalid. Redirecting to login...');
+                    window.location.href = '../login.html';
+                    return;
+                }
+
+                const statusDiv = document.getElementById('statusMessage');
+                
+                // Change UI state
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Saving...';
+
+                const skills = [];
+                document.querySelectorAll('#skillsList input').forEach(input => {
+                    const val = input.value.trim().split(' ')[0]; // Enforce one word
+                    if (val) {
+                        skills.push(val);
+                    }
+                });
+
+                const previousCompanies = [];
+                document.querySelectorAll('#companyList .dynamic-row').forEach(row => {
+                    const inputs = row.querySelectorAll('input');
+                    if (inputs[0].value.trim() || inputs[1].value.trim()) {
+                        previousCompanies.push({ companyName: inputs[0].value.trim(), yearsWorked: inputs[1].value.trim() });
+                    }
+                });
+
+                const keyProjects = [];
+                document.querySelectorAll('#projectList .dynamic-row').forEach(row => {
+                    const inputs = row.querySelectorAll('input');
+                    if (inputs[0].value.trim() || inputs[1].value.trim()) {
+                        keyProjects.push({ projectName: inputs[0].value.trim(), roleDescription: inputs[1].value.trim() });
+                    }
+                });
+
+                const payload = {
+                    name: fullNameInput.value.trim(),
+                    phone: document.getElementById('phone').value.trim(),
+                    gender: document.getElementById('gender').value,
+                    batchYear: document.getElementById('batchOfStudying').value.trim(),
+                    currentCompany: document.getElementById('company').value.trim(),
+                    designation: document.getElementById('designation').value.trim(),
+                    noOfProjects: document.getElementById('noOfProjects').value.trim(),
+                    skills,
+                    startups: document.getElementById('startups').value.trim(),
+                    linkedin: document.getElementById('linkedin').value.trim(),
+                    city: document.getElementById('city').value.trim(),
+                    country: document.getElementById('country').value.trim(),
+                    bio: document.getElementById('bio').value.trim(),
+                    previousCompanies,
+                    keyProjects,
+                    profileImage: base64Image
+                };
+
+                try {
+                    const response = await fetch(`${API_URL}/alumni/${userId}/profile`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok && !response.headers.get('content-type')?.includes('application/json')) {
+                        const text = await response.text();
+                        throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
+                    }
+
+                    const data = await response.json();
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                    
+                    if (response.ok && data.success) {
+                        localStorage.setItem('user', JSON.stringify(data.alumni));
+                        pageTitle.textContent = data.alumni.name;
+                        
+                        const headerPic = document.getElementById('headerProfilePic');
+                        if (headerPic) {
+                            headerPic.src = data.alumni.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.alumni.name)}&background=0D8ABC&color=fff`;
+                        }
+                        const headerName = document.getElementById('alumniNameDisplay');
+                        if (headerName) headerName.textContent = data.alumni.name;
+
+                        statusDiv.textContent = 'Profile information saved successfully!';
+                        statusDiv.className = 'success-msg';
+                        statusDiv.style.display = 'block';
+                        window.scrollTo(0, 0);
+                        setTimeout(() => statusDiv.style.display = 'none', 5000);
+                    } else {
+                        statusDiv.textContent = data.message || 'Failed to update profile.';
+                        statusDiv.className = 'error-msg';
+                        statusDiv.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error("Error updating profile:", error);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                    statusDiv.textContent = error.message.includes('Server Error') ? error.message : 'Network error. Please try again.';
+                    statusDiv.className = 'error-msg';
+                    statusDiv.style.display = 'block';
+                }
+            });
+
+            // ==========================================
+            // CHANGE PASSWORD MODAL LOGIC
+            // ==========================================
+            const cpModal = document.getElementById('changePasswordModal');
+            const openCpBtn = document.getElementById('changePasswordBtn');
+            const closeCpBtn = document.getElementById('closeCpModalBtn');
+            const sendCpOtpBtn = document.getElementById('sendCpOtpBtn');
+            const cpStep1 = document.getElementById('cpStep1');
+            const cpStep2 = document.getElementById('cpStep2');
+            const changePasswordForm = document.getElementById('changePasswordForm');
+            const cpMessage = document.getElementById('cpMessage');
+
+            openCpBtn.addEventListener('click', () => {
+                cpModal.style.display = 'block';
+                cpStep1.style.display = 'block';
+                cpStep2.style.display = 'none';
+                cpMessage.style.display = 'none';
+                changePasswordForm.reset();
+            });
+
+            closeCpBtn.addEventListener('click', () => cpModal.style.display = 'none');
+            window.addEventListener('click', (e) => {
+                if (e.target === cpModal) cpModal.style.display = 'none';
+            });
+
+            function showCpMessage(msg, type) {
+                cpMessage.style.display = 'block';
+                cpMessage.textContent = msg;
+                cpMessage.style.backgroundColor = type === 'success' ? '#d4edda' : '#f8d7da';
+                cpMessage.style.color = type === 'success' ? '#155724' : '#721c24';
+            }
+
+            // Send OTP
+            sendCpOtpBtn.addEventListener('click', async () => {
+                const email = emailInput.value.trim();
+                if (!email) return alert('Email not found.');
+
+                sendCpOtpBtn.textContent = 'Sending...';
+                sendCpOtpBtn.disabled = true;
+
+                try {
+                    // Re-using the existing forgot-password route!
+                    const response = await fetch(`${API_URL}/forgot-password`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        showCpMessage('OTP sent to your email!', 'success');
+                        cpStep1.style.display = 'none';
+                        cpStep2.style.display = 'block';
+                    } else {
+                        showCpMessage(data.message || 'Failed to send OTP', 'error');
+                    }
+                } catch (error) {
+                    showCpMessage('Network error. Check server.', 'error');
+                } finally {
+                    sendCpOtpBtn.textContent = 'Send OTP';
+                    sendCpOtpBtn.disabled = false;
+                }
+            });
+
+            // Submit OTP and New Password
+            changePasswordForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const otp = document.getElementById('cpOtp').value.trim();
+                const newPassword = document.getElementById('cpNewPassword').value.trim();
+                const email = emailInput.value.trim();
+                const submitBtn = document.getElementById('submitCpBtn');
+
+                if (newPassword.length < 6) return showCpMessage('Password must be at least 6 characters.', 'error');
+
+                submitBtn.textContent = 'Changing...';
+                submitBtn.disabled = true;
+
+                try {
+                    // Re-using the existing reset-password route!
+                    const response = await fetch(`${API_URL}/reset-password`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, otp, newPassword })
+                    });
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        showCpMessage('Password changed successfully!', 'success');
+                        setTimeout(() => cpModal.style.display = 'none', 2000);
+                    } else {
+                        showCpMessage(data.message || 'Failed to change password', 'error');
+                    }
+                } catch (error) {
+                    showCpMessage('Network error', 'error');
+                } finally {
+                    submitBtn.textContent = 'Verify & Change Password';
+                    submitBtn.disabled = false;
+                }
+            });
+
+            // ==========================================
+            // GALLERY UPLOAD LOGIC
+            // ==========================================
+            const galleryImageInput = document.getElementById('galleryImageInput');
+            const galleryPreviewContainer = document.getElementById('galleryPreviewContainer');
+            const galleryImagePreview = document.getElementById('galleryImagePreview');
+            const galleryImageCaption = document.getElementById('galleryImageCaption');
+            const galleryImageCategory = document.getElementById('galleryImageCategory');
+            const galleryCategoryDetailInput = document.getElementById('galleryCategoryDetailInput');
+            const galleryUploadBtn = document.getElementById('galleryUploadBtn');
+            
+            let currentGalleryDataUrl = null;
+
+            galleryImageCategory.addEventListener('change', function() {
+                // This logic remains the same
+            });
+
+            galleryImageInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert("File is too large! Please select an image under 5MB.");
+                        galleryImageInput.value = ''; 
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        currentGalleryDataUrl = event.target.result;
+                        galleryImagePreview.src = currentGalleryDataUrl;
+                        galleryPreviewContainer.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    currentGalleryDataUrl = null;
+                    galleryPreviewContainer.style.display = 'none';
+                    galleryImagePreview.src = '#';
+                }
+            });
+
+
+            document.getElementById('cancelCropBtn').addEventListener('click', () => {
+                document.getElementById('cropModal').style.display = 'none';
+                if (cropper) cropper.destroy();
+                if (currentCropperTarget === 'profile') {
+                    fileInput.value = '';
+                }
+                currentCropperTarget = null;
+            });
+
+            document.getElementById('confirmCropBtn').addEventListener('click', () => {
+                if (!cropper) return;
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                loadingOverlay.style.display = 'flex';
+                document.getElementById('cropModal').style.display = 'none';
+
+                if (currentCropperTarget === 'profile') {
+                    const canvas = cropper.getCroppedCanvas({
+                        maxWidth: 600, maxHeight: 600, imageSmoothingEnabled: true, imageSmoothingQuality: 'high',
+                    });
+                    base64Image = canvas.toDataURL('image/jpeg', 0.8);
+                    previewImg.src = base64Image;
+                }
+                
+                loadingOverlay.style.display = 'none';
+                cropper.destroy();
+                cropper = null;
+                currentCropperTarget = null;
+            });
+
+            galleryUploadBtn.addEventListener('click', async () => {
+                if (!currentGalleryDataUrl) return alert('Please select an image first.');
+                if (!galleryImageCategory.value) return alert('Please select a category for the picture.');
+                if (galleryCategoryDetailInput.style.display === 'block' && !galleryCategoryDetailInput.value.trim()) {
+                    return alert('Please enter the specific details for the selected category.');
+                }
+
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                const loadingText = document.getElementById('loadingText');
+                loadingText.textContent = 'Uploading to server...';
+                loadingOverlay.style.display = 'flex';
+                galleryUploadBtn.textContent = 'Uploading...';
+                galleryUploadBtn.disabled = true;
+
+                let userId = currentUser ? (currentUser.id || currentUser._id) : null;
+                if (!userId && token) {
+                    try {
+                        let base64Url = token.split('.')[1];
+                        let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        while (base64.length % 4) { base64 += '='; }
+                        let payload = JSON.parse(window.atob(base64));
+                        userId = payload.id || payload._id;
+                    } catch(e) { console.error('Error decoding token', e); }
+                }
+
+                const payload = {
+                    imageUrl: currentGalleryDataUrl,
+                    caption: galleryImageCaption.value.trim(),
+                    category: galleryImageCategory.value,
+                    categoryDetail: galleryCategoryDetailInput.value.trim(),
+                    postedBy: currentUser.name || 'Alumni',
+                    uploaderId: userId
+                };
+
+                try {
+                    const response = await fetch(`${API_URL}/gallery`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        alert('Gallery image uploaded successfully! It is now visible in the Alumni Gallery.');
+                        galleryImageInput.value = '';
+                        galleryImageCaption.value = '';
+                        galleryImageCategory.value = '';
+                        galleryCategoryDetailInput.value = '';
+                        galleryCategoryDetailInput.style.display = 'none';
+                        currentGalleryDataUrl = null;
+                        galleryPreviewContainer.style.display = 'none';
+                        galleryImagePreview.src = '#';
+                    } else {
+                        alert(data.message || 'Failed to save image.');
+                    }
+                } catch (e) {
+                    alert('Network error or image too large for server.');
+                } finally {
+                    loadingOverlay.style.display = 'none';
+                    galleryUploadBtn.textContent = 'Upload Picture to Gallery';
+                    galleryUploadBtn.disabled = false;
+                }
+            });
+
+        // Print ID Card functionality
+        window.printDigitalId = function() {
+            const printContents = document.getElementById('printableIdCard').outerHTML;
+            const originalContents = document.body.innerHTML;
+            document.body.innerHTML = `
+                <style>
+                    @media print {
+                        * {
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                    }
+                </style>
+                <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #fff;">
+                    ${printContents}
+                </div>
+            `;
+            window.print();
+            document.body.innerHTML = originalContents;
+            window.location.reload(); // Reload to re-attach events
+        };
+
+        });
+    </script>
+</body>
+</html>

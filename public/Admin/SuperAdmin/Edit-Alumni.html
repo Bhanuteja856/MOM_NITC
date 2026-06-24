@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Alumni - Super Admin</title>
+    <link rel="stylesheet" href="../CSS/SuperAdminStyling.css">
+    <link rel="stylesheet" href="../CSS/Admin-main-screen.css">
+    <style>
+        .form-section { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .submit-btn { background-color: #4a148c; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1em; transition: 0.3s; width: 100%; margin-bottom: 10px; }
+        .submit-btn:hover { background-color: #380b6b; }
+        .cancel-btn { background-color: #6c757d; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1em; transition: 0.3s; width: 100%; text-align: center; display: block; text-decoration: none; box-sizing: border-box; }
+        .cancel-btn:hover { background-color: #5a6268; }
+        .message-box { margin-bottom: 15px; padding: 10px; border-radius: 4px; display: none; font-size: 0.9em; }
+        .dynamic-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .dynamic-row .form-group { margin-bottom: 0; flex: 1; }
+        .remove-btn { background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        @media (max-width: 600px) {
+            .dynamic-row { flex-direction: column; align-items: stretch; }
+            .remove-btn { margin-top: 5px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Shared Super Admin Header injected here -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-superadmin.html"></div>
+    <script src="../../js/load-components.js"></script>
+
+    <div class="main-container">
+        <div class="center-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <h2 style="margin: 0;">Update Information</h2>
+                <a href="Super-Admin-Main-Screen.html" style="text-decoration: none; color: #4a148c; font-weight: bold;">← Back to Dashboard</a>
+            </div>
+
+            <div class="form-section">
+                <div id="editAlumniMessage" class="message-box"></div>
+                <form id="editAlumniForm">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="editAlumniName" required placeholder="e.g. Jane Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Roll Number</label>
+                        <input type="text" id="editAlumniRoll" required placeholder="e.g. MCA2401">
+                    </div>
+                    <div class="form-group">
+                        <label>Batch Year</label>
+                        <input type="number" id="editAlumniBatch" required placeholder="e.g. 2024">
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="editAlumniEmail" required placeholder="alumni@nitc.ac.in">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" id="editAlumniPhone" placeholder="e.g. +91 9876543210">
+                    </div>
+
+                    <hr style="margin: 25px 0; border: 0; border-top: 1px solid #ddd;">
+                    <h3 style="margin-top: 0; margin-bottom: 15px; color: #333; font-size: 1.1em;">Professional Information</h3>
+                    
+                    <div class="form-group">
+                        <label>Current Company</label>
+                        <input type="text" id="editAlumniCompany" placeholder="e.g. Google, Microsoft, Startup Inc.">
+                    </div>
+                    <div class="form-group">
+                        <label>Designation / Job Title</label>
+                        <input type="text" id="editAlumniDesignation" placeholder="e.g. Software Engineer, Product Manager">
+                    </div>
+                    <div class="form-group">
+                        <label>No. of Projects Dealt With</label>
+                        <input type="number" id="editAlumniNoOfProjects" placeholder="e.g. 5" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Startups Running Now</label>
+                        <input type="text" id="editAlumniStartups" placeholder="e.g. Tech Innovators Inc.">
+                    </div>
+                    <div class="form-group">
+                        <label>City</label>
+                        <input type="text" id="editAlumniCity" placeholder="e.g. Bangalore">
+                    </div>
+                    <div class="form-group">
+                        <label>Country</label>
+                        <input type="text" id="editAlumniCountry" placeholder="e.g. India">
+                    </div>
+                    <div class="form-group">
+                        <label>LinkedIn Profile URL</label>
+                        <input type="url" id="editAlumniLinkedIn" placeholder="https://linkedin.com/in/username">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Short Bio</label>
+                        <textarea id="editAlumniBio" rows="4" placeholder="Write a short professional summary..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit;"></textarea>
+                    </div>
+
+                    <div class="form-group" style="grid-column: 1 / -1;" id="skillsContainer">
+                        <label>Key Skills (One word per field)</label>
+                        <div id="skillsList" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                            <!-- Dynamic skill fields will be added here -->
+                        </div>
+                        <button type="button" class="add-btn" id="addSkillBtn" style="background-color: #17a2b8; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-top: 5px;">+ Add Skill</button>
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: 1 / -1;" id="previousCompaniesContainer">
+                        <label>Previous Companies</label>
+                        <div id="companyList">
+                            <!-- Dynamic rows will be added here -->
+                        </div>
+                        <button type="button" class="add-btn" id="addCompanyBtn" style="background-color: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-top: 5px;">+ Add Previous Company</button>
+                    </div>
+
+                    <div class="form-group" style="grid-column: 1 / -1;" id="keyProjectsContainer">
+                        <label>Key Projects Dealt With</label>
+                        <div id="projectList">
+                            <!-- Dynamic rows will be added here -->
+                        </div>
+                        <button type="button" class="add-btn" id="addProjectBtn" style="background-color: #6f42c1; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-top: 5px;">+ Add Key Project</button>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submitEditAlumniBtn">Update Alumni Details</button>
+                    <a href="Manage-Alumni.html" class="cancel-btn">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.API_URL;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const superAdminUser = localStorage.getItem('superAdminUser');
+            
+            document.addEventListener('HeaderLoaded', () => {
+                if (superAdminUser) {
+                    try {
+                        const user = JSON.parse(superAdminUser);
+                        if (user && user.name) {
+                            const headerPic = document.getElementById('headerProfilePic');
+                            if (headerPic) headerPic.src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=4a148c&color=fff`;
+                            const nameDisplay = document.getElementById('superAdminNameDisplay');
+                            if (nameDisplay) nameDisplay.textContent = user.name;
+                        }
+                    } catch(e) { console.error("Error parsing user data", e); }
+                }
+
+            });
+
+            // Extract Alumni ID from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const alumniId = urlParams.get('id');
+            
+            if (!alumniId) {
+                alert('No alumni ID provided!');
+                window.location.href = 'Manage-Alumni.html';
+                return;
+            }
+
+            // Dynamic Previous Companies Logic
+            const companyList = document.getElementById('companyList');
+            document.getElementById('addCompanyBtn').addEventListener('click', () => addCompanyRow());
+
+            function addCompanyRow(companyName = '', yearsWorked = '') {
+                const row = document.createElement('div');
+                row.className = 'dynamic-row';
+                row.innerHTML = `
+                    <div class="form-group">
+                        <input type="text" placeholder="Company Name e.g. Amazon" value="${escapeHtml(companyName)}">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" placeholder="Years Worked e.g. 2018 - 2021" value="${escapeHtml(yearsWorked)}">
+                    </div>
+                    <button type="button" class="remove-btn">Remove</button>
+                `;
+                row.querySelector('.remove-btn').addEventListener('click', () => row.remove());
+                companyList.appendChild(row);
+            }
+
+            // Dynamic Key Projects Logic
+            const projectList = document.getElementById('projectList');
+            document.getElementById('addProjectBtn').addEventListener('click', () => addProjectRow());
+
+            function addProjectRow(projectName = '', roleDescription = '') {
+                const row = document.createElement('div');
+                row.className = 'dynamic-row';
+                row.innerHTML = `
+                    <div class="form-group">
+                        <input type="text" placeholder="Project Name e.g. E-commerce" value="${escapeHtml(projectName)}">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" placeholder="Role/Description e.g. Lead" value="${escapeHtml(roleDescription)}">
+                    </div>
+                    <button type="button" class="remove-btn">Remove</button>
+                `;
+                row.querySelector('.remove-btn').addEventListener('click', () => row.remove());
+                projectList.appendChild(row);
+            }
+
+            // Dynamic Skills Logic
+            const skillsList = document.getElementById('skillsList');
+            document.getElementById('addSkillBtn').addEventListener('click', () => addSkillField());
+
+            function addSkillField(skillValue = '') {
+                const wrapper = document.createElement('div');
+                wrapper.style.display = 'flex';
+                wrapper.style.gap = '5px';
+                wrapper.style.alignItems = 'center';
+                wrapper.innerHTML = `
+                    <input type="text" placeholder="e.g. Java" value="${escapeHtml(skillValue)}" pattern="^\\S+$" title="Please enter only one word. No spaces allowed." style="width: 150px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    <button type="button" class="remove-btn" style="background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">X</button>
+                `;
+                wrapper.querySelector('.remove-btn').addEventListener('click', () => wrapper.remove());
+                skillsList.appendChild(wrapper);
+            }
+
+            // Fetch all users and load the matched one
+            try {
+                const response = await fetch(`${API_URL}/users`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}` }
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    const alumni = data.users.find(u => u._id === alumniId);
+                    if (alumni) {
+                        document.getElementById('editAlumniName').value = alumni.name || '';
+                        document.getElementById('editAlumniRoll').value = alumni.rollNumber || '';
+                        document.getElementById('editAlumniBatch').value = alumni.batchYear || '';
+                        document.getElementById('editAlumniEmail').value = alumni.email || '';
+                        document.getElementById('editAlumniPhone').value = alumni.phone || '';
+                        document.getElementById('editAlumniCompany').value = alumni.currentCompany || '';
+                        document.getElementById('editAlumniDesignation').value = alumni.designation || '';
+                        document.getElementById('editAlumniNoOfProjects').value = alumni.noOfProjects || '';
+                        document.getElementById('editAlumniStartups').value = alumni.startups || '';
+                        document.getElementById('editAlumniCity').value = alumni.city || '';
+                        document.getElementById('editAlumniCountry').value = alumni.country || '';
+                        document.getElementById('editAlumniLinkedIn').value = alumni.linkedin || alumni.linkedIn || '';
+                        document.getElementById('editAlumniBio').value = alumni.bio || '';
+
+                        // Load dynamic arrays if available
+                        if (alumni.skills) {
+                            let skillsArray = [];
+                            if (Array.isArray(alumni.skills)) {
+                                skillsArray = alumni.skills;
+                            } else if (typeof alumni.skills === 'string') {
+                                skillsArray = alumni.skills.split(',').map(s => s.trim()).filter(s => s);
+                            }
+                            skillsArray.forEach(skill => addSkillField(skill));
+                        }
+                        if (Array.isArray(alumni.previousCompanies)) {
+                            alumni.previousCompanies.forEach(comp => {
+                                addCompanyRow(comp.companyName, comp.yearsWorked);
+                            });
+                        }
+                        if (Array.isArray(alumni.keyProjects)) {
+                            alumni.keyProjects.forEach(proj => {
+                                addProjectRow(proj.projectName, proj.roleDescription);
+                            });
+                        }
+                    } else {
+                        alert("Alumni not found.");
+                        window.location.href = 'Manage-Alumni.html';
+                    }
+                }
+            } catch (error) { console.error("Failed to fetch user data", error); }
+
+            function escapeHtml(unsafe) {
+                if (!unsafe) return "";
+                return unsafe.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            }
+
+            // Handle Edit form submission
+            const editForm = document.getElementById('editAlumniForm');
+            const editMessage = document.getElementById('editAlumniMessage');
+
+            editForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitBtn = document.getElementById('submitEditAlumniBtn');
+                submitBtn.textContent = 'Updating...'; submitBtn.disabled = true;
+
+                const skills = [];
+                document.querySelectorAll('#skillsList input').forEach(input => {
+                    const val = input.value.trim().split(' ')[0]; // Enforce one word
+                    if (val) {
+                        skills.push(val);
+                    }
+                });
+
+                const previousCompanies = [];
+                document.querySelectorAll('#companyList .dynamic-row').forEach(row => {
+                    const inputs = row.querySelectorAll('input');
+                    if (inputs[0].value.trim() || inputs[1].value.trim()) {
+                        previousCompanies.push({ companyName: inputs[0].value.trim(), yearsWorked: inputs[1].value.trim() });
+                    }
+                });
+
+                const keyProjects = [];
+                document.querySelectorAll('#projectList .dynamic-row').forEach(row => {
+                    const inputs = row.querySelectorAll('input');
+                    if (inputs[0].value.trim() || inputs[1].value.trim()) {
+                        keyProjects.push({ projectName: inputs[0].value.trim(), roleDescription: inputs[1].value.trim() });
+                    }
+                });
+
+                const payload = {
+                    name: document.getElementById('editAlumniName').value.trim(),
+                    rollNumber: document.getElementById('editAlumniRoll').value.trim(),
+                    batchYear: document.getElementById('editAlumniBatch').value.trim(),
+                    email: document.getElementById('editAlumniEmail').value.trim(),
+                    phone: document.getElementById('editAlumniPhone').value.trim(),
+                    currentCompany: document.getElementById('editAlumniCompany').value.trim(),
+                    designation: document.getElementById('editAlumniDesignation').value.trim(),
+                    noOfProjects: document.getElementById('editAlumniNoOfProjects').value.trim(),
+                    skills,
+                    startups: document.getElementById('editAlumniStartups').value.trim(),
+                    city: document.getElementById('editAlumniCity').value.trim(),
+                    country: document.getElementById('editAlumniCountry').value.trim(),
+                    linkedin: document.getElementById('editAlumniLinkedIn').value.trim(),
+                    bio: document.getElementById('editAlumniBio').value.trim(),
+                    previousCompanies,
+                    keyProjects
+                };
+
+                try {
+                    const response = await fetch(`${API_URL}/alumni/${alumniId}`, {
+                        method: 'PUT',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+                    editMessage.style.display = 'block';
+
+                    if (response.ok && data.success) {
+                        editMessage.style.backgroundColor = '#d4edda'; editMessage.style.color = '#155724';
+                        editMessage.textContent = 'Alumni details updated successfully!';
+                        setTimeout(() => window.location.href = 'Manage-Alumni.html', 1500);
+                    } else {
+                        editMessage.style.backgroundColor = '#f8d7da'; editMessage.style.color = '#721c24';
+                        editMessage.textContent = data.message || 'Failed to update alumni.';
+                    }
+                } catch (error) {
+                    editMessage.style.backgroundColor = '#f8d7da'; editMessage.style.color = '#721c24';
+                    editMessage.textContent = 'Network error occurred.';
+                    editMessage.style.display = 'block';
+                } finally {
+                    submitBtn.textContent = 'Update Alumni Details'; submitBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

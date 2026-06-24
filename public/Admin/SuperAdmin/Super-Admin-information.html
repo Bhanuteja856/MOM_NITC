@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Information - NITC Portal</title>
+    <link rel="stylesheet" href="../CSS/SuperAdminStyling.css">
+    <link rel="stylesheet" href="../CSS/Informations.css">
+    <!-- Quill Rich Text Editor CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+</head>
+<body>
+    
+    <!-- Shared Super Admin Header injected here -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-superadmin.html"></div>
+    <script src="../../js/load-components.js"></script>
+
+    <div class="container">
+        
+        <div id="statusMessage"></div>
+
+        <!-- Name at the top -->
+        <h1 class="page-title" id="pageTitle">Update Your Information</h1>
+
+        <form id="adminInfoForm">
+            <!-- Top Section: Image Area -->
+            <div class="profile-header">
+                <div>
+                    <img src="https://ui-avatars.com/api/?name=Super+Admin&background=4a148c&color=fff&size=150" alt="Profile Picture Preview" class="image-preview" id="previewImg">
+                </div>
+                <div class="upload-section">
+                    <label for="profileImage">Choose New Image</label>
+                    <input type="file" id="profileImage" accept="image/jpeg, image/png, image/gif">
+                    <p>Allowed formats: JPG, PNG, GIF</p>
+                    <p>Maximum size: 2MB</p>
+                </div>
+            </div>
+
+            <!-- Bottom Section: Information Fields -->
+            <div class="form-section">
+                <h3>Account Information</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" placeholder="e.g. John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email" style="display: flex; align-items: center; gap: 5px;">Email Address <span title="Locked by system">🔒</span></label>
+                        <input type="email" id="email" placeholder="Loading email..." readonly style="background-color: #f0f0f0; cursor: not-allowed;" title="Email is tied to your account and cannot be changed.">
+                    </div>
+                    <div class="form-group">
+                        <label for="role">System Role</label>
+                        <input type="text" id="role" placeholder="Super Admin" readonly style="background-color: #f0f0f0; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label for="department">Department</label>
+                        <input type="text" id="department" placeholder="e.g. MCA">
+                    </div>
+                    <div class="form-group">
+                        <label for="accountCreated">Account Created</label>
+                        <input type="text" id="accountCreated" placeholder="Loading date..." readonly style="background-color: #f0f0f0; cursor: not-allowed;" title="Date this account was created">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Contact & Location</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="phone">Phone / Extension</label>
+                        <input type="tel" id="phone" placeholder="e.g. +91 9876543210 or Ext. 1234">
+                    </div>
+                    <div class="form-group">
+                        <label for="officeLocation">Campus Office Location</label>
+                        <input type="text" id="officeLocation" placeholder="e.g. Room 302, IT Building">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="bio">Short Bio (About you)</label>
+                        <textarea id="bio" rows="4" placeholder="Write a short summary about your role and responsibilities..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Public Page Management Section -->
+            <div class="form-section" id="aboutUsSection">
+                <h3>Public Page Management</h3>
+                <div class="form-group full-width">
+                    <label style="margin-bottom: 10px; display: block;">About Us Editor</label>
+                    <div id="aboutUsEditor" style="height: 250px; background-color: white; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;"></div>
+                    <button type="button" id="postAboutUsBtn" class="btn btn-primary" style="background-color: #28a745; margin-top: 15px;">Post Content</button>
+                </div>
+                
+                <div class="form-group full-width" style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <label style="margin-bottom: 10px; display: block; font-weight: bold;">Currently Published "About Us"</label>
+                    <div id="currentAboutUsDisplay" style="padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 8px; min-height: 50px; max-height: 300px; overflow-y: auto; color: #444;">
+                        <em>No content published yet.</em>
+                    </div>
+                    <div style="margin-top: 15px; display: flex; gap: 10px;">
+                        <button type="button" id="editAboutUsBtn" class="btn btn-secondary" style="background-color: #ffc107; color: #333; border: none;">Edit</button>
+                        <button type="button" id="deleteAboutUsBtn" class="btn btn-secondary" style="background-color: #dc3545; color: white; border: none;">Delete</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About Us Slider Management Section -->
+            <div class="form-section" id="aboutUsSliderSection">
+                <h3>About Us Page Slider Management</h3>
+                <div class="form-group full-width">
+                    <label>Upload New Slider Image</label>
+                    <input type="file" id="sliderImageInput" accept="image/*" style="margin-bottom: 10px; display: block;">
+                    <input type="text" id="sliderImageCaption" placeholder="Optional: Caption for the image" style="width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 10px;">
+                    <input type="url" id="sliderImageLink" placeholder="Optional: Link for the image (e.g., /events/some-event)" style="width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 10px;">
+                    <button type="button" id="addSliderImageBtn" class="btn btn-primary" style="background-color: #28a745;">+ Add Image to Slider</button>
+                </div>
+                <div class="form-group full-width" style="margin-top: 20px;">
+                    <label>Current Slider Images</label>
+                    <div id="currentSliderImages" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; min-height: 100px; background: #f9f9f9;">
+                        <!-- Images will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side Gallery Management Section -->
+            <div class="form-section" id="sideImagesSection">
+                <h3>Vertical Scrolling Gallery Management (About Us Page)</h3>
+                <div class="form-group full-width">
+                    <label>Add New Scrolling Image</label>
+                    <input type="file" id="sideImageInput" accept="image/*" style="margin-bottom: 10px; display: block;">
+                    <button type="button" id="addSideImageBtn" class="btn btn-primary" style="background-color: #17a2b8;">+ Add Image</button>
+                </div>
+                <div class="form-group full-width" style="margin-top: 20px;">
+                    <label>Current Scrolling Images</label>
+                    <div id="currentSideImages" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; min-height: 100px; background: #f9f9f9;">
+                        <!-- Images will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <a href="javascript:history.back()" class="btn btn-secondary">Cancel</a>
+                <button type="button" id="changePasswordBtn" class="btn btn-secondary" style="background-color: #f57c00; color: white;">Change Password</button>
+                <button type="submit" class="btn btn-primary" style="background-color: #4a148c;">Save Information</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6);">
+        <div class="modal-content" style="background-color: white; margin: 10% auto; padding: 25px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <span class="close" id="closeCpModalBtn" style="color: #888; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+            <h3 style="margin-top: 0; color: #4a148c;">Change Password</h3>
+            <div id="cpMessage" style="margin-bottom: 15px; font-size: 0.9em; display: none; padding: 10px; border-radius: 4px;"></div>
+
+            <div id="cpStep1">
+                <p style="font-size: 0.9em; color: #555; margin-bottom: 15px;">Click below to send an OTP to your registered email address.</p>
+                <button type="button" id="sendCpOtpBtn" class="btn btn-primary" style="width: 100%; padding: 12px; background-color: #4a148c; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Send OTP</button>
+            </div>
+
+            <div id="cpStep2" style="display: none;">
+                <p style="font-size: 0.9em; color: #28a745; margin-bottom: 15px;">✓ OTP sent to your email.</p>
+                <form id="changePasswordForm">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="font-weight: bold; font-size: 0.9em; color: #333;">Enter 6-digit OTP</label>
+                        <input type="text" id="cpOtp" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 25px;">
+                        <label style="font-weight: bold; font-size: 0.9em; color: #333;">New Password</label>
+                        <div style="position: relative;">
+                            <input type="password" id="cpNewPassword" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; padding-right: 40px;">
+                            <span onclick="var input = this.previousElementSibling; var isPass = input.type === 'password'; input.type = isPass ? 'text' : 'password'; this.querySelector('.eye-open').style.display = isPass ? 'none' : 'block'; this.querySelector('.eye-closed').style.display = isPass ? 'block' : 'none';" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center; color: #666;">
+                                <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <svg class="eye-closed" style="display: none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </span>
+                        </div>
+                    </div>
+                    <button type="submit" id="submitCpBtn" class="btn btn-primary" style="width: 100%; padding: 12px; background-color: #4a148c; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Verify & Change Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals and Footer are loaded here dynamically -->
+    <div id="modal-placeholder"></div>
+    <div id="footer-placeholder"></div>
+    <!-- Quill Rich Text Editor JS -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script>
+        const API_URL = window.API_URL;
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.checkAccess()) return;
+            const pageTitle = document.getElementById('pageTitle');
+            const previewImg = document.getElementById('previewImg');
+            const fileInput = document.getElementById('profileImage');
+            const fullNameInput = document.getElementById('fullName');
+            const emailInput = document.getElementById('email');
+            const roleInput = document.getElementById('role');
+            const deptInput = document.getElementById('department');
+            const phoneInput = document.getElementById('phone');
+            const officeLocationInput = document.getElementById('officeLocation');
+            const bioInput = document.getElementById('bio');
+            const accountCreatedInput = document.getElementById('accountCreated');
+            
+            const storedUser = localStorage.getItem('superAdminUser');
+            let aboutUsSliderImages = [];
+            let sideImages = [];
+            const token = localStorage.getItem('superAdminToken');
+            let currentUser = null;
+            let savedAboutUsContent = "";
+
+            // Initialize Quill Editor
+            const quill = new Quill('#aboutUsEditor', {
+                theme: 'snow',
+                placeholder: 'Write the story and mission of the Alumni Association here...',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        ['link', 'clean']
+                    ]
+                }
+            });
+
+            // Fetch the most up-to-date About Us content directly from the server
+            // This ensures data shows up immediately even if the admin hasn't logged out and logged back in recently.
+            fetch(`${API_URL}/about-us`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.content && data.content !== 'Welcome to the NITC MCA Alumni Portal. Connect, collaborate, and grow with your fellow alumni.') {
+                            savedAboutUsContent = data.content;
+                            quill.root.innerHTML = data.content;
+                            const display = document.getElementById('currentAboutUsDisplay');
+                            display.innerHTML = data.content;
+                        }
+                        if (data.sliderImages && data.sliderImages.length > 0) {
+                            aboutUsSliderImages = data.sliderImages;
+                            renderSliderImages();
+                        }
+                        if (data.sideImages && data.sideImages.length > 0) {
+                            sideImages = data.sideImages;
+                            renderSideImages();
+                        }
+                    }
+                }).catch(err => console.error("Error fetching about us data", err));
+            
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    currentUser = user;
+                    if (user && user.name) {
+                        pageTitle.textContent = user.name;
+                        fullNameInput.value = user.name;
+                        previewImg.src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=4a148c&color=fff&size=150`;
+                    }
+                    if (user && user.email) emailInput.value = user.email;
+                    if (user && user.role) roleInput.value = 'Super Admin';
+                    if (user && user.department) deptInput.value = user.department;
+                    if (user && user.phone) phoneInput.value = user.phone;
+                    if (user && user.officeLocation) officeLocationInput.value = user.officeLocation;
+                    if (user && user.bio) bioInput.value = user.bio;
+
+                    if (user && user.aboutUsContent) {
+                        savedAboutUsContent = user.aboutUsContent;
+                        quill.root.innerHTML = user.aboutUsContent;
+                        const display = document.getElementById('currentAboutUsDisplay');
+                        display.innerHTML = (user.aboutUsContent && user.aboutUsContent.trim() !== '' && user.aboutUsContent.trim() !== '<p><br></p>') ? user.aboutUsContent : '<em>No content published yet.</em>';
+                    }
+
+                    if (user && user.aboutUsSliderImages) {
+                        aboutUsSliderImages = user.aboutUsSliderImages;
+                        renderSliderImages();
+                    }
+
+                    if (user && user.sideImages) {
+                        sideImages = user.sideImages;
+                        renderSideImages();
+                    }
+                    
+                    // Extract the creation timestamp directly from the MongoDB ObjectId
+                    const userId = user.id || user._id;
+                    if (userId && userId.length === 24) {
+                        const timestamp = parseInt(userId.substring(0, 8), 16) * 1000;
+                        accountCreatedInput.value = new Date(timestamp).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                    } else {
+                        accountCreatedInput.value = 'Unknown';
+                    }
+                } catch(e) {
+                    console.error("Error parsing user data");
+                }
+            }
+
+        document.addEventListener('HeaderLoaded', () => {
+            if (currentUser && currentUser.name) {
+                const pic = document.getElementById('headerProfilePic');
+                if (pic) pic.src = currentUser.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=4a148c&color=fff`;
+                const nameDisplay = document.getElementById('superAdminNameDisplay');
+                if (nameDisplay) nameDisplay.textContent = currentUser.name;
+            }
+            
+        });
+
+            // Image Preview Logic
+            let base64Image = currentUser?.profileImage || null;
+            fileInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert("File is too large! Please select an image under 2MB.");
+                        fileInput.value = ''; 
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        base64Image = e.target.result;
+                        previewImg.src = e.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Form Submit Logic
+            document.getElementById('adminInfoForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                let userId = currentUser ? (currentUser.id || currentUser._id) : null;
+                
+                // Extract ID directly from the JWT Token if missing from localStorage
+                if (!userId && token) {
+                    try {
+                        let base64Url = token.split('.')[1];
+                        let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        while (base64.length % 4) { base64 += '='; }
+                        let payload = JSON.parse(window.atob(base64));
+                        userId = payload.id || payload._id;
+                    } catch(e) { console.error('Error decoding token', e); }
+                }
+
+                if (!userId) return alert('No user session found! Please log out and log back in.');
+
+                const statusDiv = document.getElementById('statusMessage');
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Saving...';
+
+                const name = fullNameInput.value.trim();
+                const department = deptInput.value.trim();
+                const phone = phoneInput.value.trim();
+                const officeLocation = officeLocationInput.value.trim();
+                const bio = bioInput.value.trim();
+                const aboutUsContent = quill.root.innerHTML;
+
+                try {
+                    const response = await fetch(`${API_URL}/admin/${userId}/profile`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ name, department, phone, officeLocation, bio, profileImage: base64Image, aboutUsSliderImages, aboutUsContent, sideImages })
+                    });
+
+                    if (!response.ok && !response.headers.get('content-type')?.includes('application/json')) {
+                        const text = await response.text();
+                        throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
+                    }
+
+                    const data = await response.json();
+                    
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                    
+                    if (response.ok && data.success) {
+                        localStorage.setItem('superAdminUser', JSON.stringify(data.admin));
+                        
+                        // Instantly update header profile info without reload
+                        const headerPic = document.getElementById('headerProfilePic');
+                        if (headerPic) {
+                            headerPic.src = data.admin.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.admin.name)}&background=4a148c&color=fff`;
+                        }
+                        const headerName = document.getElementById('superAdminNameDisplay');
+                        if (headerName) headerName.textContent = data.admin.name;
+
+                        statusDiv.textContent = 'Super Admin profile updated successfully!';
+                        statusDiv.className = 'success-msg';
+                        statusDiv.style.display = 'block';
+                        window.scrollTo(0, 0);
+
+                        setTimeout(() => statusDiv.style.display = 'none', 5000);
+                    } else {
+                        statusDiv.textContent = data.message || 'Failed to update profile.';
+                        statusDiv.className = 'error-msg';
+                        statusDiv.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error("Error updating profile:", error);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                    statusDiv.textContent = error.message.includes('Server Error') ? error.message : 'Network error. Please try again.';
+                    statusDiv.className = 'error-msg';
+                    statusDiv.style.display = 'block';
+                }
+            });
+
+            // ==========================================
+            // ABOUT US SLIDER MANAGEMENT
+            // ==========================================
+            function renderSliderImages() {
+                const container = document.getElementById('currentSliderImages');
+                container.innerHTML = '';
+                aboutUsSliderImages.forEach((img, index) => {
+                    const imgWrapper = document.createElement('div');
+                    imgWrapper.style.position = 'relative';
+                    imgWrapper.innerHTML = `
+                        <img src="${img.imageUrl}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 4px;" title="${escapeHtml(img.caption || 'No caption')}">
+                        <button type="button" class="remove-btn" style="position: absolute; top: 5px; right: 5px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; line-height: 24px; text-align: center; padding: 0;">&times;</button>
+                    `;
+                    imgWrapper.querySelector('.remove-btn').onclick = () => {
+                        if (confirm('Are you sure you want to remove this slider image?')) {
+                            aboutUsSliderImages.splice(index, 1);
+                            renderSliderImages();
+                        }
+                    };
+                    container.appendChild(imgWrapper);
+                });
+            }
+
+            document.getElementById('addSliderImageBtn').addEventListener('click', () => {
+                const fileInput = document.getElementById('sliderImageInput');
+                const captionInput = document.getElementById('sliderImageCaption');
+                const linkInput = document.getElementById('sliderImageLink');
+                const file = fileInput.files[0];
+
+                if (!file) { return alert('Please select an image file.'); }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    aboutUsSliderImages.push({
+                        imageUrl: e.target.result,
+                        caption: captionInput.value.trim(),
+                        link: linkInput.value.trim()
+                    });
+                    renderSliderImages();
+                    fileInput.value = ''; captionInput.value = ''; linkInput.value = '';
+                };
+                reader.readAsDataURL(file);
+            });
+            // ==========================================
+            // SIDE IMAGES MANAGEMENT
+            // ==========================================
+            function renderSideImages() {
+                const container = document.getElementById('currentSideImages');
+                container.innerHTML = '';
+                sideImages.forEach((img, index) => {
+                    const imgWrapper = document.createElement('div');
+                    imgWrapper.style.position = 'relative';
+                    imgWrapper.style.textAlign = 'center';
+                    imgWrapper.innerHTML = `
+                        <img src="${img.imageUrl}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;">
+                        <button type="button" class="remove-btn" style="position: absolute; top: 0px; right: 0px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; line-height: 24px; text-align: center; padding: 0;">&times;</button>
+                    `;
+                    imgWrapper.querySelector('.remove-btn').onclick = () => {
+                        if (confirm('Are you sure you want to remove this scrolling image?')) {
+                            sideImages.splice(index, 1);
+                            renderSideImages();
+                        }
+                    };
+                    container.appendChild(imgWrapper);
+                });
+            }
+
+            document.getElementById('addSideImageBtn').addEventListener('click', () => {
+                const fileInput = document.getElementById('sideImageInput');
+                const file = fileInput.files[0];
+
+                if (!file) { return alert('Please select an image file.'); }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    sideImages.push({
+                        imageUrl: e.target.result
+                    });
+                    renderSideImages();
+                    fileInput.value = '';
+                };
+                reader.readAsDataURL(file);
+            });
+            // ==========================================
+            // ABOUT US CONTENT MANAGEMENT
+            // ==========================================
+            const currentAboutUsDisplay = document.getElementById('currentAboutUsDisplay');
+            const postAboutUsBtn = document.getElementById('postAboutUsBtn');
+            const editAboutUsBtn = document.getElementById('editAboutUsBtn');
+            const deleteAboutUsBtn = document.getElementById('deleteAboutUsBtn');
+
+            async function updateAboutUs(content, btnElement, originalText) {
+                let userId = currentUser ? (currentUser.id || currentUser._id) : null;
+                if (!userId && token) {
+                    try {
+                        let base64Url = token.split('.')[1];
+                        let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        while (base64.length % 4) { base64 += '='; }
+                        let payload = JSON.parse(window.atob(base64));
+                        userId = payload.id || payload._id;
+                    } catch(e) { }
+                }
+                if (!userId) return alert('No user session found!');
+                
+                if (btnElement) {
+                    btnElement.disabled = true;
+                    btnElement.textContent = 'Saving...';
+                }
+                
+                const statusDiv = document.getElementById('statusMessage');
+                
+                try {
+                    const response = await fetch(`${API_URL}/admin/${userId}/profile`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ aboutUsContent: content, aboutUsSliderImages: aboutUsSliderImages, sideImages: sideImages })
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        savedAboutUsContent = content;
+                        currentAboutUsDisplay.innerHTML = (content && content !== '<p><br></p>') ? content : '<em>No content published yet.</em>';
+                        localStorage.setItem('superAdminUser', JSON.stringify(data.admin));
+                        
+                        statusDiv.textContent = 'About Us content updated successfully!';
+                        statusDiv.className = 'success-msg';
+                        statusDiv.style.display = 'block';
+                        setTimeout(() => statusDiv.style.display = 'none', 5000);
+                        window.scrollTo(0, 0);
+                    } else { throw new Error(data.message || 'Failed to update content'); }
+                } catch (error) {
+                    statusDiv.textContent = error.message;
+                    statusDiv.className = 'error-msg';
+                    statusDiv.style.display = 'block';
+                    setTimeout(() => statusDiv.style.display = 'none', 5000);
+                } finally {
+                    if (btnElement) { btnElement.disabled = false; btnElement.textContent = originalText; }
+                }
+            }
+
+            postAboutUsBtn.addEventListener('click', () => {
+                const content = quill.root.innerHTML;
+                if (content === '<p><br></p>' || !content.trim()) return alert("Please enter some content before posting.");
+                updateAboutUs(content, postAboutUsBtn, 'Post Content');
+            });
+
+            editAboutUsBtn.addEventListener('click', () => { quill.root.innerHTML = savedAboutUsContent; document.getElementById('aboutUsSection').scrollIntoView({ behavior: 'smooth' }); quill.focus(); });
+            deleteAboutUsBtn.addEventListener('click', () => { if (confirm("Are you sure you want to delete the published About Us content?")) { quill.root.innerHTML = ''; updateAboutUs('', deleteAboutUsBtn, 'Delete'); } });
+
+            // ==========================================
+            // CHANGE PASSWORD MODAL LOGIC
+            // ==========================================
+            const cpModal = document.getElementById('changePasswordModal');
+            const openCpBtn = document.getElementById('changePasswordBtn');
+            const closeCpBtn = document.getElementById('closeCpModalBtn');
+            const sendCpOtpBtn = document.getElementById('sendCpOtpBtn');
+            const cpStep1 = document.getElementById('cpStep1');
+            const cpStep2 = document.getElementById('cpStep2');
+            const changePasswordForm = document.getElementById('changePasswordForm');
+            const cpMessage = document.getElementById('cpMessage');
+
+            openCpBtn.addEventListener('click', () => {
+                cpModal.style.display = 'block';
+                cpStep1.style.display = 'block';
+                cpStep2.style.display = 'none';
+                cpMessage.style.display = 'none';
+                changePasswordForm.reset();
+            });
+
+            closeCpBtn.addEventListener('click', () => cpModal.style.display = 'none');
+            window.addEventListener('click', (e) => {
+                if (e.target === cpModal) cpModal.style.display = 'none';
+            });
+
+            function showCpMessage(msg, type) {
+                cpMessage.style.display = 'block';
+                cpMessage.textContent = msg;
+                cpMessage.style.backgroundColor = type === 'success' ? '#d4edda' : '#f8d7da';
+                cpMessage.style.color = type === 'success' ? '#155724' : '#721c24';
+            }
+
+            // Send OTP
+            sendCpOtpBtn.addEventListener('click', async () => {
+                const email = emailInput.value.trim();
+                if (!email) return alert('Email not found.');
+
+                sendCpOtpBtn.textContent = 'Sending...';
+                sendCpOtpBtn.disabled = true;
+
+                try {
+                    const response = await fetch(`${API_URL}/admin/send-otp`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        showCpMessage('OTP sent to your email!', 'success');
+                        cpStep1.style.display = 'none';
+                        cpStep2.style.display = 'block';
+                    } else {
+                        showCpMessage(data.message || 'Failed to send OTP', 'error');
+                    }
+                } catch (error) {
+                    showCpMessage('Network error. Check server.', 'error');
+                } finally {
+                    sendCpOtpBtn.textContent = 'Send OTP';
+                    sendCpOtpBtn.disabled = false;
+                }
+            });
+
+            // Submit OTP and New Password
+            changePasswordForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const otp = document.getElementById('cpOtp').value.trim();
+                const newPassword = document.getElementById('cpNewPassword').value.trim();
+                const email = emailInput.value.trim();
+                const submitBtn = document.getElementById('submitCpBtn');
+
+                if (newPassword.length < 6) return showCpMessage('Password must be at least 6 characters.', 'error');
+
+                submitBtn.textContent = 'Changing...';
+                submitBtn.disabled = true;
+
+                try {
+                    const response = await fetch(`${API_URL}/admin/change-password`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, otp, newPassword })
+                    });
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        showCpMessage('Password changed successfully!', 'success');
+                        setTimeout(() => cpModal.style.display = 'none', 2000);
+                    } else {
+                        showCpMessage(data.message || 'Failed to change password', 'error');
+                    }
+                } catch (error) {
+                    showCpMessage('Network error', 'error');
+                } finally {
+                    submitBtn.textContent = 'Verify & Change Password';
+                    submitBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

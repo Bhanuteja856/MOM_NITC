@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Manual Alumni Registration - NITC</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .legacy-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 15px;
+    }
+
+    @media (max-width: 500px) {
+      .legacy-form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container" style="max-width: 650px;">
+    <!-- Shared Header will be injected here -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header.html"></div>
+
+    <h2>Registration without Roll Number</h2>
+
+    <div class="info-box">
+      After the Submitting verification request, our team will review your details and Give you the approval then you
+      can visit the portal with your credentials. Please allow 1-2 business days for processing. We appreciate your
+      patience!
+    </div>
+    <div id="message" class="message"></div>
+    <div id="registrationForm" class="legacy-form-grid">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="fullName" placeholder="Your Name as per records" required>
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="email" placeholder="your@email.com" required>
+      </div>
+      <div class="form-group">
+        <label>Graduation Year</label>
+        <input type="number" id="gradYear" placeholder="e.g. 2003" required>
+      </div>
+      <div class="form-group">
+        <label>Batchmate Reference (Optional)</label>
+        <input type="text" id="reference" placeholder="Name or email of a batchmate to vouch for you">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div style="position: relative;">
+          <input type="password" id="password" placeholder="At least 6 characters" required
+            style="width: 100%; box-sizing: border-box; padding-right: 40px;">
+          <span
+            onclick="var input = this.previousElementSibling; var isPass = input.type === 'password'; input.type = isPass ? 'text' : 'password'; this.querySelector('.eye-open').style.display = isPass ? 'none' : 'block'; this.querySelector('.eye-closed').style.display = isPass ? 'block' : 'none';"
+            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center; color: #666;">
+            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <svg class="eye-closed" style="display: none;" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+              </path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+          </span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <div style="position: relative;">
+          <input type="password" id="confirmPassword" placeholder="Re-enter password" required
+            style="width: 100%; box-sizing: border-box; padding-right: 40px;">
+          <span
+            onclick="var input = this.previousElementSibling; var isPass = input.type === 'password'; input.type = isPass ? 'text' : 'password'; this.querySelector('.eye-open').style.display = isPass ? 'none' : 'block'; this.querySelector('.eye-closed').style.display = isPass ? 'block' : 'none';"
+            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center; color: #666;">
+            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <svg class="eye-closed" style="display: none;" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+              </path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+          </span>
+        </div>
+      </div>
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label>Profile Picture (Optional)</label>
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <img id="previewImg" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="Preview"
+            style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #e0e0e0;">
+          <input type="file" id="profileImage" accept="image/jpeg, image/png, image/gif" style="flex: 1; padding: 8px;">
+        </div>
+      </div>
+      <div style="grid-column: 1 / -1; margin-top: 5px;">
+        <button class="btn" id="submitRequestBtn">Submit Verification Request</button>
+      </div>
+    </div>
+
+    <p class="link-text" style="margin-top: 20px;">Know your Roll Number? <a href="signup.html">Use Standard Sign Up</a>
+    </p>
+    <p class="link-text" style="margin-top: 10px;"><a href="index.html">← Back to Home</a></p>
+  </div>
+
+  <script src="js/load-components.js"></script>
+  <script src="js/3d-effects.js" defer></script>
+  <script src="js/legacy-signup.js"></script>
+</body>
+
+</html>

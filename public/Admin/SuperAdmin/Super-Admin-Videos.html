@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Videos - Super Admin</title>
+    <link rel="stylesheet" href="../CSS/SuperAdminStyling.css">
+    <link rel="stylesheet" href="../CSS/Admin-main-screen.css">
+    <style>
+        .video-card { background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 20px; }
+        .video-card video { width: 100%; max-height: 250px; object-fit: cover; background: #000; }
+        .video-card-body { padding: 15px; }
+        .form-section { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .form-group { margin-bottom: 15px; }    
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .submit-btn { background-color: #4a148c; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+        .submit-btn:disabled { background-color: #aaa; cursor: not-allowed; }
+        .submit-btn:hover:not(:disabled) { opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-superadmin.html"></div>
+    <script src="../../js/load-components.js"></script>
+
+    <div class="main-container">
+        <div class="center-content" style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+            <div style="flex: 2; min-width: 300px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Uploaded Videos</h2>
+                    <a href="Super-Admin-Main-Screen.html" style="text-decoration: none; color: #4a148c; font-weight: bold;">← Back to Dashboard</a>
+                </div>
+                <div id="videosGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                    <!-- Videos injected here -->
+                </div>
+            </div>
+            <div style="flex: 1; min-width: 300px; position: sticky; top: 20px;">
+                <div class="form-section">
+                    <h3 style="margin-top: 0; color: #4a148c; border-bottom: 1px solid #eee; padding-bottom: 10px;">Upload New Video</h3>
+                    <form id="uploadVideoForm">
+                        <div class="form-group">
+                            <label>Video Title *</label>
+                            <input type="text" id="videoTitle" required placeholder="E.g. Annual Alumni Meet 2024">
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="videoDesc" rows="3" placeholder="Brief description of the video..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Video File (MP4/WebM) *</label>
+                            <input type="file" id="videoFile" accept="video/mp4,video/webm,video/ogg" required>
+                            <small style="color: #666; display: block; margin-top: 4px;">Max limit: 200MB. Please wait for upload to complete.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Thumbnail Image (Optional)</label>
+                            <input type="file" id="thumbnailFile" accept="image/jpeg,image/png,image/webp">
+                        </div>
+                        <button type="submit" id="uploadBtn" class="submit-btn">Upload Video File</button>
+                        <div id="uploadStatus" style="margin-top: 15px; font-weight: bold; text-align: center; font-size: 1.1em;"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = window.API_URL;
+        const BASE_URL = API_URL.replace('/api/auth', ''); // Gets the raw server root for resolving media
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.checkAccess()) return;
+            const token = localStorage.getItem('superAdminToken');
+            
+            let currentUser = JSON.parse(localStorage.getItem('superAdminUser') || '{}');
+
+            document.addEventListener('HeaderLoaded', () => {
+                const pic = document.getElementById('headerProfilePic');
+                if (pic) pic.src = currentUser.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=4a148c&color=fff`;
+                const nameDisplay = document.getElementById('superAdminNameDisplay');
+                if (nameDisplay) nameDisplay.textContent = currentUser.name;
+                
+            });
+
+            window.loadVideos = async function() {
+                try {
+                    const response = await fetch(`${API_URL}/videos/public`);
+                    const data = await response.json();
+                    const grid = document.getElementById('videosGrid');
+                    grid.innerHTML = '';
+                    if (data.success && data.videos.length > 0) {
+                        data.videos.forEach(v => {
+                            const fullVideoUrl = v.videoUrl.startsWith('http') ? v.videoUrl : BASE_URL + v.videoUrl;
+                            const fullThumbUrl = v.thumbnailUrl ? (v.thumbnailUrl.startsWith('http') ? v.thumbnailUrl : BASE_URL + v.thumbnailUrl) : '';
+                            const posterAttr = fullThumbUrl ? `poster="${fullThumbUrl}"` : '';
+                            
+                            grid.innerHTML += `
+                                <div class="video-card">
+                                    <video controls ${posterAttr}>
+                                        <source src="${fullVideoUrl}" type="video/mp4">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                    <div class="video-card-body">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                                            <h4 style="margin: 0 0 5px 0; color: #333; word-break: break-word;">${v.title}</h4>
+                                            <button onclick="deleteVideo('${v._id}')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold; flex-shrink: 0;">Delete</button>
+                                        </div>
+                                        <p style="margin: 5px 0 10px 0; font-size: 0.85em; color: #666;">${v.description || 'No description provided.'}</p>
+                                        <small style="color: #999; display: block; border-top: 1px solid #eee; padding-top: 8px;">Uploaded by: ${v.postedBy}</small>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        grid.innerHTML = '<p style="color: #666; font-style: italic;">No videos have been uploaded yet.</p>';
+                    }
+                } catch (err) {
+                    console.error('Failed to load videos', err);
+                }
+            };
+
+            window.deleteVideo = async function(id) {
+                if (!confirm("Are you sure you want to permanently delete this video? The file will be erased from the server.")) return;
+                try {
+                    const response = await fetch(`${API_URL}/videos/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        loadVideos();
+                    } else {
+                        alert(data.message || 'Failed to delete video.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Network error while deleting video.');
+                }
+            };
+
+            document.getElementById('uploadVideoForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('uploadBtn');
+                const status = document.getElementById('uploadStatus');
+                
+                const videoFile = document.getElementById('videoFile').files[0];
+                const thumbnailFile = document.getElementById('thumbnailFile').files[0];
+
+                if (videoFile.size > 200 * 1024 * 1024) {
+                    status.textContent = 'Video size exceeds 200MB!';
+                    status.style.color = '#dc3545';
+                    return;
+                }
+
+                if (thumbnailFile && thumbnailFile.size > 5 * 1024 * 1024) {
+                    status.textContent = 'Thumbnail image size exceeds 5MB!';
+                    status.style.color = '#dc3545';
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.textContent = 'Uploading... (Do not close tab)';
+                status.textContent = '';
+
+                const formData = new FormData();
+                formData.append('title', document.getElementById('videoTitle').value);
+                formData.append('description', document.getElementById('videoDesc').value);
+                formData.append('postedBy', currentUser.name + ' (Super Admin)');
+                formData.append('video', videoFile);
+                if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
+
+                try {
+                    const response = await fetch(`${API_URL}/videos`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        status.textContent = 'Video Uploaded Successfully!';
+                        status.style.color = '#28a745';
+                        document.getElementById('uploadVideoForm').reset();
+                        loadVideos();
+                    } else {
+                        status.textContent = data.message || 'Upload failed.';
+                        status.style.color = '#dc3545';
+                    }
+                } catch (err) {
+                    status.textContent = 'Network error or file is too large for the server.';
+                    status.style.color = '#dc3545';
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Upload Video File';
+                }
+            });
+
+            loadVideos();
+        });
+    </script>
+</body>
+</html>

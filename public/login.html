@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - NITC Alumni Network</title>
+  <meta name="description" content="Login to the NITC MCA Alumni Portal to connect with your alumni network.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="container">
+    <!-- Shared Header will be injected here -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header.html"></div>
+
+    <h2>Welcome Back</h2>
+    <p style="text-align:center; color:#64748b; font-size:0.875rem; margin: 4px 40px 24px; line-height:1.5;">Sign in to your alumni account</p>
+
+    <div id="message" class="message"></div>
+
+    <div class="form-group">
+      <label for="email">Email Address</label>
+      <input type="email" id="email" placeholder="your@email.com" required autocomplete="email">
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div style="position: relative;">
+        <input type="password" id="password" placeholder="Enter your password" required
+          style="width: 100%; box-sizing: border-box; padding-right: 46px;" autocomplete="current-password">
+        <span onclick="
+          var input = this.previousElementSibling;
+          var isPass = input.type === 'password';
+          input.type = isPass ? 'text' : 'password';
+          this.querySelector('.eye-open').style.display = isPass ? 'none' : 'block';
+          this.querySelector('.eye-closed').style.display = isPass ? 'block' : 'none';
+        " style="position:absolute; right:14px; top:50%; transform:translateY(-50%); cursor:pointer; display:flex; align-items:center; color:#94a3b8; transition:color 0.2s;" onmouseover="this.style.color='#3b82f6'" onmouseout="this.style.color='#94a3b8'">
+          <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <svg class="eye-closed" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+          </svg>
+        </span>
+      </div>
+    </div>
+
+    <!-- Forgot Password -->
+    <div style="text-align:right; margin: -8px 40px 18px;">
+      <a href="Forgotpassword.html" style="font-size:13px; color:#3b82f6; text-decoration:none; font-weight:600;">Forgot password?</a>
+    </div>
+
+    <button class="btn" id="loginBtn">Sign In</button>
+
+    <p class="link-text" style="margin-top:18px;">Don't have an account? <a href="signup.html">Create Account</a></p>
+    <p class="link-text" style="margin-top:10px; padding-bottom:32px;">
+      <a href="index.html">← Back to Home</a>
+    </p>
+  </div>
+
+  <script src="js/load-components.js"></script>
+  <script src="js/3d-effects.js" defer></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

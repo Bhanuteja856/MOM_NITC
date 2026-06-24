@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Admins - NITC</title>
+    <link rel="stylesheet" href="../CSS/SuperAdminStyling.css">
+    <link rel="stylesheet" href="../CSS/Admin-main-screen.css">
+    <link rel="stylesheet" href="../CSS/global-dashboard.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>:root { --primary-color: #4a148c; --primary-hover: #380b6b; }</style>
+    <style>
+        .top-forms-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 30px;
+        }
+        .top-forms-container .form-section {
+            flex: 1;
+        }
+        @media (max-width: 900px) {
+            .top-forms-container {
+                flex-direction: column;
+            }
+        }
+        .instructions { background: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px; font-size: 0.95em; color: #333; border-left: 4px solid #4a148c; }
+        .instructions code { background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid #ddd; color: #c62828; font-weight: bold; }
+        .file-upload-wrapper { border: 2px dashed #4a148c; padding: 30px; text-align: center; border-radius: 8px; background: #faf5ff; cursor: pointer; margin-bottom: 20px; transition: all 0.3s ease; }
+        .file-upload-wrapper:hover { background: #f3e8ff; border-color: #380b6b; transform: translateY(-2px); }
+        #processBtn { background-color: #4a148c; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.1em; width: 100%; transition: all 0.3s ease; }
+        #processBtn:hover:not(:disabled) { background-color: #380b6b; transform: translateY(-1px); }
+        #processBtn:disabled { background-color: #6c757d; cursor: not-allowed; opacity: 0.8; }
+        .results-box { margin-top: 20px; padding: 15px; border-radius: 5px; display: none; }
+        .success-text { color: #155724; background-color: #d4edda; padding: 10px; border-radius: 4px; margin-bottom: 10px;}
+        .error-text { color: #721c24; background-color: #f8d7da; padding: 10px; border-radius: 4px; font-size: 0.9em; }
+        /* Page Loader Styles */
+        #pageLoader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(244, 246, 248, 0.85);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.4s ease;
+        }
+    </style>
+</head>
+<body>
+    <div id="pageLoader"><div class="spinner"></div><h3 style="color: var(--primary-color); margin-top: 15px;">Loading Admins...</h3></div>
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-superadmin.html"></div>
+    <script src="../../js/load-components.js"></script>
+    <!-- Main Content Area -->
+    <div class="main-container">
+        <!-- Center Content -->
+        <div class="center-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Manage Admins & Faculty</h2>
+                <a href="Super-Admin-Main-Screen.html" style="text-decoration: none; color: #4a148c; font-weight: bold;">← Back to Home</a>
+            </div>
+
+            <div class="top-forms-container">
+                <div class="form-section">
+                    <h3 style="margin-top:0; color: #4a148c; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">Add Single Admin</h3>
+                    <div id="addAdminMessage" class="message-box"></div>
+                    <form id="addAdminForm">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="newAdminName" required placeholder="e.g. John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="newAdminEmail" required placeholder="admin@nitc.ac.in">
+                        </div>
+                        <div class="form-group">
+                            <label>Temporary Password</label>
+                            <div style="position: relative;">
+                                <input type="password" id="newAdminPassword" required placeholder="Enter temporary password" style="width: 100%; box-sizing: border-box; padding-right: 40px;">
+                            <span onclick="const input = this.previousElementSibling; const isPass = input.type === 'password'; input.type = isPass ? 'text' : 'password'; this.querySelector('.eye-open').style.display = isPass ? 'none' : 'block'; this.querySelector('.eye-closed').style.display = isPass ? 'block' : 'none';" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center; color: #666;">
+                              <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                              <svg class="eye-closed" style="display: none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Department</label>
+                            <input type="text" id="newAdminDept" required placeholder="e.g. MCA">
+                        </div>
+                        <div style="display: flex; gap: 15px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label>Phone Number (Optional)</label>
+                                <input type="tel" id="newAdminPhone" placeholder="e.g. +91 9876543210">
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Office Location (Optional)</label>
+                                <input type="text" id="newAdminOffice" placeholder="e.g. Room 302, IT Building">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Role</label>
+                            <select id="newAdminRole" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit;">
+                                <option value="admin">Admin</option>
+                                <option value="super_admin">Super Admin</option>
+                                <option value="faculty">Faculty</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Menu Access Permissions</label>
+                            <p style="font-size: 0.85em; color: #666; margin-top: -5px; margin-bottom: 10px;">Drag menus from the left box to the right box to grant access.</p>
+                            <div class="dnd-container">
+                                <div class="dnd-box" id="availableMenus" ondrop="drop(event)" ondragover="allowDrop(event)">
+                                    <h4 style="margin-top: 0; text-align: center; color: #555;">Revoked (Hidden)</h4>
+                                    <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-manage-alumni" data-value="Manage Alumni">Manage Alumni</div>
+                                    <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-event-creation" data-value="Event Creation">Event Creation</div>
+                                    <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-alumni-approval" data-value="Alumni Approval">Alumni Approval</div>
+                                    <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-event-approval" data-value="Event Approval">Event Approval</div>
+                                    <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-announcements" data-value="Announcements">Announcements</div>
+                                    <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-gallery" data-value="Manage Gallery">Manage Gallery</div>
+                                    <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-id-cards" data-value="Manage ID Cards">Manage ID Cards</div>
+                                    <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-videos" data-value="Manage Videos">Manage Videos</div>
+                                </div>
+                                <div class="dnd-box" id="selectedMenus" ondrop="drop(event)" ondragover="allowDrop(event)">
+                                    <h4 style="margin-top: 0; text-align: center; color: #0D8ABC;">Selected Menus (Access Granted)</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button type="submit" class="submit-btn" id="submitNewAdminBtn">Create Admin Account</button>
+                            <button type="button" class="submit-btn" id="cancelEditBtn" style="display: none; background-color: #6c757d;">Cancel Edit</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="form-section">
+                    <h3 style="margin-top:0; color: #4a148c; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">Bulk Add Admins & Faculty</h3>
+                    <div class="instructions">
+                        <p style="margin-top:0;"><strong>Instructions:</strong> Please upload a <code>.csv</code> or <code>.xlsx</code> file. The first row must be the header with these exact names:</p>
+                        <p><strong>Mandatory:</strong> <code>Name</code>, <code>Email</code>, <code>Password</code>, <code>Department</code>, <code>Role</code> (Values: <em>admin, super_admin, faculty</em>)</p>
+                        <p style="margin-bottom:0;"><strong>Optional:</strong> <code>Phone</code>, <code>OfficeLocation</code>, <code>AccessibleMenus</code> (Comma separated)</p>
+                    </div>
+    
+                    <div class="file-upload-wrapper" onclick="document.getElementById('csvFileInput').click()">
+                        <p style="margin: 0; font-size: 1.1em; color: #4a148c;"><strong>Click here to select a file</strong></p>
+                        <p id="fileNameDisplay" style="margin: 10px 0 0 0; color: #666; font-size: 0.9em;">No file chosen</p>
+                        <input type="file" id="csvFileInput" accept=".csv, .xlsx, .xls" style="display: none;">
+                    </div>
+    
+                    <button class="submit-btn" id="processBtn" disabled>Process & Upload Accounts</button>
+    
+                    <div id="resultsBox" class="results-box">
+                        <div id="successSummary" class="success-text"></div>
+                        <div id="errorSummary" class="error-text"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; margin-top: 40px;">
+                <h2 style="margin: 0;">Current Admins Directory</h2>
+                <button id="exportCsvBtn" onclick="exportToCSV()" style="background-color: #17a2b8; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#138496'" onmouseout="this.style.backgroundColor='#17a2b8'">Export CSV</button>
+            </div>
+            <div style="overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <table style="width: 100%; border-collapse: collapse; min-width: 900px;">
+                    <thead>
+                        <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; text-align: left;">
+                            <th style="padding: 15px; color: #495057;">Profile</th>
+                            <th style="padding: 15px; color: #495057;">Name</th>
+                            <th style="padding: 15px; color: #495057;">Role</th>
+                            <th style="padding: 15px; color: #495057;">Department</th>
+                            <th style="padding: 15px; color: #495057;">Email</th>
+                            <th style="padding: 15px; color: #495057;">Status</th>
+                            <th style="padding: 15px; color: #495057; text-align: center;">Actions</th>
+                        </tr>
+                        <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; text-align: left;">
+                            <th style="padding: 5px;"></th>
+                            <th style="padding: 5px;"><select id="filterName" style="width: 100%; padding: 6px; box-sizing: border-box; font-weight: normal; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"><option value="">All</option></select></th>
+                            <th style="padding: 5px;"><select id="filterRole" style="width: 100%; padding: 6px; box-sizing: border-box; font-weight: normal; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"><option value="">All</option></select></th>
+                            <th style="padding: 5px;"><select id="filterDept" style="width: 100%; padding: 6px; box-sizing: border-box; font-weight: normal; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"><option value="">All</option></select></th>
+                            <th style="padding: 5px;"><select id="filterEmail" style="width: 100%; padding: 6px; box-sizing: border-box; font-weight: normal; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"><option value="">All</option></select></th>
+                            <th style="padding: 5px;"><select id="filterStatus" style="width: 100%; padding: 6px; box-sizing: border-box; font-weight: normal; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"><option value="">All</option></select></th>
+                            <th style="padding: 5px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="userGrid">
+                        <!-- Admins will be dynamically populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_URL = window.API_URL;
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text");
+            var target = ev.target;
+            while (target && !target.classList.contains('dnd-box')) {
+                target = target.parentNode;
+            }
+            if (target) {
+                target.appendChild(document.getElementById(data));
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.checkAccess()) return;
+            // Retrieve User from LocalStorage
+            const storedUser = localStorage.getItem('superAdminUser');
+            document.addEventListener('HeaderLoaded', () => {
+                if (storedUser) {
+                    try {
+                        const user = JSON.parse(storedUser);
+                        if (user && user.name) {
+                            const nameDisplay = document.getElementById('superAdminNameDisplay');
+                            if (nameDisplay) nameDisplay.textContent = user.name;
+                            const pic = document.getElementById('headerProfilePic');
+                            if (pic) pic.src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=4a148c&color=fff`;
+                        }
+                    } catch(e) {
+                        console.error("Error parsing user data", e);
+                    }
+                }
+            });
+
+            // --- BULK ADD SCRIPT ---
+            const fileInput = document.getElementById('csvFileInput');
+            const processBtn = document.getElementById('processBtn');
+            const fileNameDisplay = document.getElementById('fileNameDisplay');
+            let parsedAdminData = [];
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file && (file.name.endsWith('.csv') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+                    fileNameDisplay.textContent = `Selected: ${file.name}`;
+                    processBtn.disabled = false;
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        if (file.name.endsWith('.csv')) {
+                            // This is a simplified CSV parser. For production, a library is better.
+                            const lines = event.target.result.split('\n').filter(line => line.trim() !== '');
+                            const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z0-9]/g, ''));
+                            const result = [];
+                            for (let i = 1; i < lines.length; i++) {
+                                const obj = {};
+                                const currentLine = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || lines[i].split(',');
+                                headers.forEach((header, index) => {
+                                    let val = currentLine[index] ? currentLine[index].replace(/(^"|"$)/g, '').trim() : '';
+                                    if (val === '') val = null;
+                                    if (header.includes('name')) obj.name = val;
+                                    else if (header.includes('email')) obj.email = val;
+                                    else if (header.includes('password') || header.includes('temp')) obj.password = val;
+                                    else if (header.includes('department') || header.includes('dept')) obj.department = val;
+                                    else if (header.includes('role')) obj.role = val;
+                                    else if (header.includes('phone')) obj.phone = val;
+                                    else if (header.includes('office') || header.includes('location')) obj.officeLocation = val;
+                                    else if (header.includes('menu') || header.includes('access')) obj.accessibleMenus = val;
+                                });
+                                if (obj.name && obj.email && obj.password && obj.role) result.push(obj);
+                            }
+                            parsedAdminData = result;
+                        } else {
+                            const data = new Uint8Array(event.target.result);
+                            const workbook = XLSX.read(data, {type: 'array'});
+                            const firstSheetName = workbook.SheetNames[0];
+                            const worksheet = workbook.Sheets[firstSheetName];
+                            const json = XLSX.utils.sheet_to_json(worksheet, {raw: false});
+                            
+                            parsedAdminData = json.map(row => {
+                                const obj = {};
+                                const normalizedRow = {};
+                                for (let key in row) {
+                                    const normalizedKey = key.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+                                    normalizedRow[normalizedKey] = String(row[key] || '').trim();
+                                }
+                                obj.name = normalizedRow['name'] || null;
+                                obj.email = normalizedRow['email'] || null;
+                                obj.password = normalizedRow['password'] || normalizedRow['temppassword'] || null;
+                                obj.department = normalizedRow['department'] || normalizedRow['dept'] || null;
+                                obj.role = normalizedRow['role'] || null;
+                                obj.phone = normalizedRow['phone'] || null;
+                                obj.officeLocation = normalizedRow['officelocation'] || normalizedRow['office'] || null;
+                                obj.accessibleMenus = normalizedRow['accessiblemenus'] || normalizedRow['menus'] || null;
+                                return obj;
+                            }).filter(obj => obj.name && obj.email && obj.password && obj.role);
+                        }
+                    };
+                    if (file.name.endsWith('.csv')) {
+                        reader.readAsText(file);
+                    } else {
+                        reader.readAsArrayBuffer(file);
+                    }
+                } else {
+                    fileNameDisplay.textContent = 'Please select a valid .csv or .xlsx file';
+                    processBtn.disabled = true;
+                    parsedAdminData = [];
+                }
+            });
+
+            const dropZone = document.querySelector('.file-upload-wrapper');
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.backgroundColor = '#f3e8ff'; });
+            dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.style.backgroundColor = '#faf5ff'; });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.style.backgroundColor = '#faf5ff';
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    fileInput.dispatchEvent(new Event('change'));
+                }
+            });
+
+            processBtn.addEventListener('click', async () => {
+                if (parsedAdminData.length === 0) {
+                    return alert("No valid admin/faculty records found. Please ensure Name, Email, Password, Department, and Role are populated.");
+                }
+                
+                processBtn.disabled = true;
+                processBtn.textContent = `Uploading ${parsedAdminData.length} accounts...`;
+                document.getElementById('resultsBox').style.display = 'none';
+
+                try {
+                    const response = await fetch(`${API_URL}/bulk-add-admins`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}` },
+                        body: JSON.stringify({ adminsList: parsedAdminData })
+                    });
+
+                    const data = await response.json();
+                    document.getElementById('resultsBox').style.display = 'block';
+                    document.getElementById('successSummary').innerHTML = `<strong>Success:</strong> Successfully added ${data.results.successful} accounts.`;
+                    
+                    if (data.results.failed > 0) {
+                        document.getElementById('errorSummary').innerHTML = `<strong>Failed:</strong> ${data.results.failed} records failed.<br> <ul style="margin-top:5px; padding-left:20px;"><li>${data.results.errors.join('</li><li>')}</li></ul>`;
+                    } else {
+                        document.getElementById('errorSummary').innerHTML = '';
+                    }
+                    loadAdmins(); // Always refresh the table to show any successful additions
+                } catch (err) {
+                    alert("Network error occurred while uploading batch.");
+                } finally {
+                    processBtn.textContent = 'Process & Upload Accounts';
+                    fileInput.value = '';
+                    fileNameDisplay.textContent = 'No file chosen';
+                }
+            });
+            // --- END BULK ADD SCRIPT ---
+
+            // ==========================================
+            // LOAD ADMINS LOGIC
+            // ==========================================
+            let currentAdminsList = [];
+            let displayedAdminsList = [];
+            
+            function renderAdminTable(list) {
+                const userGrid = document.getElementById('userGrid');
+                displayedAdminsList = list;
+                userGrid.innerHTML = '';
+                
+                if (list.length === 0) {
+                    userGrid.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #666;">No admins found matching your criteria.</td></tr>';
+                    return;
+                }
+                
+                list.forEach(admin => {
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid #eee';
+                    const roleBadge = admin.role === 'super_admin' ? 'SUPER ADMIN' : (admin.role === 'faculty' ? 'FACULTY' : 'ADMIN');
+                    const badgeColor = admin.role === 'super_admin' ? '#4a148c' : (admin.role === 'faculty' ? '#0288d1' : '#c62828');
+                    const statusColor = admin.isActive ? 'green' : 'gray';
+                    const statusText = admin.isActive ? 'Active' : 'Revoked';
+                    const revokeBtnText = admin.isActive ? 'Revoke' : 'Restore';
+                    const btnColor = admin.isActive ? '#dc3545' : '#28a745';
+                    const imgSrc = admin.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(admin.name)}&background=random`;
+                    row.innerHTML = `
+                        <td style="padding: 15px; vertical-align: middle;"><img src="${imgSrc}" alt="Admin" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd;"></td>
+                        <td style="padding: 15px; vertical-align: middle; font-weight: bold; color: #333;">${escapeHtml(admin.name)}</td>
+                        <td style="padding: 15px; vertical-align: middle;"><span style="background: ${badgeColor}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold;">${roleBadge}</span></td>
+                        <td style="padding: 15px; vertical-align: middle;">${escapeHtml(admin.department || 'N/A')}</td>
+                        <td style="padding: 15px; vertical-align: middle; color: #0D8ABC; word-break: break-all;">${escapeHtml(admin.email)}</td>
+                        <td style="padding: 15px; vertical-align: middle;"><span style="color: ${statusColor}; font-weight: bold;">${statusText}</span></td>
+                        <td style="padding: 15px; vertical-align: middle; text-align: center;">
+                            ${admin.role !== 'super_admin' ? `<button onclick="editAdmin('${admin._id}')" style="background-color: #ffc107; color: #333; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-right: 5px;">Edit</button><button onclick="toggleAdminStatus('${admin._id}')" style="background-color: ${btnColor}; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${revokeBtnText}</button>` : '<span style="color: #999; font-style: italic;">N/A</span>'}
+                        </td>
+                    `;
+                    userGrid.appendChild(row);
+                });
+            }
+
+            function populateAdminFilters() {
+                const filters = [
+                    { id: 'filterName', key: 'name' },
+                    { id: 'filterRole', key: 'role', transform: r => r === 'super_admin' ? 'Super Admin' : (r === 'faculty' ? 'Faculty' : 'Admin') },
+                    { id: 'filterDept', key: 'department' },
+                    { id: 'filterEmail', key: 'email' },
+                    { id: 'filterStatus', key: 'isActive', transform: s => s ? 'Active' : 'Revoked' }
+                ];
+
+                filters.forEach(f => {
+                    const select = document.getElementById(f.id);
+                    if (!select) return;
+                    const currentVal = select.value;
+                    const uniqueValues = [...new Set(currentAdminsList.map(a => f.transform ? f.transform(a[f.key]) : a[f.key]).filter(Boolean))].sort();
+                    select.innerHTML = '<option value="">All</option>' + uniqueValues.map(v => `<option value="${escapeHtml(String(v))}">${escapeHtml(String(v))}</option>`).join('');
+                    select.value = currentVal;
+                });
+            }
+
+            window.applyAdminFilters = function() {
+                const fName = document.getElementById('filterName').value;
+                const fRole = document.getElementById('filterRole').value;
+                const fDept = document.getElementById('filterDept').value;
+                const fEmail = document.getElementById('filterEmail').value;
+                const fStatus = document.getElementById('filterStatus').value;
+
+                const filtered = currentAdminsList.filter(a => {
+                    const roleStr = a.role === 'super_admin' ? 'Super Admin' : (a.role === 'faculty' ? 'Faculty' : 'Admin');
+                    const statusStr = a.isActive ? 'Active' : 'Revoked';
+
+                    const matchesName = !fName || String(a.name || '') === fName;
+                    const matchesRole = !fRole || roleStr === fRole;
+                    const matchesDept = !fDept || String(a.department || '') === fDept;
+                    const matchesEmail = !fEmail || String(a.email || '') === fEmail;
+                    const matchesStatus = !fStatus || statusStr === fStatus;
+                    
+                    return matchesName && matchesRole && matchesDept && matchesEmail && matchesStatus;
+                });
+                
+                renderAdminTable(filtered);
+            }
+
+            async function loadAdmins() {
+                const userGrid = document.getElementById('userGrid');
+                try {
+                    const response = await fetch(`${API_URL}/admins`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}`
+                        }
+                    });
+                    const data = await response.json();     
+                    if (response.ok && data.success) {
+                        currentAdminsList = data.admins;
+                        populateAdminFilters();
+                        applyAdminFilters();
+                    }
+                } catch (error) {
+                    console.error("Failed to load admins", error);
+                    userGrid.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #dc3545; font-weight: bold;">Failed to load admins. Please check your connection and try again.</td></tr>';
+                } finally {
+                    const pageLoader = document.getElementById('pageLoader');
+                    if (pageLoader) {
+                        pageLoader.style.opacity = '0';
+                        setTimeout(() => { pageLoader.style.display = 'none'; }, 400);
+                    }
+                }
+            }
+            // ==========================================
+            // ADD ADMIN FORM LOGIC
+            // ==========================================
+            const addAdminForm = document.getElementById('addAdminForm');
+            const addAdminMessage = document.getElementById('addAdminMessage');
+            let editingAdminId = null;
+            addAdminForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitBtn = document.getElementById('submitNewAdminBtn');
+                submitBtn.textContent = 'Creating...';
+                submitBtn.disabled = true;
+                const name = document.getElementById('newAdminName').value.trim();
+                const email = document.getElementById('newAdminEmail').value.trim();
+                const password = document.getElementById('newAdminPassword').value.trim();
+                const department = document.getElementById('newAdminDept').value.trim();
+                const phone = document.getElementById('newAdminPhone').value.trim();
+                const officeLocation = document.getElementById('newAdminOffice').value.trim();
+                const role = document.getElementById('newAdminRole').value;
+                const selectedMenuElements = document.querySelectorAll('#selectedMenus .dnd-item');
+                const accessibleMenus = Array.from(selectedMenuElements).map(el => el.getAttribute('data-value'));
+                let endpoint = `${API_URL}/add-admin`;
+                let method = 'POST';
+                if (editingAdminId) {
+                    endpoint = `${API_URL}/admins/${editingAdminId}`;
+                    method = 'PUT';
+                }
+                try {
+                    const response = await fetch(endpoint, {
+                        method: method,
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}`
+                        },
+                        body: JSON.stringify({ name, email, password, department, role, phone, officeLocation, accessibleMenus })
+                    });
+                    const data = await response.json();
+                    addAdminMessage.style.display = 'block';
+                    if (response.ok && data.success) {
+                        addAdminMessage.style.backgroundColor = '#d4edda';
+                        addAdminMessage.style.color = '#155724';
+                        addAdminMessage.textContent = editingAdminId ? 'Admin updated successfully!' : 'Admin created successfully!';
+                        addAdminForm.reset();
+                        editingAdminId = null;
+                        // Reset drag and drop
+                        const availableMenusBox = document.getElementById('availableMenus');
+                        const allMenus = document.querySelectorAll('.dnd-item');
+                        allMenus.forEach(el => availableMenusBox.appendChild(el));
+                        // Reload grid from the database
+                        loadAdmins();
+                        setTimeout(() => {
+                            addAdminMessage.style.display = 'none';
+                        }, 3000);
+                    } else {
+                        addAdminMessage.style.backgroundColor = '#f8d7da';
+                        addAdminMessage.style.color = '#721c24';
+                        addAdminMessage.textContent = data.message || 'Failed to create admin.';
+                    }
+                } catch (error) {
+                    addAdminMessage.style.backgroundColor = '#f8d7da';
+                    addAdminMessage.style.color = '#721c24';
+                    addAdminMessage.textContent = 'Network error occurred. Make sure your server is running.';
+                    addAdminMessage.style.display = 'block';
+                } finally {
+                    submitBtn.textContent = 'Create Admin Account';
+                    submitBtn.disabled = false;
+                    document.getElementById('cancelEditBtn').style.display = 'none';
+                }
+            });
+            function escapeHtml(unsafe) {
+                if (!unsafe) return "";
+                return unsafe.toString()
+                     .replace(/&/g, "&amp;")
+                     .replace(/</g, "&lt;")
+                     .replace(/>/g, "&gt;")
+                     .replace(/"/g, "&quot;")
+                     .replace(/'/g, "&#039;");
+            }
+            window.editAdmin = function(id) {
+                const admin = currentAdminsList.find(a => a._id === id);
+                if (!admin) return;
+                editingAdminId = id;
+                document.getElementById('newAdminName').value = admin.name || '';
+                document.getElementById('newAdminEmail').value = admin.email || '';
+                const passInput = document.getElementById('newAdminPassword');
+                passInput.value = ''; 
+                passInput.removeAttribute('required'); // Password is optional when editing
+                passInput.placeholder = 'Leave blank to keep current password';
+                document.getElementById('newAdminDept').value = admin.department || '';
+                document.getElementById('newAdminPhone').value = admin.phone || '';
+                document.getElementById('newAdminOffice').value = admin.officeLocation || '';
+                document.getElementById('newAdminRole').value = admin.role || 'admin';
+                const availableMenusBox = document.getElementById('availableMenus');
+                const selectedMenusBox = document.getElementById('selectedMenus');
+                const allMenus = document.querySelectorAll('.dnd-item');
+                const userMenus = admin.accessibleMenus || [];
+                // Reconfigure the drag-and-drop layout based on current permissions
+                allMenus.forEach(el => {
+                    if (userMenus.includes(el.getAttribute('data-value'))) {
+                        selectedMenusBox.appendChild(el);
+                    } else {
+                        availableMenusBox.appendChild(el);
+                    }
+                });
+                document.getElementById('submitNewAdminBtn').textContent = 'Update Admin Account';
+                document.getElementById('cancelEditBtn').style.display = 'block';
+                document.querySelector('.center-content').scrollIntoView({ behavior: 'smooth' });
+            };
+            cancelEditBtn.addEventListener('click', () => {
+                addAdminForm.reset();
+                const passInput = document.getElementById('newAdminPassword');
+                passInput.setAttribute('required', 'true');
+                passInput.placeholder = 'Enter temporary password';
+                editingAdminId = null;
+                document.getElementById('submitNewAdminBtn').textContent = 'Create Admin Account';
+                cancelEditBtn.style.display = 'none';  
+                const availableMenusBox = document.getElementById('availableMenus');
+                const allMenus = document.querySelectorAll('.dnd-item');
+                allMenus.forEach(el => availableMenusBox.appendChild(el));
+            });
+            window.toggleAdminStatus = async function(adminId) {
+                if (!confirm("Are you sure you want to change this Admin's access status?")) return; 
+                try {
+                    const response = await fetch(`${API_URL}/admins/${adminId}/status`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}`
+                        }
+                    });
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        loadAdmins();
+                    } else {
+                        alert(data.message || 'Failed to update admin status.');
+                    }
+                } catch(error) {
+                    console.error("Error updating admin", error);
+                }
+            };
+            window.exportToCSV = function() {
+                if (!displayedAdminsList || displayedAdminsList.length === 0) {
+                    alert("No admin data available to export.");
+                    return;
+                }    
+                const headers = ['Name', 'Email', 'Role', 'Department', 'Status'];
+                const csvRows = [headers.join(',')];    
+                displayedAdminsList.forEach(admin => {
+                    const row = [
+                        `"${(admin.name || '').replace(/"/g, '""')}"`,
+                        `"${(admin.email || '').replace(/"/g, '""')}"`,
+                        `"${(admin.role === 'super_admin' ? 'Super Admin' : (admin.role === 'faculty' ? 'Faculty' : 'Admin'))}"`,
+                        `"${(admin.department || '').replace(/"/g, '""')}"`,
+                        `"${admin.isActive ? 'Active' : 'Revoked'}"`
+                    ];
+                    csvRows.push(row.join(','));
+                });
+                const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'Admins_Directory.csv';
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+            // Load admins initially
+            loadAdmins();
+            
+            // Bind filter event listeners
+            ['filterName', 'filterRole', 'filterDept', 'filterEmail', 'filterStatus'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', applyAdminFilters);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+ /* Specific styles for Admin buttons */
+        .card-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .btn-group-horizontal {
+            display: flex;
+            gap: 8px;
+        }
+
+        .profile-card .details-btn {
+            width: 100%;
+            margin-top: 0;
+            padding: 8px 20px;
+            background-color: #003366;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+
+        .profile-card .details-btn:hover {
+            background-color: #00509e;
+        }
+
+        .profile-card .edit-btn {
+            flex: 1;
+            padding: 8px 10px;
+            background-color: #ffc107;
+            color: #212529;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+
+        .profile-card .edit-btn:hover {
+            background-color: #e0a800;
+        }
+
+        .profile-card .delete-btn {
+            flex: 1;
+            padding: 8px 10px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+
+        .profile-card .delete-btn:hover {
+            background-color: #c82333;
+        }

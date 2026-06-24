@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Alumni (Admin) - NITC</title>
+    <link rel="stylesheet" href="../CSS/AdminStyling.css">
+    <link rel="stylesheet" href="../CSS/Admin-main-screen.css">
+    <style>
+        .form-section { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .submit-btn { background-color: #0D8ABC; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1em; transition: 0.3s; width: 100%; }
+        .submit-btn:hover { background-color: #0b739e; }
+        .message-box { margin-bottom: 15px; padding: 10px; border-radius: 4px; display: none; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+    <!-- Shared Admin Header injected here -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-admin.html"></div>
+    <script src="../../js/load-components.js"></script>
+
+    <div class="main-container">
+        <div class="center-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <h2 style="margin: 0;">Add New Alumni</h2>
+                    <button id="bulkAddBtn" onclick="window.location.href='Admin-bulk-add-alumni.html'" style="background-color: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#218838'" onmouseout="this.style.backgroundColor='#28a745'">Bulk Add</button>
+                </div>
+                <a href="Admin-Main-Screen.html" style="text-decoration: none; color: #0D8ABC; font-weight: bold;">← Back to Home</a>
+            </div>
+
+            <div class="form-section">
+                <div id="addAlumniMessage" class="message-box"></div>
+                <form id="addAlumniForm">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="newAlumniName" required placeholder="e.g. Jane Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Roll Number</label>
+                        <input type="text" id="newAlumniRoll" required placeholder="e.g. MCA2401">
+                    </div>
+                    <div class="form-group">
+                        <label>Batch Year</label>
+                        <input type="number" id="newAlumniBatch" placeholder="e.g. 2024">
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="newAlumniEmail" placeholder="alumni@nitc.ac.in">
+                    </div>
+                    <div class="form-group">
+                        <label>Temporary Password</label>
+                        <div style="position: relative;">
+                            <input type="password" id="newAlumniPassword" placeholder="Enter temporary password" style="width: 100%; box-sizing: border-box; padding-right: 40px;">
+                            <span onclick="var input = this.previousElementSibling; var isPass = input.type === 'password'; input.type = isPass ? 'text' : 'password'; this.querySelector('.eye-open').style.display = isPass ? 'none' : 'block'; this.querySelector('.eye-closed').style.display = isPass ? 'block' : 'none';" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center; color: #666;">
+                                <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <svg class="eye-closed" style="display: none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </span>
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-btn" id="submitNewAlumniBtn">Create Alumni Account</button>
+                </form>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Current Alumni Directory</h2>
+                <button id="exportCsvBtn" onclick="exportToCSV()" style="background-color: #17a2b8; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#138496'" onmouseout="this.style.backgroundColor='#17a2b8'">Export CSV</button>
+            </div>
+            <div style="overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
+                    <thead>
+                        <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; text-align: left;">
+                            <th style="padding: 15px; color: #495057;">Profile</th>
+                            <th style="padding: 15px; color: #495057;">Name</th>
+                            <th style="padding: 15px; color: #495057;">Roll No</th>
+                            <th style="padding: 15px; color: #495057;">Batch</th>
+                            <th style="padding: 15px; color: #495057;">Alumni ID</th>
+                            <th style="padding: 15px; color: #495057;">Gender</th>
+                            <th style="padding: 15px; color: #495057;">Email</th>
+                            <th style="padding: 15px; color: #495057;">City</th>
+                            <th style="padding: 15px; color: #495057;">Country</th>
+                            <th style="padding: 15px; color: #495057; text-align: center;">Edit</th>
+                            <th style="padding: 15px; color: #495057; text-align: center;">View</th>
+                            <th style="padding: 15px; color: #495057; text-align: center;">Delete</th>
+                        </tr>
+                        <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; text-align: left;">
+                            <th style="padding: 5px;"></th>
+                            <th style="padding: 5px;"><select id="filterName" style="width: 100%; padding: 6px; box-sizing: border-box; font-weight: normal; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"><option value="">All</option></select></th>
+                            <th style="padding: 5px;"><select id="filterRoll" style="width: 100%; padding: 6px; box-sizing: border-box; font-weight: normal; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"><option value="">All</option></select></th>
+                            <th style="padding: 5px;"><select id="filterBatch" style="width: 100%; padding: 6px; box-sizing: border-box; font-weight: normal; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"><option value="">All</option></select></th>
+                            <th style="padding: 5px;"><select id="filterAlumniId" style="width: 100%; padding: 6px; box-sizing: border-box; font-weight: normal; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"><option value="">All</option></select></th>
+                            <th style="padding: 5px;"><select id="filterGender" style="width: 100%; padding: 6px; box-sizing: border-box; font-weight: normal; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"><option value="">All</option></select></th>
+                            <th style="padding: 5px;"><select id="filterEmail" style="width: 100%; padding: 6px; box-sizing: border-box; font-weight: normal; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"><option value="">All</option></select></th>
+                            <th style="padding: 5px;"><select id="filterCity" style="width: 100%; padding: 6px; box-sizing: border-box; font-weight: normal; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"><option value="">All</option></select></th>
+                            <th style="padding: 5px;"><select id="filterCountry" style="width: 100%; padding: 6px; box-sizing: border-box; font-weight: normal; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"><option value="">All</option></select></th>
+                            <th colspan="3" style="padding: 5px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="userGrid">
+                        <!-- Alumni will be dynamically populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.API_URL;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.checkAccess()) return;
+            const adminUser = localStorage.getItem('adminUser');
+            
+            document.addEventListener('HeaderLoaded', () => {
+                if (adminUser) {
+                    try {
+                        const user = JSON.parse(adminUser);
+                        if (user && user.name) {
+                            let avatarColor = 'c62828';
+                            if (user.role === 'faculty') avatarColor = '0D8ABC';
+                            
+                            document.getElementById('headerProfilePic').src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=${avatarColor}&color=fff`;
+                            
+                            if (user.role === 'faculty') {
+                                const style = document.createElement('style');
+                                style.innerHTML = `
+                                    .submit-btn, .btn-primary, .btn-approve { background-color: #0D8ABC !important; }
+                                    .submit-btn:hover, .btn-primary:hover, .btn-approve:hover { background-color: #0b739e !important; }
+                                    #logoutBtn { color: #0D8ABC !important; }
+                                    h1, h2, h3, .page-title { color: #0D8ABC !important; }
+                                `;
+                                document.head.appendChild(style);
+                                
+                                // Update breadcrumb link
+                                const backLinks = document.querySelectorAll('a[href="Admin-Main-Screen.html"]');
+                                backLinks.forEach(link => {
+                                    link.href = '../../Alumni/Alumni-Main-Screen.html';
+                                    if (!link.classList.contains('cancel-btn')) {
+                                        link.textContent = '← Back to Dashboard';
+                                    }
+                                });
+                            }
+                        }
+                    } catch(e) {}
+                }
+            });
+
+            let currentAlumniList = [];
+            let displayedAlumniList = [];
+            
+            function renderAlumniTable(list) {
+                displayedAlumniList = list;
+                const userGrid = document.getElementById('userGrid');
+                userGrid.innerHTML = '';
+                
+                if (list.length === 0) {
+                    userGrid.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 20px; color: #666;">No alumni found matching your criteria.</td></tr>';
+                    return;
+                }
+                
+                list.forEach(alumni => {
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid #eee';
+                    const imgSrc = alumni.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(alumni.name)}&background=random`;
+                    const verifiedBadge = `<svg style="width: 16px; height: 16px; margin-left: 5px; vertical-align: text-bottom;" viewBox="0 0 24 24" fill="#28a745" title="Verified Alumni"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`;
+                    
+                    row.innerHTML = `
+                        <td style="padding: 15px; vertical-align: middle;"><img src="${imgSrc}" alt="Alumni" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 1px solid #ddd;"></td>
+                        <td style="padding: 15px; vertical-align: middle; font-weight: bold; color: #333;">${escapeHtml(alumni.name)}${verifiedBadge}</td>
+                        <td style="padding: 15px; vertical-align: middle;">${escapeHtml(alumni.rollNumber)}</td>
+                        <td style="padding: 15px; vertical-align: middle;">${escapeHtml(alumni.batchYear)}</td>
+                        <td style="padding: 15px; vertical-align: middle; font-weight: bold; color: #0D8ABC;">${escapeHtml(alumni.alumniId) || 'N/A'}</td>
+                        <td style="padding: 15px; vertical-align: middle;">${escapeHtml(alumni.gender) || 'N/A'}</td>
+                        <td style="padding: 15px; vertical-align: middle; color: #0D8ABC; word-break: break-all;">${escapeHtml(alumni.email)}</td>
+                        <td style="padding: 15px; vertical-align: middle;">${escapeHtml(alumni.city) || 'N/A'}</td>
+                        <td style="padding: 15px; vertical-align: middle;">${escapeHtml(alumni.country) || 'N/A'}</td>
+                        <td style="padding: 15px; vertical-align: middle; text-align: center;">
+                            <button onclick="window.location.href='Edit-Alumni.html?id=${alumni._id}'" style="background-color: #ffc107; color: #333; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">Edit</button>
+                        </td>
+                        <td style="padding: 15px; vertical-align: middle; text-align: center;">
+                            <button onclick="window.location.href='../../Alumni/Alumni-View-Details.html?id=${alumni._id}'" style="background-color: #17a2b8; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">View</button>
+                        </td>
+                        <td style="padding: 15px; vertical-align: middle; text-align: center;">
+                            <button onclick="deleteAlumni('${alumni._id}')" style="background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">Delete</button>
+                        </td>
+                    `;
+                    document.getElementById('userGrid').appendChild(row);
+                });
+            }
+
+            function populateTableFilters() {
+                const filters = [
+                    { id: 'filterName', key: 'name' },
+                    { id: 'filterRoll', key: 'rollNumber' },
+                    { id: 'filterBatch', key: 'batchYear' },
+                    { id: 'filterAlumniId', key: 'alumniId' },
+                    { id: 'filterGender', key: 'gender' },
+                    { id: 'filterEmail', key: 'email' },
+                    { id: 'filterCity', key: 'city' },
+                    { id: 'filterCountry', key: 'country' }
+                ];
+
+                filters.forEach(f => {
+                    const select = document.getElementById(f.id);
+                    if (!select) return;
+                    const currentVal = select.value;
+                    const uniqueValues = [...new Set(currentAlumniList.map(a => a[f.key]).filter(Boolean))].sort();
+                    select.innerHTML = '<option value="">All</option>' + uniqueValues.map(v => `<option value="${escapeHtml(String(v))}">${escapeHtml(String(v))}</option>`).join('');
+                    select.value = currentVal;
+                });
+            }
+
+            window.applyTableFilters = function() {
+                const fName = document.getElementById('filterName').value;
+                const fRoll = document.getElementById('filterRoll').value;
+                const fBatch = document.getElementById('filterBatch').value;
+                const fAlumniId = document.getElementById('filterAlumniId').value;
+                const fGender = document.getElementById('filterGender').value;
+                const fEmail = document.getElementById('filterEmail').value;
+                const fCity = document.getElementById('filterCity').value;
+                const fCountry = document.getElementById('filterCountry').value;
+
+                const filtered = currentAlumniList.filter(a => {
+                    const matchesName = !fName || String(a.name || '') === fName;
+                    const matchesRoll = !fRoll || String(a.rollNumber || '') === fRoll;
+                    const matchesBatch = !fBatch || String(a.batchYear || '') === fBatch;
+                    const matchesAlumniId = !fAlumniId || String(a.alumniId || '') === fAlumniId;
+                    const matchesGender = !fGender || String(a.gender || '') === fGender;
+                    const matchesEmail = !fEmail || String(a.email || '') === fEmail;
+                    const matchesCity = !fCity || String(a.city || '') === fCity;
+                    const matchesCountry = !fCountry || String(a.country || '') === fCountry;
+                    
+                    return matchesName && matchesRoll && matchesBatch && matchesAlumniId && matchesGender && matchesEmail && matchesCity && matchesCountry;
+                });
+                
+                renderAlumniTable(filtered);
+            }
+
+            async function loadAlumni() {
+                try {
+                    const response = await fetch(`${API_URL}/users`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                        }
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        const userGrid = document.getElementById('userGrid');
+                        userGrid.innerHTML = '';
+                        
+                        const alumniList = data.users.filter(u => u.userType === 'alumni' && (!u.rollNumber || !u.rollNumber.startsWith('PENDING-')));
+                        currentAlumniList = alumniList;
+                        populateTableFilters();
+                        applyTableFilters();
+                    }
+                } catch (error) {
+                    console.error("Failed to load alumni", error);
+                }
+            }
+
+            // Form submission logic
+            const addAlumniForm = document.getElementById('addAlumniForm');
+            const addAlumniMessage = document.getElementById('addAlumniMessage');
+
+            addAlumniForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitBtn = document.getElementById('submitNewAlumniBtn');
+                submitBtn.textContent = 'Creating...';
+                submitBtn.disabled = true;
+
+                const name = document.getElementById('newAlumniName').value.trim();
+                const rollNumber = document.getElementById('newAlumniRoll').value.trim();
+                const batchYear = document.getElementById('newAlumniBatch').value.trim();
+                const email = document.getElementById('newAlumniEmail').value.trim();
+                const password = document.getElementById('newAlumniPassword').value.trim();
+
+                try {
+                    const response = await fetch(`${API_URL}/add-alumni`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                        },
+                        body: JSON.stringify({ name, email, rollNumber, batchYear, password })
+                    });
+
+                    const data = await response.json();
+                    addAlumniMessage.style.display = 'block';
+
+                    if (response.ok && data.success) {
+                        addAlumniMessage.style.backgroundColor = '#d4edda';
+                        addAlumniMessage.style.color = '#155724';
+                        addAlumniMessage.textContent = 'Alumni added successfully!';
+                        addAlumniForm.reset();
+                        loadAlumni();
+                        setTimeout(() => addAlumniMessage.style.display = 'none', 3000);
+                    } else {
+                        addAlumniMessage.style.backgroundColor = '#f8d7da';
+                        addAlumniMessage.style.color = '#721c24';
+                        addAlumniMessage.textContent = data.message || 'Failed to add alumni.';
+                    }
+                } catch (error) {
+                    addAlumniMessage.style.backgroundColor = '#f8d7da';
+                    addAlumniMessage.style.color = '#721c24';
+                    addAlumniMessage.textContent = 'Network error occurred. Make sure your server is running.';
+                    addAlumniMessage.style.display = 'block';
+                } finally {
+                    submitBtn.textContent = 'Create Alumni Account';
+                    submitBtn.disabled = false;
+                }
+            });
+            
+            function escapeHtml(unsafe) {
+                if (!unsafe) return "";
+                return unsafe.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            }
+
+            window.deleteAlumni = async function(alumniId) {
+                if (!confirm("Are you sure you want to permanently remove this Alumni?")) return;
+                try {
+                    const response = await fetch(`${API_URL}/alumni/${alumniId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` } });
+                    const data = await response.json();
+                    if (response.ok && data.success) loadAlumni();
+                    else alert(data.message || 'Failed to remove alumni.');
+                } catch(error) { console.error("Error removing alumni", error); }
+            };
+            
+            window.exportToCSV = function() {
+                if (!displayedAlumniList || displayedAlumniList.length === 0) {
+                    alert("No alumni data available to export.");
+                    return;
+                }
+                
+                const headers = ['Name', 'Roll Number', 'Batch Year', 'Alumni ID', 'Email', 'Gender', 'Phone', 'Company', 'Designation', 'City', 'Country'];
+                const csvRows = [headers.join(',')];
+                
+                displayedAlumniList.forEach(alumni => {
+                    const row = [
+                        `"${(alumni.name || '').replace(/"/g, '""')}"`,
+                        `"${(alumni.rollNumber || '').replace(/"/g, '""')}"`,
+                        `"${(alumni.batchYear || '').toString().replace(/"/g, '""')}"`,
+                        `"${(alumni.alumniId || '').replace(/"/g, '""')}"`,
+                        `"${(alumni.email || '').replace(/"/g, '""')}"`,
+                        `"${(alumni.gender || '').replace(/"/g, '""')}"`,
+                        `"${(alumni.phone || '').replace(/"/g, '""')}"`,
+                        `"${(alumni.currentCompany || '').replace(/"/g, '""')}"`,
+                        `"${(alumni.designation || '').replace(/"/g, '""')}"`,
+                        `"${(alumni.city || '').replace(/"/g, '""')}"`,
+                        `"${(alumni.country || '').replace(/"/g, '""')}"`
+                    ];
+                    csvRows.push(row.join(','));
+                });
+                
+                const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'Alumni_Directory.csv';
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+            
+            loadAlumni();
+            
+            // Bind filter event listeners
+            ['filterName', 'filterRoll', 'filterBatch', 'filterGender', 'filterEmail', 'filterCity', 'filterCountry'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', applyTableFilters);
+            });
+        });
+    </script>
+</body>
+</html>

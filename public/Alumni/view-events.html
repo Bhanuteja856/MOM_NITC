@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Events - NITC Alumni</title>
+    <link rel="stylesheet" href="CSS/AlumniStyling.css">
+    <style>
+        /* Custom styles for the events feed grid */
+        .events-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .event-card {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            height: 100%;
+        }
+        .event-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+        }
+        .event-card h3 {
+            margin: 0 0 10px 0;
+            color: #003366;
+            font-size: 1.2rem;
+            font-weight: 700;
+            line-height: 1.4;
+            text-align: center;
+        }
+        .event-card .event-meta-info {
+            font-size: 0.85rem;
+            color: #555;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: center;
+        }
+        .event-card .event-meta-info span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            text-align: center;
+        }
+        .event-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #f1f5f9;
+        }
+        .event-card-placeholder {
+            background: linear-gradient(135deg, #0D8ABC, #003366);
+            height: 150px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3em;
+        }
+        .dark-mode .event-card-placeholder {
+            background: linear-gradient(135deg, #1e3a8a, #0f172a);
+        }
+        .event-card .details-btn {
+            margin-top: auto;
+            padding: 10px 20px;
+            background-color: #0D8ABC;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            font-size: 0.95rem;
+            width: 100%;
+        }
+        .event-card .details-btn:hover {
+            background-color: #02648a;
+            box-shadow: 0 4px 10px rgba(13, 138, 188, 0.3);
+        }
+
+        /* Register & Unregister Buttons */
+        .register-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .register-btn:hover {
+            background-color: #218838;
+        }
+        .register-btn:active {
+            transform: scale(0.98);
+        }
+        .register-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .unregister-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .unregister-btn:hover {
+            background-color: #c82333;
+        }
+        .unregister-btn:active {
+            transform: scale(0.98);
+        }
+        .no-events {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px dashed #ccc;
+            grid-column: 1 / -1;
+        }
+
+        /* Premium Overlay Modal Styling */
+        .event-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .event-modal-content {
+            background-color: #ffffff;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #e2e8f0;
+            width: 100%;
+            max-width: 650px;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            position: relative;
+            animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 90vh;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .dark-mode .event-modal-content {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .event-modal-close {
+            color: #94a3b8;
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+            z-index: 10;
+        }
+        
+        .event-modal-close:hover {
+            color: #ef4444;
+        }
+
+        .modal-banner {
+            width: 100%;
+            max-height: 280px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #f1f5f9;
+        }
+        .dark-mode .modal-banner {
+            border-color: #334155;
+        }
+
+        .modal-title {
+            color: #003366;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1.3;
+        }
+        .dark-mode .modal-title {
+            color: #60a5fa !important;
+        }
+
+        .modal-section-title {
+            font-size: 1.1rem;
+            color: #003366;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 6px;
+            font-weight: 700;
+        }
+        .dark-mode .modal-section-title {
+            color: #60a5fa !important;
+            border-bottom-color: #334155 !important;
+        }
+
+        .modal-desc {
+            color: #334155;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+        .dark-mode .modal-desc {
+            color: #cbd5e1 !important;
+        }
+
+        .modal-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #f1f5f9;
+        }
+        .dark-mode .modal-meta-grid {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+        }
+
+        .modal-meta-item {
+            font-size: 0.9rem;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dark-mode .modal-meta-item {
+            color: #94a3b8 !important;
+        }
+        .modal-meta-item strong {
+            color: #0f172a;
+        }
+        .dark-mode .modal-meta-item strong {
+            color: #cbd5e1 !important;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MASTER PAGE PLACEHOLDERS -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-alumni.html"></div>
+
+    <!-- Main Content Area -->
+    <div class="main-container">
+        
+        <!-- Center Content (Event Feed) -->
+        <div class="center-content">
+            <h2>Upcoming & Posted Events</h2>
+            
+            <div style="margin-bottom: 20px; position: relative;">
+                <input type="text" id="eventSearchInput" placeholder="Search by event title or location..." style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
+                <span id="clearSearchBtn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #999; font-weight: bold; font-size: 1.5em; display: none;" title="Clear search">&times;</span>
+            </div>
+
+            <div class="events-container" id="eventsList">
+                <!-- Events will be populated here dynamically -->
+            </div>
+        </div>
+
+        <!-- Right Sidebar (Announcements) -->
+        <div class="right-sidebar">
+            <h3><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><path d="m3 11 18-9v18L3 13"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>Admin Announcements</h3>
+            <div id="announcementsList">
+                <p style="color: #666; font-style: italic;">Loading announcements...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modals are loaded here dynamically -->
+    <div id="modal-placeholder"></div>
+
+    <!-- Event Details Modal -->
+    <div id="eventDetailsModal" class="event-modal" onclick="if(event.target === this) closeEventModal()">
+        <div class="event-modal-content">
+            <span class="event-modal-close" onclick="closeEventModal()">&times;</span>
+            <div id="eventDetailsContent"></div>
+        </div>
+    </div>
+
+    <!-- Load the Master Page Script -->
+    <script src="../js/load-components.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.checkAccess()) return;
+
+            // User Data Handling
+            const storedUser = localStorage.getItem('user');
+            let currentUser = { name: "Alumni" };
+            
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    if (user && user.name) {
+                        currentUser = user;
+                    }
+                } catch(e) {
+                    console.error("Error parsing user data", e);
+                }
+            }
+
+            document.addEventListener('HeaderLoaded', () => {
+                if (currentUser && currentUser.name !== "Alumni") {
+                    document.getElementById('alumniNameDisplay').textContent = currentUser.name;
+                    document.getElementById('headerProfilePic').src = currentUser.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=0D8ABC&color=fff`;
+                }
+            });
+
+            const API_URL = window.API_URL;
+            const token = localStorage.getItem('token');
+            
+            let allApprovedEvents = [];
+            let currentOpenEventId = null;
+
+            // Open Event Details Modal
+            window.openEventDetails = function(eventId) {
+                currentOpenEventId = eventId;
+                const event = allApprovedEvents.find(e => e._id === eventId);
+                if (!event) return;
+
+                const eventModal = document.getElementById('eventDetailsModal');
+                const contentContainer = document.getElementById('eventDetailsContent');
+                if (!eventModal || !contentContainer) return;
+
+                const imageHtml = event.image ? 
+                    `<img class="modal-banner" src="${event.image}" alt="Event Banner">` : 
+                    `<div class="event-card-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>`;
+
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                const eventDate = new Date(event.date);
+                const isCreator = event.uploaderId && currentUser && (event.uploaderId === currentUser.id || event.uploaderId === currentUser._id);
+                const isAdminOrSuperAdmin = !!(localStorage.getItem('adminToken') || localStorage.getItem('superAdminToken') || (currentUser && ['admin', 'super_admin'].includes(currentUser.role)));
+
+                let downloadBtnHtml = '';
+                if (isAdminOrSuperAdmin || isCreator) {
+                    downloadBtnHtml = `
+                        <button class="register-btn" style="background-color: #0D8ABC;" onclick="downloadRegistrations('${event._id}')">
+                            Get Data
+                        </button>
+                    `;
+                }
+
+                let actionHtml;
+                if (eventDate < now) {
+                    actionHtml = `
+                        <span style="background: #6c757d; color: white; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 1rem; display: inline-block;">Event Completed</span>
+                        ${downloadBtnHtml}
+                    `;
+                } else {
+                    const isRegistered = !!event.isRegistered;
+                    const btnText = isRegistered ? 'Unregister' : 'Register Now';
+                    const btnClass = isRegistered ? 'unregister-btn' : 'register-btn';
+                    actionHtml = `
+                        <button class="${btnClass}" id="btn-register-${event._id}" onclick="toggleRegistration('${event._id}')">
+                            ${btnText}
+                        </button>
+                        ${downloadBtnHtml}
+                    `;
+                }
+
+                contentContainer.innerHTML = `
+                    ${imageHtml}
+                    <h2 class="modal-title">${escapeHtml(event.title)}</h2>
+                    
+                    <div class="modal-meta-grid">
+                        <div class="modal-meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            <span><strong>Date:</strong> ${escapeHtml(event.date)}</span>
+                        </div>
+                        <div class="modal-meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span><strong>Time:</strong> ${escapeHtml(event.time)}</span>
+                        </div>
+                        <div class="modal-meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            <span><strong>Location:</strong> ${escapeHtml(event.location)}</span>
+                        </div>
+                        <div class="modal-meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            <span><strong>Target Audience:</strong> ${escapeHtml(event.eligibility)}</span>
+                        </div>
+                        <div class="modal-meta-item" style="grid-column: 1 / -1;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            <span><strong>Posted By:</strong> ${escapeHtml(event.postedBy)}</span>
+                        </div>
+                    </div>
+
+                    <h3 class="modal-section-title">Event Description</h3>
+                    <div class="modal-desc">${escapeHtml(event.description).replace(/\n/g, '<br>')}</div>
+
+                    <div class="modal-actions">
+                        ${actionHtml}
+                    </div>
+                `;
+
+                eventModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            };
+
+            // Close Event Details Modal
+            window.closeEventModal = function() {
+                currentOpenEventId = null;
+                const eventModal = document.getElementById('eventDetailsModal');
+                if (eventModal) {
+                    eventModal.style.display = 'none';
+                }
+                document.body.style.overflow = 'auto';
+            };
+
+            function displayEvents() {
+                const eventsListContainer = document.getElementById('eventsList');
+                const searchTerm = document.getElementById('eventSearchInput').value.toLowerCase();
+                const clearBtn = document.getElementById('clearSearchBtn');
+                if (clearBtn) clearBtn.style.display = searchTerm ? 'block' : 'none';
+
+                let eventsToDisplay = allApprovedEvents;
+
+                if (searchTerm) {
+                    eventsToDisplay = allApprovedEvents.filter(event => {
+                        const searchString = `${event.title || ''} ${event.location || ''}`.toLowerCase();
+                        return searchString.includes(searchTerm);
+                    });
+                }
+
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+
+                // Split into upcoming and past events
+                const upcomingEvents = eventsToDisplay.filter(e => new Date(e.date) >= now);
+                const pastEvents = eventsToDisplay.filter(e => new Date(e.date) < now);
+
+                // Sort upcoming events ascending (soonest first)
+                upcomingEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+                // Sort past events descending (most recent past event first)
+                pastEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                // Combine: upcoming events first, then past events
+                eventsToDisplay = [...upcomingEvents, ...pastEvents];
+
+                if (eventsToDisplay.length === 0) {
+                    eventsListContainer.innerHTML = '<div class="no-events">No events found matching your criteria.</div>';
+                    return;
+                }
+
+                eventsListContainer.innerHTML = '';
+
+                eventsToDisplay.forEach(event => {
+                    const imageHtml = event.image ? 
+                        `<img src="${event.image}" alt="Event Banner">` : 
+                        `<div class="event-card-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>`;
+
+                    const eventCard = document.createElement('div');
+                    eventCard.className = 'event-card';
+                    
+                    eventCard.innerHTML = `
+                        <div>
+                            ${imageHtml}
+                            <h3>${escapeHtml(event.title)}</h3>
+                            <div class="event-meta-info">
+                                <span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                    ${escapeHtml(event.date)}
+                                </span>
+                                <span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                    ${escapeHtml(event.location)}
+                                </span>
+                            </div>
+                        </div>
+                        <button class="details-btn" onclick="openEventDetails('${event._id}')">View Details</button>
+                    `;
+                    eventsListContainer.appendChild(eventCard);
+                });
+
+                // If modal is currently open, refresh its content to capture updated states (e.g. registration)
+                if (currentOpenEventId) {
+                    openEventDetails(currentOpenEventId);
+                }
+            }
+
+            // Fetch events and then render
+            async function fetchAndRenderEvents() {
+                const eventsListContainer = document.getElementById('eventsList');
+                eventsListContainer.innerHTML = '<p style="text-align:center; color:#666;">Loading events...</p>';
+                
+                try {
+                    const response = await fetch(`${API_URL}/events`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        allApprovedEvents = data.events.filter(event => event.status === 'Approved');
+                        displayEvents();
+                    } else {
+                        // Automatically redirect to login if the token is invalid or expired
+                        if (data.message && data.message.toLowerCase().includes('token')) {
+                            alert('Your session has expired. Please log in again.');
+                            localStorage.removeItem('token');
+                            localStorage.removeItem('user');
+                            window.location.href = '../login.html';
+                            return;
+                        }
+                        eventsListContainer.innerHTML = `<div class="no-events">Failed to load events: ${escapeHtml(data.message || 'Unauthorized')}</div>`;
+                    }
+                } catch(error) {
+                    console.error("Failed to load events", error);
+                    eventsListContainer.innerHTML = '<div class="no-events">Failed to connect to the server. Is your backend running?</div>';
+                }
+            }
+
+            // Global function to handle event registration
+            window.toggleRegistration = async function(eventId) {
+                const btn = document.getElementById('btn-register-' + eventId);
+                if (!btn) return;
+                const isRegistering = btn.textContent.trim() === 'Register Now';
+                const endpoint = isRegistering ? `/events/${eventId}/register` : `/events/${eventId}/unregister`;
+                
+                try {
+                    btn.disabled = true;
+                    const res = await fetch(`${API_URL}${endpoint}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        if (isRegistering) {
+                            btn.textContent = 'Unregister';
+                            btn.className = 'unregister-btn';
+                            alert('You have successfully registered for the event!');
+                        } else {
+                            btn.textContent = 'Register Now';
+                            btn.className = 'register-btn';
+                            alert('You have cancelled your registration for the event.');
+                        }
+                        // Optionally reload to update registered count or state cache
+                        fetchAndRenderEvents();
+                    } else {
+                        alert(data.message || 'Failed to update registration.');
+                    }
+                } catch (err) {
+                    console.error("Toggle registration error", err);
+                    alert('Error updating registration. Please try again.');
+                } finally {
+                    btn.disabled = false;
+                }
+            };
+
+            // Download Registrations CSV Function
+            window.downloadRegistrations = async function(eventId) {
+                const downloadToken = localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('superAdminToken');
+                try {
+                    const response = await fetch(`${API_URL}/events/${eventId}/registrations/download`, {
+                        headers: {
+                            'Authorization': `Bearer ${downloadToken}`
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        const data = await response.json().catch(() => ({}));
+                        alert(data.message || 'Failed to download registrations.');
+                        return;
+                    }
+                    
+                    const blob = await response.blob();
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = 'event_registrations.csv';
+                    if (contentDisposition && contentDisposition.includes('filename=')) {
+                        const matches = contentDisposition.match(/filename="?([^"]+)"?/);
+                        if (matches && matches[1]) {
+                            filename = matches[1];
+                        }
+                    }
+                    
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                } catch (err) {
+                    console.error("Download error", err);
+                    alert('Error downloading file. Please check connection.');
+                }
+            };
+            
+            async function loadSideBarAnnouncements() {
+                const announcementsList = document.getElementById('announcementsList');
+                if (!announcementsList) return;
+
+                try {
+                    const currentToken = localStorage.getItem('token');
+                    const headers = currentToken ? { 'Authorization': `Bearer ${currentToken}` } : {};
+                    const response = await fetch(`${API_URL}/announcements`, { headers });
+                    if (!response.ok) throw new Error('API missing');
+                    const data = await response.json();
+                    renderSideBarAnnouncements(data.success ? data.announcements : []);
+                } catch (error) {
+                    const local = JSON.parse(localStorage.getItem('adminAnnouncements')) || [];
+                    renderSideBarAnnouncements(local);
+                }
+            }
+
+            function renderSideBarAnnouncements(announcements) {
+                const announcementsList = document.getElementById('announcementsList');
+                announcementsList.innerHTML = '';
+                
+                const now = new Date();
+                const twoDaysInMillis = 2 * 24 * 60 * 60 * 1000;
+                const validAnnouncements = announcements.filter(ann => {
+                    if (ann.isActive === false) return false;
+                    if (!ann.expiryDate) return true;
+                    const expiry = new Date(ann.expiryDate);
+                    return isNaN(expiry.getTime()) || (now.getTime() <= expiry.getTime() + twoDaysInMillis);
+                });
+
+                if (validAnnouncements.length === 0) {
+                    announcementsList.innerHTML = '<p style="color: #666; font-style: italic;">No new announcements.</p>';
+                    return;
+                }
+                if (!document.getElementById('marquee-style')) {
+                    const style = document.createElement('style');
+                    style.id = 'marquee-style';
+                    style.innerHTML = '.marquee-content:hover { animation-play-state: paused !important; } @keyframes marquee-up { 0% { transform: translateY(100%); } 100% { transform: translateY(-100%); } }';
+                    document.head.appendChild(style);
+                }
+                let htmlStr = '<div class="marquee-container" style="height: 100%; max-height: 400px; overflow: hidden; position: relative; padding-right: 5px;">';
+                htmlStr += '<div class="marquee-content" style="animation: marquee-up 15s linear infinite; display: flex; flex-direction: column;">';
+                // Sort newest first and limit to 5
+                validAnnouncements.sort((a, b) => new Date(b.date) - new Date(a.date));
+                validAnnouncements.slice(0, 5).forEach(ann => {
+                    const dateStr = new Date(ann.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                    htmlStr += `<div class="announcement"><h4>${escapeHtml(ann.title)}</h4><p>${escapeHtml(ann.content)}</p><span class="date">${escapeHtml(dateStr)}</span></div>`;
+                });
+                htmlStr += '</div></div>';
+                announcementsList.innerHTML = htmlStr;
+            }
+
+            const searchInput = document.getElementById('eventSearchInput');
+            const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+            if (searchInput) {
+                searchInput.addEventListener('input', displayEvents);
+            }
+            if (clearSearchBtn) {
+                clearSearchBtn.addEventListener('click', () => {
+                    searchInput.value = '';
+                    displayEvents();
+                });
+            }
+            fetchAndRenderEvents();
+            loadSideBarAnnouncements();
+        });
+    </script>
+    <div id="footer-placeholder"></div>
+</body>
+</html>

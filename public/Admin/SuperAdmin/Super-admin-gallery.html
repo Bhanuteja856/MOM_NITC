@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alumni Gallery - NITC</title>
+    <link rel="stylesheet" href="../CSS/SuperAdminStyling.css">
+    <link rel="stylesheet" href="../CSS/GalleryStyling.css">
+    <style>
+        /* Stylish Gallery Buttons */
+        .gallery-btn-container {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-stylish {
+            flex: 1;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 25px;
+            /* Modern Pill Shape */
+            font-weight: 600;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-edit-stylish {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .btn-edit-stylish:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-delete-stylish {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn-delete-stylish:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Image Modal Styles */
+        .image-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            overflow: auto;
+        }
+
+        .image-modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            /* Drops from top */
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 900px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+            animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #888;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #d9534f;
+        }
+
+        /* Loading Spinner Overlay */
+        #loadingOverlay {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #0D8ABC;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .category-badge {
+            display: inline-block;
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        /* Category Management Scrollbar styling */
+        #categoriesListContainer::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #categoriesListContainer::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        #categoriesListContainer::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+
+        #categoriesListContainer::-webkit-scrollbar-thumb:hover {
+            background: #aaa;
+        }
+
+        /* Responsive Layout adjustment */
+        @media (max-width: 992px) {
+            .center-content {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+
+            .gallery-main-view {
+                width: 100% !important;
+            }
+
+            .gallery-upload-sidebar {
+                position: static !important;
+                width: 100% !important;
+                box-sizing: border-box;
+                margin-top: 20px;
+            }
+        }
+
+        /* Dark Mode Specific styling for Categories Management */
+        body.dark-mode #categoriesListContainer {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+        }
+
+        body.dark-mode #newCategoryInput {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+
+        body.dark-mode #newCategoryInput::placeholder {
+            color: #64748b !important;
+        }
+
+        body.dark-mode #categoriesListContainer div {
+            border-bottom-color: #334155 !important;
+        }
+
+        body.dark-mode #categoriesListContainer span.category-name-span {
+            color: #f1f5f9 !important;
+        }
+
+        body.dark-mode #categoriesListContainer span.system-badge {
+            color: #64748b !important;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <h3 id="loadingText" style="color: #0D8ABC; margin: 0;">Processing...</h3>
+    </div>
+    <!-- Shared Super Admin Header injected here -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-superadmin.html"></div>
+    <script src="../../js/load-components.js"></script>
+    <!-- Scrolling Ticker -->
+    <div class="scrolling-ticker">
+        <div class="ticker-content" id="eventsTicker">
+            ⭐ Upcoming Event: Annual Alumni Meet 2026 - Nov 15th &nbsp; | &nbsp; ⭐ Webinar on Tech Trends - Dec 2nd
+            &nbsp; | &nbsp; ⭐ Registration open for Mentorship Program!
+        </div>
+    </div>
+    <!-- Main Content Area -->
+    <div class="main-container">
+        <!-- Center Content (Gallery) -->
+        <div class="center-content" style="display: flex; flex-direction: row; gap: 20px; align-items: flex-start;">
+            <!-- Gallery Grid on the left -->
+            <div class="gallery-main-view" style="flex: 3;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Alumni Gallery</h2>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="searchInput" placeholder="Search caption, batch, details..."
+                            style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; min-width: 250px;">
+                        <select id="categoryFilter"
+                            style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-weight: bold; color: #0D8ABC; background-color: #fff; cursor: pointer; min-width: 180px;">
+                            <option value="All">All Categories</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="gallery-grid" id="galleryGrid">
+                    <!-- Images will be displayed here dynamically -->
+                </div>
+            </div>
+            <!-- Upload section on the right -->
+            <div class="gallery-upload-sidebar"
+                style="flex: 1; position: sticky; top: 20px; background-color: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eaeaea;">
+                <h3
+                    style="margin-top: 0; color: #0D8ABC; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                    Upload a Picture</h3>
+                <div class="upload-section">
+                    <input type="file" id="imageInput" accept="image/*"
+                        style="width: 100%; margin-bottom: 15px; padding: 10px; border: 1px dashed #ccc; border-radius: 4px; box-sizing: border-box; background-color: #f9f9f9; cursor: pointer;">
+                    <div class="image-preview-container" id="previewContainer">
+                        <img id="imagePreview" src="#" alt="Image Preview">
+                    </div>
+                    <select id="imageCategory"
+                        style="width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"
+                        required>
+                        <option value="" disabled selected>-- Select a Category * --</option>
+                    </select>
+                    <input type="text" id="categoryDetailInput" placeholder="Enter category details..."
+                        style="display: none; width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    <input type="text" id="imageCaption" placeholder="Enter a caption for your image..."
+                        style="width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                    <div style="display: flex; gap: 10px; margin-top: 5px;">
+                        <button id="uploadBtn"
+                            style="flex: 1; background-color: #0D8ABC; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;">Upload
+                            Picture</button>
+                        <button id="cancelEditBtn"
+                            style="display: none; flex: 1; background-color: #6c757d; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;">Cancel
+                            Edit</button>
+                    </div>
+                </div>
+
+                <hr style="margin: 25px 0 20px 0; border: 0; border-top: 1px solid #eee;">
+                <h3 style="margin-top: 0; color: #0D8ABC; margin-bottom: 15px; padding-bottom: 5px;">Manage Categories
+                </h3>
+                <div class="category-management-section">
+                    <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                        <input type="text" id="newCategoryInput" placeholder="New category name..."
+                            style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 0.9em;">
+                        <button id="addCategoryBtn"
+                            style="background-color: #28a745; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9em; transition: background-color 0.2s;">Add</button>
+                    </div>
+
+                    <div id="categoriesListContainer"
+                        style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; padding: 10px; background-color: #fafafa;">
+                        <!-- Categories list will load dynamically -->
+                    </div>
+                </div>
+                <!-- Modal Enlarged View -->
+                <div id="enlargedViewContainer" class="image-modal">
+                    <div class="image-modal-content">
+                        <span class="close-modal" id="closeEnlargedBtn">&times;</span>
+                        <div style="text-align: center; margin-top: 10px;">
+                            <img id="enlargedImage" src="#" alt="Enlarged View"
+                                style="max-width: 100%; max-height: 70vh; border-radius: 4px; object-fit: contain; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        </div>
+                        <div id="enlargedCaption"
+                            style="font-size: 1em; color: #444; margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 4px; border-left: 4px solid #0D8ABC; text-align: left;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="modal-placeholder"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.checkAccess()) return;
+            document.addEventListener('HeaderLoaded', () => {
+                const storedUser = localStorage.getItem('superAdminUser');
+                if (storedUser) {
+                    try {
+                        const user = JSON.parse(storedUser);
+                        if (user && user.name) {
+                            const nameDisplay = document.getElementById('superAdminNameDisplay');
+                            if (nameDisplay) nameDisplay.textContent = user.name;
+                            document.getElementById('headerProfilePic').src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=4a148c&color=fff`;
+                        }
+                    } catch (e) { }
+                }
+            });
+            // Gallery Functionality
+            const imageInput = document.getElementById('imageInput');
+            const previewContainer = document.getElementById('previewContainer');
+            const imagePreview = document.getElementById('imagePreview');
+            const imageCaption = document.getElementById('imageCaption');
+            const imageCategory = document.getElementById('imageCategory');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const galleryGrid = document.getElementById('galleryGrid');
+            const categoryFilter = document.getElementById('categoryFilter');
+            const searchInput = document.getElementById('searchInput');
+            const API_URL = window.API_URL;
+            const token = localStorage.getItem('superAdminToken');
+            let galleryImages = [];
+            let editingImageId = null;
+            let currentUserId = null;
+            // Extract user ID from token to check ownership
+            if (token) {
+                try {
+                    const base64Url = token.split('.')[1];
+                    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                    const payload = JSON.parse(window.atob(base64));
+                    currentUserId = payload.id || payload._id;
+                } catch (e) { }
+            }
+            const categoryDetailInput = document.getElementById('categoryDetailInput');
+            imageCategory.addEventListener('change', function () {
+                const val = this.value;
+                if (val === 'Batch') {
+                    categoryDetailInput.style.display = 'block';
+                    categoryDetailInput.placeholder = 'Enter Batch Year (e.g., 2020-2023) *';
+                } else if (val === 'Occasion') {
+                    categoryDetailInput.style.display = 'block';
+                    categoryDetailInput.placeholder = 'Enter Occasion Name *';
+                } else if (val === 'Campus Life') {
+                    categoryDetailInput.style.display = 'block';
+                    categoryDetailInput.placeholder = 'Enter Campus Life Details *';
+                } else if (val === 'Achievements') {
+                    categoryDetailInput.style.display = 'block';
+                    categoryDetailInput.placeholder = 'Enter Achievement Details *';
+                } else if (val === 'Index') {
+                    categoryDetailInput.style.display = 'block';
+                    categoryDetailInput.placeholder = 'Enter Index Details *';
+                } else if (val === 'Others') {
+                    categoryDetailInput.style.display = 'block';
+                    categoryDetailInput.placeholder = 'Enter Custom Category Name *';
+                } else {
+                    // For dynamic categories details are optional
+                    categoryDetailInput.style.display = 'block';
+                    categoryDetailInput.placeholder = 'Enter details (optional)...';
+                }
+            });
+            categoryFilter.addEventListener('change', renderGallery);
+            searchInput.addEventListener('input', renderGallery);
+            function renderGallery() {
+                galleryGrid.innerHTML = '';
+                const selectedCategory = categoryFilter.value;
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                let filteredImages = galleryImages;
+                if (selectedCategory !== 'All') {
+                    filteredImages = filteredImages.filter(img => (img.category || 'Others') === selectedCategory);
+                }
+                if (searchTerm) {
+                    filteredImages = filteredImages.filter(img => {
+                        const searchString = `${img.caption || ''} ${img.category || ''} ${img.categoryDetail || ''} ${img.postedBy || ''}`.toLowerCase();
+                        return searchString.includes(searchTerm);
+                    });
+                }
+                if (filteredImages.length === 0) {
+                    galleryGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #666;">No pictures found for this category.</p>';
+                    return;
+                }
+                filteredImages.forEach((image) => {
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item';
+                    const isVisible = image.isVisible !== false;
+                    const hiddenBadge = !isVisible ? '<div style="background: #dc3545; color: white; padding: 2px 8px; border-radius: 4px; display: inline-block; font-size: 0.7em; margin-bottom: 5px; font-weight: bold;">HIDDEN</div><br>' : '';
+                    // Super Admins have access to edit and delete every image
+                    let actionsHtml = `
+                        <div class="gallery-btn-container" style="flex-wrap: wrap; gap: 5px;">
+                            <button class="btn-stylish btn-edit-stylish" onclick="editImage('${image._id}')">Edit</button>
+                            <button class="btn-stylish btn-delete-stylish" onclick="deleteImage('${image._id}')">Delete</button>
+                        </div>
+                        <div style="margin-top: 10px; font-size: 0.85em; background: #f9f9f9; padding: 8px; border-radius: 4px; border: 1px solid #eee; display: flex; justify-content: center; gap: 15px;">
+                            <label style="cursor: pointer; font-weight: bold; color: #28a745;"><input type="radio" name="visibility_${image._id}" value="true" ${isVisible ? 'checked' : ''} onchange="toggleVisibility('${image._id}', true)"> VISIBLE</label>
+                            <label style="cursor: pointer; font-weight: bold; color: #dc3545;"><input type="radio" name="visibility_${image._id}" value="false" ${!isVisible ? 'checked' : ''} onchange="toggleVisibility('${image._id}', false)"> INVISIBLE</label>
+                        </div>
+                    `;
+                    let displayCategory = escapeHtml(image.category) || 'Others';
+                    if (image.categoryDetail) {
+                        displayCategory += `: ${escapeHtml(image.categoryDetail)}`;
+                    }
+                    item.innerHTML = `
+                        ${hiddenBadge}
+                        <img src="${image.imageUrl}" alt="Gallery Image" style="width: 100%; aspect-ratio: 12 / 10; object-fit: cover; border-radius: 4px; margin-bottom: 10px; cursor: pointer; transition: transform 0.2s; ${!isVisible ? 'opacity: 0.5; filter: grayscale(80%);' : ''}" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" onclick="viewEnlargedImage('${image._id}')" title="Click to enlarge">
+                        <div class="category-badge">${displayCategory}</div>
+                        <div class="caption">${escapeHtml(image.caption) || 'No caption'}</div>
+                        <div style="font-size: 0.8em; color: #888; margin-top: 5px;">Uploaded by: <strong>${escapeHtml(image.postedBy)}</strong></div>
+                        ${actionsHtml}
+                    `;
+
+                    galleryGrid.appendChild(item);
+                });
+            }
+
+            // Make delete function globally accessible
+            window.deleteImage = async function (id) {
+                if (confirm('Are you sure you want to delete this picture?')) {
+                    try {
+                        const response = await fetch(`${API_URL}/gallery/${id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (response.ok) {
+                            loadGallery();
+                        } else { alert("Failed to delete image."); }
+                    } catch (error) { console.error("Error deleting image", error); }
+                }
+            }
+
+            window.toggleVisibility = async function (id, isVisible) {
+                try {
+                    const response = await fetch(`${API_URL}/gallery/${id}/visibility`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ isVisible })
+                    });
+                    if (response.ok) {
+                        // Update local array directly to prevent browser caching issues and avoid full reload
+                        const imageIndex = galleryImages.findIndex(img => img._id === id);
+                        if (imageIndex !== -1) {
+                            galleryImages[imageIndex].isVisible = isVisible;
+                            renderGallery();
+                        } else {
+                            loadGallery();
+                        }
+                    } else { alert("Failed to update visibility."); }
+                } catch (error) { console.error("Error updating visibility", error); }
+            };
+
+            // View enlarged image functionality
+            window.viewEnlargedImage = function (id) {
+                const imageToView = galleryImages.find(img => img._id === id);
+                if (imageToView) {
+                    document.getElementById('enlargedImage').src = imageToView.imageUrl;
+                    const captionText = escapeHtml(imageToView.caption) || '<em>No caption provided</em>';
+
+                    let displayCategory = escapeHtml(imageToView.category) || 'Others';
+                    if (imageToView.categoryDetail) {
+                        displayCategory += `: ${escapeHtml(imageToView.categoryDetail)}`;
+                    }
+
+                    document.getElementById('enlargedCaption').innerHTML = `<strong>Category:</strong> <span class="category-badge">${displayCategory}</span><br/><br/><strong>Caption:</strong><br/>${captionText}<br/><br/><span style="font-size:0.85em; color:#888;">Posted by: ${escapeHtml(imageToView.postedBy)}</span>`;
+                    document.getElementById('enlargedViewContainer').style.display = 'block';
+                }
+            };
+
+            // Close enlarged view
+            document.getElementById('closeEnlargedBtn').addEventListener('click', () => {
+                document.getElementById('enlargedViewContainer').style.display = 'none';
+            });
+
+            // Close enlarged view when clicking outside the image
+            window.addEventListener('click', (e) => {
+                if (e.target === document.getElementById('enlargedViewContainer')) {
+                    document.getElementById('enlargedViewContainer').style.display = 'none';
+                }
+            });
+
+            // Make edit function globally accessible
+            window.editImage = function (id) {
+                const imageToEdit = galleryImages.find(img => img._id === id);
+                if (imageToEdit) {
+                    editingImageId = id;
+                    imageCaption.value = imageToEdit.caption || '';
+                    imageCategory.value = imageToEdit.category || '';
+                    categoryDetailInput.value = imageToEdit.categoryDetail || '';
+                    imageCategory.dispatchEvent(new Event('change')); // Trigger visibility logic
+
+                    // Show existing image in preview
+                    imagePreview.src = imageToEdit.imageUrl;
+                    previewContainer.style.display = 'block';
+                    currentDataUrl = imageToEdit.imageUrl; // Keep the existing image so it passes the check
+
+                    uploadBtn.textContent = 'Update Picture';
+                    document.getElementById('cancelEditBtn').style.display = 'block';
+                    document.querySelector('.gallery-upload-sidebar').scrollIntoView({ behavior: 'smooth' });
+                }
+            };
+
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            cancelEditBtn.addEventListener('click', () => {
+                editingImageId = null;
+                imageInput.value = '';
+                imageCaption.value = '';
+                imageCategory.value = '';
+                categoryDetailInput.value = '';
+                categoryDetailInput.style.display = 'none';
+                currentDataUrl = null;
+                previewContainer.style.display = 'none';
+                imagePreview.src = '#';
+                uploadBtn.textContent = 'Upload Picture';
+                cancelEditBtn.style.display = 'none';
+            });
+
+            // Handle image selection preview
+            let currentDataUrl = null;
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const loadingText = document.getElementById('loadingText');
+
+            imageInput.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Quick validation to prevent crashing the browser or server
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert("File is too large! Please select an image under 5MB.");
+                        imageInput.value = '';
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        currentDataUrl = event.target.result;
+                        imagePreview.src = currentDataUrl;
+                        previewContainer.style.display = 'block';
+                    }
+                    reader.onerror = function () {
+                        alert("Failed to read the file.");
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    currentDataUrl = null;
+                    previewContainer.style.display = 'none';
+                    imagePreview.src = '#';
+                }
+            });
+
+            // Handle upload button click
+            uploadBtn.addEventListener('click', async () => {
+                if (!currentDataUrl) {
+                    alert('Please select an image first.');
+                    return;
+                }
+                if (!imageCategory.value) {
+                    alert('Please select a category for the picture.');
+                    return;
+                }
+                if (categoryDetailInput.style.display === 'block' &&
+                    !categoryDetailInput.value.trim() &&
+                    ['Batch', 'Occasion', 'Campus Life', 'Achievements', 'Index', 'Others'].includes(imageCategory.value)) {
+                    alert('Please enter the specific details for the selected category.');
+                    return;
+                }
+
+                loadingText.textContent = 'Uploading to server...';
+                loadingOverlay.style.display = 'flex';
+                uploadBtn.textContent = 'Uploading...';
+                uploadBtn.disabled = true;
+
+                const payload = {
+                    imageUrl: currentDataUrl,
+                    caption: imageCaption.value.trim(),
+                    category: imageCategory.value,
+                    categoryDetail: categoryDetailInput.value.trim(),
+                    postedBy: (document.getElementById('superAdminNameDisplay').textContent || 'Super Admin') + ' (Super Admin)',
+                    uploaderId: currentUserId
+                };
+
+                try {
+                    let response;
+                    if (editingImageId) {
+                        response = await fetch(`${API_URL}/gallery/${editingImageId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                    } else {
+                        response = await fetch(`${API_URL}/gallery`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                    }
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        // Reset form
+                        imageInput.value = '';
+                        imageCaption.value = '';
+                        imageCategory.value = '';
+                        categoryDetailInput.value = '';
+                        categoryDetailInput.style.display = 'none';
+                        currentDataUrl = null;
+                        editingImageId = null;
+                        previewContainer.style.display = 'none';
+                        imagePreview.src = '#';
+                        cancelEditBtn.style.display = 'none';
+
+                        loadGallery();
+                    } else {
+                        alert(data.message || 'Failed to save image.');
+                    }
+                } catch (e) {
+                    alert('Network error or image too large for server.');
+                } finally {
+                    loadingOverlay.style.display = 'none';
+                    uploadBtn.textContent = editingImageId ? 'Update Picture' : 'Upload Picture';
+                    uploadBtn.disabled = false;
+                }
+            });
+
+            async function loadGallery() {
+                try {
+                    const response = await fetch(`${API_URL}/gallery`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        galleryImages = data.images;
+                        renderGallery();
+                    }
+                } catch (error) {
+                    console.error('Failed to load gallery', error);
+                }
+            }
+
+            // Category list/management functionality
+            let categories = [];
+            async function loadCategories() {
+                try {
+                    const response = await fetch(`${API_URL}/gallery-categories`);
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        categories = data.categories.map(c => c.name);
+                        populateCategoryDropdowns(data.categories);
+                    }
+                } catch (error) {
+                    console.error('Failed to load categories', error);
+                }
+            }
+
+            function populateCategoryDropdowns(catObjects) {
+                const filterVal = categoryFilter.value;
+                const imageVal = imageCategory.value;
+
+                categoryFilter.innerHTML = '<option value="All">All Categories</option>';
+                imageCategory.innerHTML = '<option value="" disabled selected>-- Select a Category * --</option>';
+                const listContainer = document.getElementById('categoriesListContainer');
+                listContainer.innerHTML = '';
+
+                catObjects.forEach(cat => {
+                    const name = cat.name;
+
+                    const optFilter = document.createElement('option');
+                    optFilter.value = name;
+                    optFilter.textContent = name;
+                    categoryFilter.appendChild(optFilter);
+
+                    const optImage = document.createElement('option');
+                    optImage.value = name;
+                    optImage.textContent = name;
+                    imageCategory.appendChild(optImage);
+
+                    const item = document.createElement('div');
+                    item.style.display = 'flex';
+                    item.style.justifyContent = 'space-between';
+                    item.style.alignItems = 'center';
+                    item.style.padding = '6px 0';
+                    item.style.borderBottom = '1px solid #eee';
+
+                    const isOthers = name.toLowerCase() === 'others';
+                    const deleteBtnHtml = isOthers ?
+                        `<span class="system-badge" style="color: #aaa; font-size: 0.8em; font-style: italic;">system</span>` :
+                        `<button class="delete-cat-btn" data-id="${cat._id}" style="background: none; border: none; color: #dc3545; cursor: pointer; font-weight: bold; padding: 2px 5px; font-size: 0.85em;">Delete</button>`;
+
+                    item.innerHTML = `
+                        <span class="category-name-span" style="font-weight: 500; font-size: 0.9em; color: #333;">${escapeHtml(name)}</span>
+                        ${deleteBtnHtml}
+                    `;
+                    listContainer.appendChild(item);
+                });
+
+                if (filterVal && Array.from(categoryFilter.options).some(opt => opt.value === filterVal)) {
+                    categoryFilter.value = filterVal;
+                }
+                if (imageVal && Array.from(imageCategory.options).some(opt => opt.value === imageVal)) {
+                    imageCategory.value = imageVal;
+                }
+
+                document.querySelectorAll('.delete-cat-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const catId = e.target.dataset.id;
+                        if (confirm('Are you sure you want to delete this category? Any images currently under this category will be changed to "Others".')) {
+                            try {
+                                const res = await fetch(`${API_URL}/gallery-categories/${catId}`, {
+                                    method: 'DELETE',
+                                    headers: { 'Authorization': `Bearer ${token}` }
+                                });
+                                const resData = await res.json();
+                                if (res.ok && resData.success) {
+                                    await loadCategories();
+                                    await loadGallery();
+                                } else {
+                                    alert(resData.message || 'Failed to delete category.');
+                                }
+                            } catch (err) {
+                                console.error('Error deleting category', err);
+                            }
+                        }
+                    });
+                });
+            }
+
+            const addCategoryBtn = document.getElementById('addCategoryBtn');
+            const newCategoryInput = document.getElementById('newCategoryInput');
+
+            addCategoryBtn.addEventListener('click', async () => {
+                const name = newCategoryInput.value.trim();
+                if (!name) {
+                    alert('Please enter a category name.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_URL}/gallery-categories`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ name })
+                    });
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        newCategoryInput.value = '';
+                        await loadCategories();
+                    } else {
+                        alert(data.message || 'Failed to add category.');
+                    }
+                } catch (error) {
+                    console.error('Error adding category', error);
+                }
+            });
+
+            // Initial render
+            loadCategories().then(() => {
+                loadGallery();
+            });
+            updateEventsTicker();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Notifications – MCA Alumni Network</title>
+    <meta name="description" content="View your complete notification history for the MCA Alumni Network portal.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --primary: #0D8ABC;
+            --primary-dark: #0a6fa3;
+            --accent: #4a148c;
+            --bg: #f0f4f8;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --unread-bg: #eff6ff;
+            --unread-border: #bfdbfe;
+            --tag-event: #dbeafe;
+            --tag-event-text: #1d4ed8;
+            --tag-announce: #fef3c7;
+            --tag-announce-text: #92400e;
+            --tag-batchmate: #dcfce7;
+            --tag-batchmate-text: #15803d;
+            --tag-reg: #fce7f3;
+            --tag-reg-text: #9d174d;
+            --tag-verify: #f3e8ff;
+            --tag-verify-text: #6b21a8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --border: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --unread-bg: #1e3a5f;
+            --unread-border: #3b82f6;
+            --tag-event: #1e3a5f;
+            --tag-event-text: #93c5fd;
+            --tag-announce: #3d2e0a;
+            --tag-announce-text: #fcd34d;
+            --tag-batchmate: #052e16;
+            --tag-batchmate-text: #4ade80;
+            --tag-reg: #3d0a1e;
+            --tag-reg-text: #f9a8d4;
+            --tag-verify: #2e1065;
+            --tag-verify-text: #c4b5fd;
+        }
+
+
+        .page-wrapper {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 32px 16px 64px;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-title-icon {
+            width: 46px;
+            height: 46px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(13, 138, 188, 0.3);
+        }
+
+        .page-title h1 {
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.2;
+        }
+
+        .page-title p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-mark-all {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-mark-all:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-mark-all:active {
+            transform: translateY(0);
+        }
+
+        /* Filter chips */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .filter-chip {
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1.5px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .filter-chip:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .filter-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Notification cards */
+        #notif-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .notif-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 20px;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            transition: box-shadow 0.2s, transform 0.15s;
+            animation: fadeUp 0.3s ease both;
+        }
+
+        .notif-card:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .notif-card.unread {
+            background: var(--unread-bg);
+            border-color: var(--unread-border);
+            border-left: 4px solid var(--primary);
+        }
+
+        body.dark-mode .notif-card.unread {
+            border-left-color: #3b82f6;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .notif-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1.1rem;
+        }
+
+        .notif-icon.event {
+            background: var(--tag-event);
+            color: var(--tag-event-text);
+        }
+
+        .notif-icon.announce {
+            background: var(--tag-announce);
+            color: var(--tag-announce-text);
+        }
+
+        .notif-icon.batchmate {
+            background: var(--tag-batchmate);
+            color: var(--tag-batchmate-text);
+        }
+
+        .notif-icon.reg {
+            background: var(--tag-reg);
+            color: var(--tag-reg-text);
+        }
+
+        .notif-icon.verify {
+            background: var(--tag-verify);
+            color: var(--tag-verify-text);
+        }
+
+        .notif-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .notif-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .notif-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+
+        .notif-card.unread .notif-title {
+            color: var(--primary);
+        }
+
+        body.dark-mode .notif-card.unread .notif-title {
+            color: #60a5fa;
+        }
+
+        .notif-time {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .notif-text {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .notif-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .notif-tag.event {
+            background: var(--tag-event);
+            color: var(--tag-event-text);
+        }
+
+        .notif-tag.announce {
+            background: var(--tag-announce);
+            color: var(--tag-announce-text);
+        }
+
+        .notif-tag.batchmate {
+            background: var(--tag-batchmate);
+            color: var(--tag-batchmate-text);
+        }
+
+        .notif-tag.reg {
+            background: var(--tag-reg);
+            color: var(--tag-reg-text);
+        }
+
+        .notif-tag.verify {
+            background: var(--tag-verify);
+            color: var(--tag-verify-text);
+        }
+
+        /* Vouch buttons */
+        .vouch-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .vouch-btn {
+            flex: 1;
+            padding: 7px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .vouch-btn:hover {
+            opacity: 0.85;
+        }
+
+        .vouch-btn.know {
+            background: #16a34a;
+            color: white;
+        }
+
+        .vouch-btn.dontknow {
+            background: #dc2626;
+            color: white;
+        }
+
+        /* Empty / Loading state */
+        .empty-state {
+            text-align: center;
+            padding: 64px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            margin-bottom: 16px;
+            opacity: 0.4;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+        }
+
+        /* Loader */
+        .loader-wrap {
+            display: flex;
+            justify-content: center;
+            padding: 60px 0;
+        }
+
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Unread dot */
+        .unread-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+
+        body.dark-mode .unread-dot {
+            background: #3b82f6;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .notif-top {
+                flex-direction: column;
+                gap: 2px;
+            }
+
+            .page-title h1 {
+                font-size: 1.25rem;
+            }
+
+            .notif-card {
+                padding: 14px 14px;
+                gap: 12px;
+            }
+        }
+    </style>
+    <script src="js/load-components.js"></script>
+</head>
+
+<body>
+    <!-- Header injected by load-components.js -->
+    <!-- The data-header attribute is set dynamically based on the active session role -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-alumni.html"></div>
+
+    <script>
+        // Pick the correct header and stylesheet before DOMContentLoaded fires (sync)
+        (function () {
+            const ph = document.getElementById('header-placeholder');
+            const head = document.head;
+            let stylesheetPath = 'Alumni/CSS/AlumniStyling.css'; // Default to alumni
+
+            if (!ph) return;
+
+            if (localStorage.getItem('superAdminToken')) {
+                ph.setAttribute('data-header', '/Headers_Footers_common/header-superadmin.html');
+                stylesheetPath = 'Admin/CSS/SuperAdminStyling.css';
+            } else if (localStorage.getItem('adminToken')) {
+                ph.setAttribute('data-header', '/Headers_Footers_common/header-admin.html');
+                stylesheetPath = 'Admin/CSS/AdminStyling.css';
+            } else {
+                ph.setAttribute('data-header', '/Headers_Footers_common/header-alumni.html');
+            }
+
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = stylesheetPath;
+            head.appendChild(link);
+        })();
+    </script>
+    <script>
+        document.addEventListener('HeaderLoaded', () => {
+            let user = null;
+            let userKey = 'user'; // default to alumni
+            let avatarBg = '0D8ABC';
+
+            if (localStorage.getItem('superAdminToken')) {
+                userKey = 'superAdminUser';
+                avatarBg = '4a148c';
+            } else if (localStorage.getItem('adminToken')) {
+                userKey = 'adminUser';
+                avatarBg = 'c62828';
+            }
+
+            try {
+                user = JSON.parse(localStorage.getItem(userKey));
+            } catch (e) {
+                console.error('Failed to parse user data from localStorage');
+            }
+
+            if (user && user.name) {
+                const nameDisplay = document.getElementById('alumniNameDisplay') || document.getElementById('adminNameDisplay') || document.getElementById('superAdminNameDisplay');
+                if (nameDisplay) nameDisplay.textContent = user.name;
+                document.getElementById('headerProfilePic').src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=${avatarBg}&color=fff`;
+            }
+        });
+    </script>
+
+    <div class="page-wrapper">
+        <div class="page-header">
+            <div class="page-title">
+                <div class="page-title-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                </div>
+                <div>
+                    <h1>All Notifications</h1>
+                    <p id="notif-summary">Loading your activity...</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn-mark-all" id="markAllBtn" onclick="markAllRead()" style="display:none;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Mark all read
+                </button>
+            </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="filter-bar" id="filterBar">
+            <button class="filter-chip active" data-filter="all" onclick="applyFilter('all', this)">All</button>
+            <button class="filter-chip" data-filter="Event" onclick="applyFilter('Event', this)">Events</button>
+            <button class="filter-chip" data-filter="Announcement"
+                onclick="applyFilter('Announcement', this)">Announcements</button>
+            <button class="filter-chip" data-filter="Batchmate"
+                onclick="applyFilter('Batchmate', this)">Batchmates</button>
+            <button class="filter-chip" data-filter="Registration"
+                onclick="applyFilter('Registration', this)">Registrations</button>
+        </div>
+
+        <!-- List -->
+        <div id="notif-list">
+            <div class="loader-wrap">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load the shared script (must come first for API_URL etc.) -->
+    <script>
+        window.API_URL = '/api/auth';
+    </script>
+    <script src="/js/load-components.js"></script>
+
+    <script>
+        // =====================================================
+        // NOTIFICATIONS PAGE – STANDALONE LOGIC
+        // =====================================================
+        let allNotifications = [];
+        let activeFilter = 'all';
+
+        // ── Helpers ────────────────────────────────────────
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.toString()
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return 'Just now';
+            let interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + ' days ago';
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + ' hours ago';
+            interval = seconds / 60;
+            return Math.floor(interval) + ' mins ago';
+        }
+
+        function fullDate(date) {
+            return date.toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', hour12: true
+            });
+        }
+
+        function typeClass(type) {
+            const map = {
+                'Event': 'event',
+                'Announcement': 'announce',
+                'Batchmate': 'batchmate',
+                'LegacyVerification': 'verify',
+                'Registration': 'reg'
+            };
+            return map[type] || 'event';
+        }
+
+        function typeIcon(type) {
+            if (type === 'Event') return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+            if (type === 'Announcement') return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>`;
+            if (type === 'Batchmate') return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
+            if (type === 'LegacyVerification') return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>`;
+            return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+        }
+
+        // ── Resolve active session ─────────────────────────
+        // Note: This page lives at /notifications.html (root), so we can't use
+        // URL path to determine role. Instead check which token is present.
+        function getSession() {
+            if (localStorage.getItem('superAdminToken')) {
+                return { token: localStorage.getItem('superAdminToken'), user: safeParseUser('superAdminUser') };
+            } else if (localStorage.getItem('adminToken')) {
+                return { token: localStorage.getItem('adminToken'), user: safeParseUser('adminUser') };
+            } else {
+                return { token: localStorage.getItem('token'), user: safeParseUser('user') };
+            }
+        }
+
+        function safeParseUser(key) {
+            try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
+        }
+
+        // ── Fetch & build notifications ────────────────────
+        async function loadNotifications() {
+            const { token, user: currentUser } = getSession();
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const notifications = [];
+            const fetches = [];
+
+            // Events
+            fetches.push(
+                fetch(`${window.API_URL}/events`, { headers })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success && data.events) {
+                            data.events.forEach(e => {
+                                if (e.status === 'Approved') {
+                                    notifications.push({ type: 'Event', title: 'New Event Approved', text: e.title, date: new Date(e.createdAt || e.date || Date.now()) });
+                                } else if (e.status === 'Pending' && currentUser && currentUser.role) {
+                                    notifications.push({ type: 'Event', title: 'Pending Event', text: `"${e.title}" needs review.`, date: new Date(e.createdAt || e.date || Date.now()) });
+                                }
+                            });
+                        }
+                    }).catch(() => { })
+            );
+
+            // Announcements
+            fetches.push(
+                fetch(`${window.API_URL}/announcements`, { headers })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success && data.announcements) {
+                            data.announcements.filter(a => a.isActive !== false).forEach(a => {
+                                notifications.push({ type: 'Announcement', title: 'New Announcement', text: a.title, date: new Date(a.date || a.createdAt || Date.now()) });
+                            });
+                        }
+                    }).catch(() => {
+                        const local = JSON.parse(localStorage.getItem('adminAnnouncements') || '[]');
+                        local.filter(a => a.isActive !== false).forEach(a => {
+                            notifications.push({ type: 'Announcement', title: 'New Announcement', text: a.title, date: new Date(a.date || a.createdAt || Date.now()) });
+                        });
+                    })
+            );
+
+            // Alumni / batchmates
+            if (token && currentUser) {
+                fetches.push(
+                    fetch(`${window.API_URL}/alumni`, { headers })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success && data.alumni) {
+                                const myBatch = currentUser.batchYear || currentUser.gradYear;
+                                data.alumni.forEach(u => {
+                                    const theirBatch = u.batchYear || u.gradYear;
+                                    if (!currentUser.role && myBatch && String(theirBatch) === String(myBatch) && u.email !== currentUser.email) {
+                                        if (!u.isVerified && u.rollNumber && u.rollNumber.startsWith('PENDING-')) {
+                                            notifications.push({ type: 'LegacyVerification', title: 'Verify Batchmate', text: `${u.name} claims to be from your batch. Do you know them?`, date: new Date(u.createdAt || Date.now()), userId: u._id });
+                                        } else if (!u.rollNumber || !u.rollNumber.startsWith('PENDING-')) {
+                                            notifications.push({ type: 'Batchmate', title: 'New Batchmate', text: `${u.name} joined!`, date: new Date(u.createdAt || Date.now()) });
+                                        }
+                                    }
+                                    if (currentUser.role && !u.isVerified && u.rollNumber && u.rollNumber.startsWith('PENDING-')) {
+                                        notifications.push({ type: 'Registration', title: 'Pending Registration', text: `${u.name} awaits approval.`, date: new Date(u.createdAt || Date.now()) });
+                                    }
+                                });
+                            }
+                        }).catch(() => { })
+                );
+            }
+
+            await Promise.all(fetches);
+            notifications.sort((a, b) => b.date - a.date);
+            return notifications;
+        }
+
+        // ── Render ─────────────────────────────────────────
+        function renderNotifications(list) {
+            const container = document.getElementById('notif-list');
+            const defaultCutoff = Date.now() - (48 * 60 * 60 * 1000);
+            const lastRead = parseInt(localStorage.getItem('notificationsLastRead')) || defaultCutoff;
+
+            const unreadCount = list.filter(n => n.date.getTime() > lastRead).length;
+
+            // Summary line
+            document.getElementById('notif-summary').textContent =
+                `${list.length} total · ${unreadCount} unread`;
+
+            // Show mark-all-read button only if there are unread
+            document.getElementById('markAllBtn').style.display = unreadCount > 0 ? 'inline-flex' : 'none';
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                        <p>You're all caught up! No notifications yet.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            list.forEach((n, i) => {
+                const isNew = n.date.getTime() > lastRead;
+                const tc = typeClass(n.type);
+
+                let actionsHtml = '';
+                if (n.type === 'LegacyVerification' && n.userId) {
+                    actionsHtml = `
+                        <div class="vouch-actions">
+                            <button class="vouch-btn know" onclick="window.vouchBatchmate && window.vouchBatchmate('${n.userId}', true, event)">✓ Know</button>
+                            <button class="vouch-btn dontknow" onclick="window.vouchBatchmate && window.vouchBatchmate('${n.userId}', false, event)">✗ Don't Know</button>
+                        </div>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = `notif-card${isNew ? ' unread' : ''}`;
+                card.style.animationDelay = `${i * 0.04}s`;
+                card.innerHTML = `
+                    <div class="notif-icon ${tc}">${typeIcon(n.type)}</div>
+                    <div class="notif-body">
+                        <span class="notif-tag ${tc}">${escapeHtml(n.type === 'LegacyVerification' ? 'Verify' : n.type)}</span>
+                        <div class="notif-top">
+                            <span class="notif-title">${escapeHtml(n.title)}</span>
+                            <span class="notif-time" title="${fullDate(n.date)}">${timeAgo(n.date)}</span>
+                        </div>
+                        <div class="notif-text">${escapeHtml(n.text)}</div>
+                        ${actionsHtml}
+                    </div>
+                    ${isNew ? '<div class="unread-dot"></div>' : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ── Filter ─────────────────────────────────────────
+        function applyFilter(filter, chip) {
+            activeFilter = filter;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+
+            const filtered = filter === 'all'
+                ? allNotifications
+                : allNotifications.filter(n => n.type === filter || (filter === 'Batchmate' && n.type === 'LegacyVerification'));
+            renderNotifications(filtered);
+        }
+
+        // ── Mark all read ──────────────────────────────────
+        function markAllRead() {
+            localStorage.setItem('notificationsLastRead', Date.now().toString());
+            // Also update the dropdown bell if it's on the same page
+            if (window.markNotificationsRead) window.markNotificationsRead();
+
+            // Re-render to remove unread styling
+            const filtered = activeFilter === 'all'
+                ? allNotifications
+                : allNotifications.filter(n => n.type === activeFilter || (activeFilter === 'Batchmate' && n.type === 'LegacyVerification'));
+            renderNotifications(filtered);
+        }
+
+        // ── Init ───────────────────────────────────────────
+        (async () => {
+            try {
+                allNotifications = await loadNotifications();
+                renderNotifications(allNotifications);
+            } catch (err) {
+                document.getElementById('notif-list').innerHTML = `
+                    <div class="empty-state">
+                        <p>⚠️ Failed to load notifications. Please refresh the page.</p>
+                    </div>`;
+                console.error('Notification load error:', err);
+            }
+        })();
+    </script>
+</body>
+
+</html>
