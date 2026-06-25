@@ -6,6 +6,34 @@ document.addEventListener("DOMContentLoaded", () => {
         publicBaseUrl = scriptTag.src.split('/js/load-components.js')[0];
     }
 
+    // Dynamically set/update favicon and apple-touch-icon using calculated publicBaseUrl
+    let faviconLink = document.querySelector('link[rel="icon"]');
+    if (!faviconLink) {
+        faviconLink = document.createElement('link');
+        faviconLink.rel = 'icon';
+        faviconLink.type = 'image/png';
+        document.head.appendChild(faviconLink);
+    } else {
+        faviconLink.type = 'image/png';
+    }
+    faviconLink.href = publicBaseUrl + '/logo.png';
+
+    let shortcutLink = document.querySelector('link[rel="shortcut icon"]');
+    if (!shortcutLink) {
+        shortcutLink = document.createElement('link');
+        shortcutLink.rel = 'shortcut icon';
+        document.head.appendChild(shortcutLink);
+    }
+    shortcutLink.href = publicBaseUrl + '/favicon.ico';
+
+    let appleTouchLink = document.querySelector('link[rel="apple-touch-icon"]');
+    if (!appleTouchLink) {
+        appleTouchLink = document.createElement('link');
+        appleTouchLink.rel = 'apple-touch-icon';
+        document.head.appendChild(appleTouchLink);
+    }
+    appleTouchLink.href = publicBaseUrl + '/logo.png';
+
     // Dynamically load the 3D particles background effect if not already present
     if (!document.querySelector('script[src*="3d-effects.js"]')) {
         const script = document.createElement('script');
