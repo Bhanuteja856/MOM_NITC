@@ -640,7 +640,8 @@ document.addEventListener('HeaderLoaded', () => {
     if (userStr && document.getElementById('navProfileLink')) {
         try {
             const user = JSON.parse(userStr);
-            if (user.role === 'faculty') {
+            const isCustomRole = !['super_admin', 'admin', 'faculty', 'alumni'].includes(user.role);
+            if (user.role === 'faculty' || isCustomRole) {
                 const menusToUse = Array.isArray(user.accessibleMenus) ? user.accessibleMenus : [];
                 const adminMenus = document.querySelectorAll('.dropdown-content a.admin-menu');
                 adminMenus.forEach(link => {

@@ -161,7 +161,14 @@
                 if (user && user.role) {
                     if (user.role === 'super_admin') roleInput.value = 'Super Admin';
                     else if (user.role === 'faculty') roleInput.value = 'Faculty';
-                    else roleInput.value = 'Administrator';
+                    else if (user.role === 'admin') roleInput.value = 'Administrator';
+                    else {
+                        const formattedRole = user.role
+                            .split(/[_-]/)
+                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                            .join(' ');
+                        roleInput.value = formattedRole;
+                    }
                 }
                     if (user && user.department) deptInput.value = user.department;
                     if (user && user.phone) phoneInput.value = user.phone;

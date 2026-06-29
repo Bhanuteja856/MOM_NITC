@@ -79,10 +79,15 @@ const authenticateToken = (req, res, next) => {
 // ============================
 const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ success: false, message: 'Forbidden. Insufficient permissions.' });
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Access Denied. No token provided.' });
     }
-    next();
+    const userRole = req.user.role;
+    const isCustomRole = !['super_admin', 'admin', 'faculty', 'alumni'].includes(userRole);
+    if (allowedRoles.includes(userRole) || (allowedRoles.includes('admin') && isCustomRole)) {
+      return next();
+    }
+    return res.status(403).json({ success: false, message: 'Forbidden. Insufficient permissions.' });
   };
 };
 
@@ -1123,7 +1128,7 @@ router.post('/add-admin', authenticateToken, authorizeRoles('admin', 'super_admi
 
     // Send a welcome email with their temporary credentials
     try {
-      const roleLabel = role === 'super_admin' ? 'Super Admin' : (role === 'faculty' ? 'Faculty' : 'Admin');
+      const roleLabel = role === 'super_admin' ? 'Super Admin' : (role === 'faculty' ? 'Faculty' : (role === 'admin' ? 'Admin' : role.split(/[_-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')));
       const emailHtml = `
         <div style="font-family: Arial; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
           <h2 style="color: #4a148c;">Welcome to the NITC Alumni Portal</h2>
@@ -1197,15 +1202,15 @@ router.post('/bulk-add-admins', authenticateToken, async (req, res) => {
           menusArray = Array.isArray(accessibleMenus) ? accessibleMenus : String(accessibleMenus).split(',').map(s => s.trim()).filter(Boolean);
         }
 
-        let normalizedRole = String(role).toLowerCase().trim().replace(' ', '_');
-        if (!['admin', 'super_admin', 'faculty'].includes(normalizedRole)) normalizedRole = 'faculty'; // Default fallback
+        let normalizedRole = String(role || '').toLowerCase().trim().replace(/\s+/g, '_');
+        if (!normalizedRole) normalizedRole = 'faculty'; // Default fallback
 
         const newAdmin = new Admin({ name, email, password: hashedPassword, role: normalizedRole, department, phone: phone || null, officeLocation: officeLocation || null, accessibleMenus: menusArray });
         await newAdmin.save();
         results.successful++;
 
         try {
-          const roleLabel = normalizedRole === 'super_admin' ? 'Super Admin' : (normalizedRole === 'faculty' ? 'Faculty' : 'Admin');
+          const roleLabel = normalizedRole === 'super_admin' ? 'Super Admin' : (normalizedRole === 'faculty' ? 'Faculty' : (normalizedRole === 'admin' ? 'Admin' : normalizedRole.split(/[_-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')));
           const emailHtml = `
             <div style="font-family: Arial; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
               <h2 style="color: #4a148c;">Welcome to the NITC Alumni Portal</h2>

@@ -56,15 +56,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('superAdminUser', JSON.stringify(loggedInUser));
                     window.location.href = 'Admin/SuperAdmin/Super-Admin-Main-Screen.html';
                 } else {
-                    localStorage.setItem('adminToken', data.token);
-                    localStorage.setItem('adminUser', JSON.stringify(loggedInUser || {}));
-                    
-                    if (loggedInUser.role === 'faculty') {
-                        // Give Faculty a dual-session token to access Alumni pages
+                    const isCustomRole = !['super_admin', 'admin', 'faculty'].includes(loggedInUser.role);
+
+                    if (loggedInUser.role === 'faculty' || isCustomRole) {
+                        // Give Faculty/Custom roles a dual-session token to access Alumni pages
                         localStorage.setItem('token', data.token);
                         localStorage.setItem('user', JSON.stringify(loggedInUser || {}));
                         window.location.href = 'Alumni/Alumni-Main-Screen.html';
                     } else {
+                        localStorage.setItem('adminToken', data.token);
+                        localStorage.setItem('adminUser', JSON.stringify(loggedInUser || {}));
                         window.location.href = 'Admin/Admin/Admin-Main-Screen.html';
                     }
                 }

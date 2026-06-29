@@ -106,7 +106,12 @@
                                 <option value="admin">Admin</option>
                                 <option value="super_admin">Super Admin</option>
                                 <option value="faculty">Faculty</option>
+                                <option value="custom">+ Create Custom Role...</option>
                             </select>
+                        </div>
+                        <div class="form-group" id="customRoleGroup" style="display: none; margin-top: 10px;">
+                            <label>Custom Role Name</label>
+                            <input type="text" id="customAdminRole" placeholder="e.g. Dean, Coordinator" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit;">
                         </div>
                         <div class="form-group">
                             <label>Menu Access Permissions</label>
@@ -360,6 +365,25 @@
             // ==========================================
             let currentAdminsList = [];
             let displayedAdminsList = [];
+
+            const formatRoleLabel = r => {
+                if (r === 'super_admin') return 'Super Admin';
+                if (r === 'faculty') return 'Faculty';
+                if (r === 'admin') return 'Admin';
+                return String(r || '').split(/[_-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+            };
+            const formatRoleBadge = r => {
+                if (r === 'super_admin') return 'SUPER ADMIN';
+                if (r === 'faculty') return 'FACULTY';
+                if (r === 'admin') return 'ADMIN';
+                return String(r || '').toUpperCase().replace(/[_-]/g, ' ');
+            };
+            const getBadgeColor = r => {
+                if (r === 'super_admin') return '#4a148c';
+                if (r === 'faculty') return '#0288d1';
+                if (r === 'admin') return '#c62828';
+                return '#7b1fa2';
+            };
             
             function renderAdminTable(list) {
                 const userGrid = document.getElementById('userGrid');
@@ -374,8 +398,8 @@
                 list.forEach(admin => {
                     const row = document.createElement('tr');
                     row.style.borderBottom = '1px solid #eee';
-                    const roleBadge = admin.role === 'super_admin' ? 'SUPER ADMIN' : (admin.role === 'faculty' ? 'FACULTY' : 'ADMIN');
-                    const badgeColor = admin.role === 'super_admin' ? '#4a148c' : (admin.role === 'faculty' ? '#0288d1' : '#c62828');
+                    const roleBadge = formatRoleBadge(admin.role);
+                    const badgeColor = getBadgeColor(admin.role);
                     const statusColor = admin.isActive ? 'green' : 'gray';
                     const statusText = admin.isActive ? 'Active' : 'Revoked';
                     const revokeBtnText = admin.isActive ? 'Revoke' : 'Restore';
@@ -399,7 +423,7 @@
             function populateAdminFilters() {
                 const filters = [
                     { id: 'filterName', key: 'name' },
-                    { id: 'filterRole', key: 'role', transform: r => r === 'super_admin' ? 'Super Admin' : (r === 'faculty' ? 'Faculty' : 'Admin') },
+                    { id: 'filterRole', key: 'role', transform: formatRoleLabel },
                     { id: 'filterDept', key: 'department' },
                     { id: 'filterEmail', key: 'email' },
                     { id: 'filterStatus', key: 'isActive', transform: s => s ? 'Active' : 'Revoked' }
@@ -423,7 +447,7 @@
                 const fStatus = document.getElementById('filterStatus').value;
 
                 const filtered = currentAdminsList.filter(a => {
-                    const roleStr = a.role === 'super_admin' ? 'Super Admin' : (a.role === 'faculty' ? 'Faculty' : 'Admin');
+                    const roleStr = formatRoleLabel(a.role);
                     const statusStr = a.isActive ? 'Active' : 'Revoked';
 
                     const matchesName = !fName || String(a.name || '') === fName;
@@ -470,6 +494,23 @@
             const addAdminForm = document.getElementById('addAdminForm');
             const addAdminMessage = document.getElementById('addAdminMessage');
             let editingAdminId = null;
+
+            // Role Select and Custom Role controls
+            const roleSelect = document.getElementById('newAdminRole');
+            const customRoleGroup = document.getElementById('customRoleGroup');
+            const customRoleInput = document.getElementById('customAdminRole');
+
+            roleSelect.addEventListener('change', () => {
+                if (roleSelect.value === 'custom') {
+                    customRoleGroup.style.display = 'block';
+                    customRoleInput.setAttribute('required', 'true');
+                } else {
+                    customRoleGroup.style.display = 'none';
+                    customRoleInput.removeAttribute('required');
+                    customRoleInput.value = '';
+                }
+            });
+
             addAdminForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const submitBtn = document.getElementById('submitNewAdminBtn');
@@ -481,7 +522,12 @@
                 const department = document.getElementById('newAdminDept').value.trim();
                 const phone = document.getElementById('newAdminPhone').value.trim();
                 const officeLocation = document.getElementById('newAdminOffice').value.trim();
-                const role = document.getElementById('newAdminRole').value;
+                
+                let role = document.getElementById('newAdminRole').value;
+                if (role === 'custom') {
+                    role = document.getElementById('customAdminRole').value.trim();
+                }
+
                 const selectedMenuElements = document.querySelectorAll('#selectedMenus .dnd-item');
                 const accessibleMenus = Array.from(selectedMenuElements).map(el => el.getAttribute('data-value'));
                 let endpoint = `${API_URL}/add-admin`;
@@ -506,6 +552,9 @@
                         addAdminMessage.style.color = '#155724';
                         addAdminMessage.textContent = editingAdminId ? 'Admin updated successfully!' : 'Admin created successfully!';
                         addAdminForm.reset();
+                        customRoleGroup.style.display = 'none';
+                        customRoleInput.removeAttribute('required');
+                        customRoleInput.value = '';
                         editingAdminId = null;
                         // Reset drag and drop
                         const availableMenusBox = document.getElementById('availableMenus');
@@ -554,7 +603,23 @@
                 document.getElementById('newAdminDept').value = admin.department || '';
                 document.getElementById('newAdminPhone').value = admin.phone || '';
                 document.getElementById('newAdminOffice').value = admin.officeLocation || '';
-                document.getElementById('newAdminRole').value = admin.role || 'admin';
+                
+                // Set role
+                const roleSelect = document.getElementById('newAdminRole');
+                const customRoleGroup = document.getElementById('customRoleGroup');
+                const customRoleInput = document.getElementById('customAdminRole');
+                if (['admin', 'super_admin', 'faculty'].includes(admin.role)) {
+                    roleSelect.value = admin.role;
+                    customRoleGroup.style.display = 'none';
+                    customRoleInput.removeAttribute('required');
+                    customRoleInput.value = '';
+                } else {
+                    roleSelect.value = 'custom';
+                    customRoleGroup.style.display = 'block';
+                    customRoleInput.value = admin.role || '';
+                    customRoleInput.setAttribute('required', 'true');
+                }
+
                 const availableMenusBox = document.getElementById('availableMenus');
                 const selectedMenusBox = document.getElementById('selectedMenus');
                 const allMenus = document.querySelectorAll('.dnd-item');
@@ -573,6 +638,9 @@
             };
             cancelEditBtn.addEventListener('click', () => {
                 addAdminForm.reset();
+                customRoleGroup.style.display = 'none';
+                customRoleInput.removeAttribute('required');
+                customRoleInput.value = '';
                 const passInput = document.getElementById('newAdminPassword');
                 passInput.setAttribute('required', 'true');
                 passInput.placeholder = 'Enter temporary password';
@@ -613,7 +681,7 @@
                     const row = [
                         `"${(admin.name || '').replace(/"/g, '""')}"`,
                         `"${(admin.email || '').replace(/"/g, '""')}"`,
-                        `"${(admin.role === 'super_admin' ? 'Super Admin' : (admin.role === 'faculty' ? 'Faculty' : 'Admin'))}"`,
+                        `"${(formatRoleLabel(admin.role))}"`,
                         `"${(admin.department || '').replace(/"/g, '""')}"`,
                         `"${admin.isActive ? 'Active' : 'Revoked'}"`
                     ];

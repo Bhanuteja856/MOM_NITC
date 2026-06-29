@@ -21,7 +21,6 @@ const adminSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['admin', 'super_admin', 'faculty'],
         default: 'admin' // By default, new admins are standard department admins
     },
     department: {

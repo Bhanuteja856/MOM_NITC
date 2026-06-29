@@ -51,6 +51,8 @@ document.getElementById('loginBtn').addEventListener('click', async (e) => {
       const accountType = data.accountType;
       const user = data.user || data;
 
+      const isCustomRole = !['alumni', 'super_admin', 'faculty', 'admin'].includes(accountType);
+
       if (accountType === 'alumni') {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(user));
@@ -65,6 +67,12 @@ document.getElementById('loginBtn').addEventListener('click', async (e) => {
         // Faculty gets dual-session to access both admin and alumni pages
         localStorage.setItem('adminToken', data.token);
         localStorage.setItem('adminUser', JSON.stringify(user));
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(user));
+        setTimeout(() => { window.location.href = 'Alumni/Alumni-Main-Screen.html'; }, 1500);
+
+      } else if (isCustomRole) {
+        // Custom roles only get standard alumni-dashboard access token
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(user));
         setTimeout(() => { window.location.href = 'Alumni/Alumni-Main-Screen.html'; }, 1500);
