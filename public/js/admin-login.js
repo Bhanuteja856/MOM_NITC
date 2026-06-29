@@ -59,7 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const isCustomRole = !['super_admin', 'admin', 'faculty'].includes(loggedInUser.role);
 
                     if (loggedInUser.role === 'faculty' || isCustomRole) {
-                        // Give Faculty/Custom roles a dual-session token to access Alumni pages
+                        // Give Faculty/Custom roles a dual-session token to access both Admin and Alumni pages
+                        localStorage.setItem('adminToken', data.token);
+                        localStorage.setItem('adminUser', JSON.stringify(loggedInUser || {}));
                         localStorage.setItem('token', data.token);
                         localStorage.setItem('user', JSON.stringify(loggedInUser || {}));
                         window.location.href = 'Alumni/Alumni-Main-Screen.html';

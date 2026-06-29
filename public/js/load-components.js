@@ -229,9 +229,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (hasSuperAdmin || hasAdmin || hasAlumni) {
             let dashboardUrl = '';
-            if (hasSuperAdmin) dashboardUrl = publicBaseUrl + '/Admin/SuperAdmin/Super-Admin-Main-Screen.html';
-            else if (hasAdmin) dashboardUrl = publicBaseUrl + '/Admin/Admin/Admin-Main-Screen.html';
-            else if (hasAlumni) dashboardUrl = publicBaseUrl + '/Alumni/Alumni-Main-Screen.html';
+            if (hasSuperAdmin) {
+                dashboardUrl = publicBaseUrl + '/Admin/SuperAdmin/Super-Admin-Main-Screen.html';
+            } else {
+                let userObj = null;
+                if (hasAdmin) {
+                    try { userObj = JSON.parse(hasAdmin); } catch (e) {}
+                } else if (hasAlumni) {
+                    try { userObj = JSON.parse(hasAlumni); } catch (e) {}
+                }
+                
+                const isCustomRole = userObj && userObj.role && !['super_admin', 'admin', 'faculty', 'alumni'].includes(userObj.role);
+                if (userObj && (userObj.role === 'faculty' || isCustomRole)) {
+                    dashboardUrl = publicBaseUrl + '/Alumni/Alumni-Main-Screen.html';
+                } else if (hasAdmin) {
+                    dashboardUrl = publicBaseUrl + '/Admin/Admin/Admin-Main-Screen.html';
+                } else {
+                    dashboardUrl = publicBaseUrl + '/Alumni/Alumni-Main-Screen.html';
+                }
+            }
 
             // 1. Update Header Nav Links (login -> dashboard, register -> logout)
             const navLinks = document.getElementById('navLinks');
@@ -641,7 +657,41 @@ document.addEventListener('HeaderLoaded', () => {
         try {
             const user = JSON.parse(userStr);
             const isCustomRole = !['super_admin', 'admin', 'faculty', 'alumni'].includes(user.role);
-            if (user.role === 'faculty' || isCustomRole) {
+            if (isCustomRole) {
+                const dashboardLink = document.getElementById('navDashboardLink');
+                if (dashboardLink) {
+                    dashboardLink.style.display = 'flex';
+                    dashboardLink.href = '/Alumni/Alumni-Main-Screen.html';
+                }
+                const profileLink = document.getElementById('navProfileLink');
+                if (profileLink) {
+                    profileLink.style.display = 'flex';
+                    profileLink.href = '/Admin/Admin/Admin-Information.html';
+                }
+
+                // Hide all standard alumni links (not admin-menu)
+                const alumniLinks = document.querySelectorAll('.dropdown-content a:not(.admin-menu):not(#navDashboardLink):not(#navProfileLink):not(#logoutBtn)');
+                alumniLinks.forEach(link => link.style.display = 'none');
+
+                // Handle admin menus based on permissions
+                const menusToUse = Array.isArray(user.accessibleMenus) ? user.accessibleMenus : [];
+                const adminMenus = document.querySelectorAll('.dropdown-content a.admin-menu');
+                adminMenus.forEach(link => {
+                    const menuAttr = link.getAttribute('data-menu');
+                    if (menuAttr === 'Dashboard' || menuAttr === 'My Profile') {
+                        link.style.display = 'none'; // Replaced by navDashboardLink and navProfileLink
+                    } else {
+                        const isAllowed = menusToUse.includes(menuAttr);
+                        link.style.display = isAllowed ? 'flex' : 'none';
+                    }
+                });
+
+                // Adjust logo link if present
+                const logoLink = document.querySelector('header a[href*="Alumni-Main-Screen.html"]');
+                if (logoLink) {
+                    logoLink.href = '/Alumni/Alumni-Main-Screen.html';
+                }
+            } else if (user.role === 'faculty') {
                 const menusToUse = Array.isArray(user.accessibleMenus) ? user.accessibleMenus : [];
                 const adminMenus = document.querySelectorAll('.dropdown-content a.admin-menu');
                 adminMenus.forEach(link => {
@@ -676,7 +726,35 @@ document.addEventListener('HeaderLoaded', () => {
             const adminDashboardLink = document.getElementById('adminDashboardLink');
             const adminProfileLink = document.getElementById('adminProfileLink');
 
-            if (user.role === 'super_admin') {
+            const isCustomRole = !['super_admin', 'admin', 'faculty'].includes(user.role);
+
+            if (isCustomRole) {
+                if (adminDashboardLink) {
+                    adminDashboardLink.style.display = 'flex';
+                    adminDashboardLink.href = '/Alumni/Alumni-Main-Screen.html';
+                }
+                if (adminProfileLink) {
+                    adminProfileLink.style.display = 'flex';
+                    adminProfileLink.href = '/Admin/Admin/Admin-Information.html';
+                }
+
+                // Hide any faculty-specific links
+                facultyMenuLinks.forEach(link => link.style.display = 'none');
+
+                // Handle data-menu links based on permissions
+                const menusToUse = Array.isArray(user.accessibleMenus) ? user.accessibleMenus : [];
+                allDataMenuLinks.forEach(link => {
+                    const menuAttr = link.getAttribute('data-menu');
+                    const isAllowed = menusToUse.includes(menuAttr);
+                    link.style.display = isAllowed ? 'flex' : 'none';
+                });
+
+                // Adjust logo link if present
+                const logoLink = document.querySelector('header a[href*="Admin-Main-Screen.html"]');
+                if (logoLink) {
+                    logoLink.href = '/Alumni/Alumni-Main-Screen.html';
+                }
+            } else if (user.role === 'super_admin') {
                 // Super admin sees everything, so do nothing (links are visible by default in HTML)
             } else if (user.role === 'faculty') {
                 if (adminDashboardLink) adminDashboardLink.style.display = 'none';
