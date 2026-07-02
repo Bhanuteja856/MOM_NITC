@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -125,27 +125,29 @@
 
             let localEventsCache = [];
 
-            // Retrieve User from LocalStorage
-            const storedUser = localStorage.getItem('user');
             let currentUser = { name: "Alumni" };
-            
-            if (storedUser) {
-                try {
-                    const user = JSON.parse(storedUser);
-                    if (user && user.name) {
-                        currentUser = user;
-                    }
-                } catch(e) {
-                    console.error("Error parsing user data", e);
-                }
-            }
 
-            document.addEventListener('HeaderLoaded', () => {
-                if (currentUser && currentUser.name !== "Alumni") {
-                    document.getElementById('alumniNameDisplay').textContent = currentUser.name;
-                    document.getElementById('headerProfilePic').src = currentUser.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=0D8ABC&color=fff`;
+            const updateHeaderInfo = () => {
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    try {
+                        const user = JSON.parse(userStr);
+                        if (user && user.name) {
+                            currentUser = user;
+                            const nameEl = document.getElementById('alumniNameDisplay');
+                            if (nameEl) nameEl.textContent = user.name;
+                            const picEl = document.getElementById('headerProfilePic');
+                            if (picEl) picEl.src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff`;
+                        }
+                    } catch(e) {
+                        console.error("Error parsing user data", e);
+                    }
                 }
-            });
+            };
+            
+            document.addEventListener('HeaderLoaded', updateHeaderInfo);
+            document.addEventListener('PermissionsRefreshed', updateHeaderInfo);
+            updateHeaderInfo();
 
             // Image Preview Logic
             const imageInput = document.getElementById('eventImage');

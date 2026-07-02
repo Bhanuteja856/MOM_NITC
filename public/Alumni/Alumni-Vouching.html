@@ -51,7 +51,7 @@
         <div class="center-content" style="flex: 1; max-width: 900px; margin: 0 auto; padding-top: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 id="pageMainHeading" style="margin: 0;">Verify Batchmates</h2>
-                <a href="Alumni-Main-Screen.html" style="text-decoration: none; color: #0D8ABC; font-weight: bold;">← Back to Dashboard</a>
+                <a href="Alumni-Main-Screen" style="text-decoration: none; color: #0D8ABC; font-weight: bold;">← Back to Dashboard</a>
             </div>
             <div id="infoBoxText" class="info-box" style="background: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #0D8ABC;">
                 The following users claim to be from your batch (<strong><span id="myBatchYear">...</span></strong>) and have requested access to the portal. Please help us verify their identity.
@@ -83,38 +83,39 @@
         document.addEventListener('DOMContentLoaded', () => {
             if (!window.checkAccess()) return;
             const token = localStorage.getItem('token');
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-                try {
-                    const user = JSON.parse(storedUser);
-                    if (user.role === 'faculty') {
-                        document.title = 'Verify Alumni - NITC Alumni';
-                        const heading = document.getElementById('pageMainHeading');
-                        if (heading) heading.textContent = 'Verify Alumni';
-                        const infoBox = document.getElementById('infoBoxText');
-                        if (infoBox) {
-                            infoBox.innerHTML = 'The following students have requested access to the portal. Please help us verify their identity.';
-                        }
-                    } else {
-                        const batchYearSpan = document.getElementById('myBatchYear');
-                        if (batchYearSpan) batchYearSpan.textContent = user.batchYear || 'Unknown';
-                    }
-                } catch(e) {}
-            }
-            document.addEventListener('HeaderLoaded', () => {
-                const storedUser = localStorage.getItem('user');
-                if (storedUser) {
+
+            const updateHeaderInfo = () => {
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
                     try {
-                        const user = JSON.parse(storedUser);
+                        const user = JSON.parse(userStr);
                         if (user && user.name) {
                             const nameDisplay = document.getElementById('alumniNameDisplay');
                             if (nameDisplay) nameDisplay.textContent = user.name;
                             const pic = document.getElementById('headerProfilePic');
                             if (pic) pic.src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff`;
                         }
-                    } catch(e) {}
+                        if (user.role === 'faculty') {
+                            document.title = 'Verify Alumni - NITC Alumni';
+                            const heading = document.getElementById('pageMainHeading');
+                            if (heading) heading.textContent = 'Verify Alumni';
+                            const infoBox = document.getElementById('infoBoxText');
+                            if (infoBox) {
+                                infoBox.innerHTML = 'The following students have requested access to the portal. Please help us verify their identity.';
+                            }
+                        } else {
+                            const batchYearSpan = document.getElementById('myBatchYear');
+                            if (batchYearSpan) batchYearSpan.textContent = user.batchYear || 'Unknown';
+                        }
+                    } catch(e) {
+                        console.error("Error parsing user data", e);
+                    }
                 }
-            });
+            };
+            
+            document.addEventListener('HeaderLoaded', updateHeaderInfo);
+            document.addEventListener('PermissionsRefreshed', updateHeaderInfo);
+            updateHeaderInfo();
             function showMessage(msg, isSuccess = true) {
                 const msgDiv = document.getElementById('statusMessage');
                 msgDiv.textContent = msg;

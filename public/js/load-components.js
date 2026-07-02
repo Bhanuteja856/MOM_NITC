@@ -1,10 +1,126 @@
+// ==========================================
+// CLIENT-SIDE ROUTER / URL MASKING SYSTEM
+// ==========================================
+const routes = {
+    '#dashboard': '/Alumni/Alumni-Main-Screen',
+    '#profile': '/Admin/Admin/Admin-Information',
+    '#manage-admins': '/Admin/SuperAdmin/Manage-Admins',
+    '#manage-alumni': '/Admin/SuperAdmin/Manage-Alumni',
+    '#manage-alumni-admin': '/Admin/Admin/Manage-Alumni-Admin',
+    '#role-permissions': '/Admin/SuperAdmin/Manage-Role-Permissions',
+    '#approve-alumni': '/Admin/Admin/Alumni-Approval',
+    '#super-approve-alumni': '/Admin/SuperAdmin/Alumni-Approval',
+    '#approve-events': '/Admin/Admin/event-approval',
+    '#create-event': '/Admin/Admin/event-creation',
+    '#super-create-event': '/Admin/SuperAdmin/Super-admin-event-creation',
+    '#announcements': '/Admin/Admin/Manage-Announcements',
+    '#super-announcements': '/Admin/SuperAdmin/Super-Admin-Manage-Announcements',
+    '#id-cards': '/Admin/Admin/Manage-ID-Cards',
+    '#super-id-cards': '/Admin/SuperAdmin/Manage-ID-Cards',
+    '#gallery': '/Alumni/gallary',
+    '#admin-gallery': '/Admin/Admin/Admin-gallery',
+    '#super-gallery': '/Admin/SuperAdmin/Super-admin-gallery',
+    '#videos': '/Admin/Admin/Admin-Videos',
+    '#super-videos': '/Admin/SuperAdmin/Super-Admin-Videos',
+    '#vouch': '/Alumni/Alumni-Vouching',
+    '#alumni-profile': '/Alumni/Alumni-Information',
+    '#alumni-details': '/Alumni/Alumni-View-Details',
+    '#login': '/login',
+    '#admin-login': '/Admin-login',
+    '#signup': '/signup',
+    '#about': '/about-us'
+};
+window.routes = routes;
+
+const getResolvedPath = () => {
+    let path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash;
+    if (hash) {
+        const hashRoute = hash.split('?')[0];
+        if (routes && routes[hashRoute]) {
+            return routes[hashRoute].toLowerCase();
+        }
+    }
+    return path;
+};
+window.getResolvedPath = getResolvedPath;
+
 document.addEventListener("DOMContentLoaded", () => {
+
+
+    const currentPath = window.getResolvedPath().toLowerCase();
+
+    // 1. If we are on the home page, resolve any hash redirects
+    if (currentPath === '/' || currentPath === '/index' || currentPath.endsWith('index')) {
+        const fullHash = window.location.hash;
+        if (fullHash) {
+            const hashParts = fullHash.split('?');
+            const hashRoute = hashParts[0];
+            const query = hashParts[1] ? '?' + hashParts[1] : '';
+            if (routes[hashRoute]) {
+                window.location.replace(routes[hashRoute] + query);
+                return; // Stop execution on redirect
+            }
+        }
+    }
+
+    // 2. Otherwise, if current page path is mapped to a hash, replace the address bar URL
+    let matchingHash = null;
+    for (const [hash, routePath] of Object.entries(routes)) {
+        if (currentPath === routePath.toLowerCase()) {
+            matchingHash = hash;
+            break;
+        }
+    }
+
+    if (matchingHash) {
+        const query = window.location.search;
+        window.history.replaceState({}, '', '/' + query + matchingHash);
+    }
+
     // Dynamically determine the base URL of the public directory
     const scriptTag = document.querySelector('script[src*="load-components.js"]');
     let publicBaseUrl = '';
     if (scriptTag && scriptTag.src) {
         publicBaseUrl = scriptTag.src.split('/js/load-components.js')[0];
     }
+
+    // Automatically refresh user profile/permissions on page load from the server
+    const refreshUserPermissions = async () => {
+        let token = localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('superAdminToken');
+        if (!token) return;
+
+        try {
+            const apiBase = window.API_URL || '/api/auth';
+            const res = await fetch(`${apiBase}/me?_=${Date.now()}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.user) {
+                    const latestUser = data.user;
+                    const role = latestUser.role || 'alumni';
+                    const isCustomRole = !['super_admin', 'admin', 'faculty', 'alumni'].includes(role);
+
+                    if (role === 'faculty' || isCustomRole) {
+                        localStorage.setItem('adminUser', JSON.stringify(latestUser));
+                        localStorage.setItem('user', JSON.stringify(latestUser));
+                    } else if (role === 'super_admin') {
+                        localStorage.setItem('superAdminUser', JSON.stringify(latestUser));
+                    } else if (role === 'admin') {
+                        localStorage.setItem('adminUser', JSON.stringify(latestUser));
+                    } else {
+                        localStorage.setItem('user', JSON.stringify(latestUser));
+                    }
+                    document.dispatchEvent(new CustomEvent('PermissionsRefreshed'));
+                }
+            }
+        } catch (e) {
+            console.error("Error refreshing permissions:", e);
+        }
+    };
+    refreshUserPermissions();
+
 
     // Dynamically set/update favicon and apple-touch-icon using calculated publicBaseUrl
     let faviconLink = document.querySelector('link[rel="icon"]');
@@ -47,7 +163,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (placeholder) {
             try {
                 const fetchUrl = file.startsWith('/') ? publicBaseUrl + file : file;
-                const response = await fetch(fetchUrl);
+                const cacheBuster = fetchUrl.includes('?') ? `&_=${Date.now()}` : `?_=${Date.now()}`;
+                const response = await fetch(fetchUrl + cacheBuster);
                 if (response.ok) {
                     placeholder.innerHTML = await response.text();
                     if (eventName) document.dispatchEvent(new Event(eventName));
@@ -59,12 +176,49 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     // Load specific header based on the data attribute
     const headerPlaceholder = document.getElementById('header-placeholder');
-    const headerFile = headerPlaceholder?.getAttribute('data-header') || '/header.html';
+    let headerFile = headerPlaceholder?.getAttribute('data-header') || '/header';
+
+    // Self-healing: If user object was corrupted (overwritten by raw alumni object) or missing for Faculty/Custom roles
+    try {
+        const uStr = localStorage.getItem('user');
+        const aStr = localStorage.getItem('adminUser');
+        if (aStr) {
+            const aObj = JSON.parse(aStr);
+            const isFacultyOrCustom = aObj.role && aObj.role !== 'alumni' && aObj.role !== 'super_admin' && aObj.role !== 'admin';
+            if (isFacultyOrCustom) {
+                if (!uStr) {
+                    localStorage.setItem('user', aStr);
+                } else {
+                    const uObj = JSON.parse(uStr);
+                    if (!uObj.role || uObj.role === 'alumni') {
+                        localStorage.setItem('user', aStr);
+                    }
+                }
+            }
+        }
+    } catch (e) {}
+
+    // Dynamically route faculty or custom roles to their specific headers
+    try {
+        const userStr = localStorage.getItem('user') || localStorage.getItem('adminUser');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            if (user.role === 'faculty' && (headerFile.includes('header-alumni.html') || headerFile.includes('header-admin.html'))) {
+                headerFile = '/Headers_Footers_common/header-faculty.html';
+            } else {
+                const isCustomRole = user.role && !['super_admin', 'admin', 'faculty', 'alumni'].includes(user.role);
+                if (isCustomRole && (headerFile.includes('header-alumni.html') || headerFile.includes('header-admin.html'))) {
+                    headerFile = '/Headers_Footers_common/header-custom.html';
+                }
+            }
+        }
+    } catch (e) { }
+
     loadComponent('header-placeholder', headerFile, 'HeaderLoaded');
 
     // Load the shared invite modal
     const modalPlaceholder = document.getElementById('modal-placeholder');
-    const modalFile = modalPlaceholder?.getAttribute('data-modal') || '/Headers_Footers_common/invite-modal.html';
+    const modalFile = modalPlaceholder?.getAttribute('data-modal') || '/Headers_Footers_common/invite-modal';
     if (modalPlaceholder) loadComponent('modal-placeholder', modalFile, 'ModalLoaded');
 
     // ==========================================
@@ -123,7 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         // 5. Invite via Link
         if (e.target.closest('#inviteLinkBtn')) {
-            const signupLink = window.location.origin + "/signup.html";
+            const signupLink = window.location.origin + "/signup";
             navigator.clipboard.writeText(signupLink).then(() => {
                 alert("Invite link copied to clipboard!");
                 const inviteModal = document.getElementById('inviteModal');
@@ -196,27 +350,27 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.style.pointerEvents = 'none';
             btn.innerHTML = `<svg style="animation: spin 1s linear infinite;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="4.93" x2="19.07" y2="7.76"></line></svg> Logging out...`;
 
+            const isAdminUser = localStorage.getItem('adminUser') || localStorage.getItem('superAdminUser');
+
             fetch(`${window.API_URL || '/api/auth'}/logout`, { method: 'POST' }).finally(() => {
                 const isDarkMode = localStorage.getItem('darkMode');
                 localStorage.clear();
                 if (isDarkMode !== null) localStorage.setItem('darkMode', isDarkMode);
                 sessionStorage.clear();
-                const path = window.location.pathname.toLowerCase();
-                const isAdmin = path.includes('/admin/') || path.includes('/superadmin/') || path.includes('admin-main-screen') || path.includes('super-admin');
-                window.location.href = isAdmin ? '../../Admin-login.html' : '../login.html';
+                window.location.href = isAdminUser ? '/Admin-login' : '/login';
             });
         }
     });
 
     // Load the shared footer
     let footerPlaceholder = document.getElementById('footer-placeholder');
-    const isAuthPage = ['login', 'signup', 'forgot', 'otp', 'register'].some(kw => window.location.pathname.toLowerCase().includes(kw));
+    const isAuthPage = ['login', 'signup', 'forgot', 'otp', 'register'].some(kw => window.getResolvedPath().toLowerCase().includes(kw));
     if (!footerPlaceholder && !isAuthPage) {
         footerPlaceholder = document.createElement('div');
         footerPlaceholder.id = 'footer-placeholder';
         document.body.appendChild(footerPlaceholder);
     }
-    const footerFile = footerPlaceholder?.getAttribute('data-footer') || '/Headers_Footers_common/footer.html';
+    const footerFile = footerPlaceholder?.getAttribute('data-footer') || '/Headers_Footers_common/footer';
     loadComponent('footer-placeholder', footerFile, 'FooterLoaded');
 
     // ==========================================
@@ -230,30 +384,30 @@ document.addEventListener("DOMContentLoaded", () => {
         if (hasSuperAdmin || hasAdmin || hasAlumni) {
             let dashboardUrl = '';
             if (hasSuperAdmin) {
-                dashboardUrl = publicBaseUrl + '/Admin/SuperAdmin/Super-Admin-Main-Screen.html';
+                dashboardUrl = publicBaseUrl + '/Admin/SuperAdmin/Super-Admin-Main-Screen';
             } else {
                 let userObj = null;
                 if (hasAdmin) {
-                    try { userObj = JSON.parse(hasAdmin); } catch (e) {}
+                    try { userObj = JSON.parse(hasAdmin); } catch (e) { }
                 } else if (hasAlumni) {
-                    try { userObj = JSON.parse(hasAlumni); } catch (e) {}
+                    try { userObj = JSON.parse(hasAlumni); } catch (e) { }
                 }
-                
+
                 const isCustomRole = userObj && userObj.role && !['super_admin', 'admin', 'faculty', 'alumni'].includes(userObj.role);
                 if (userObj && (userObj.role === 'faculty' || isCustomRole)) {
-                    dashboardUrl = publicBaseUrl + '/Alumni/Alumni-Main-Screen.html';
+                    dashboardUrl = publicBaseUrl + '/Alumni/Alumni-Main-Screen';
                 } else if (hasAdmin) {
-                    dashboardUrl = publicBaseUrl + '/Admin/Admin/Admin-Main-Screen.html';
+                    dashboardUrl = publicBaseUrl + '/Admin/Admin/Admin-Main-Screen';
                 } else {
-                    dashboardUrl = publicBaseUrl + '/Alumni/Alumni-Main-Screen.html';
+                    dashboardUrl = publicBaseUrl + '/Alumni/Alumni-Main-Screen';
                 }
             }
 
             // 1. Update Header Nav Links (login -> dashboard, register -> logout)
             const navLinks = document.getElementById('navLinks');
             if (navLinks) {
-                const loginLink = navLinks.querySelector('a[href*="login.html"]');
-                const registerLink = navLinks.querySelector('a[href*="signup.html"]');
+                const loginLink = navLinks.querySelector('a[href*="login"]');
+                const registerLink = navLinks.querySelector('a[href*="signup"]');
 
                 if (loginLink) {
                     loginLink.href = dashboardUrl;
@@ -284,7 +438,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // 2. Update Feature Cards (e.g. on index.html)
-            document.querySelectorAll('a[href*="login.html"]').forEach(link => {
+            document.querySelectorAll('a[href*="login"]').forEach(link => {
                 if (!link.closest('#navLinks') && !link.closest('#footer-placeholder')) {
                     link.href = dashboardUrl;
                 }
@@ -293,8 +447,8 @@ document.addEventListener("DOMContentLoaded", () => {
             // 3. Update Footer Links
             const footerPlaceholder = document.getElementById('footer-placeholder');
             if (footerPlaceholder) {
-                const footerLoginLink = footerPlaceholder.querySelector('a[href*="/login.html"]') || footerPlaceholder.querySelector('a[href="login.html"]');
-                const footerRegisterLink = footerPlaceholder.querySelector('a[href*="/signup.html"]') || footerPlaceholder.querySelector('a[href="signup.html"]');
+                const footerLoginLink = footerPlaceholder.querySelector('a[href*="/login"]') || footerPlaceholder.querySelector('a[href="login"]');
+                const footerRegisterLink = footerPlaceholder.querySelector('a[href*="/signup"]') || footerPlaceholder.querySelector('a[href="signup"]');
 
                 if (footerLoginLink) {
                     footerLoginLink.href = dashboardUrl;
@@ -344,7 +498,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // AUTO-LOGOUT INACTIVITY TIMER (30 MINUTES)
     // ==========================================
     const hasSession = localStorage.getItem('user') || localStorage.getItem('adminUser') || localStorage.getItem('superAdminUser');
-    if (hasSession && !window.location.pathname.toLowerCase().includes('login')) {
+    if (hasSession && !window.getResolvedPath().toLowerCase().includes('login')) {
         const INACTIVITY_TIME = 30 * 60 * 1000; // 30 minutes in milliseconds
         let timeoutId;
 
@@ -355,7 +509,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (isDarkMode !== null) localStorage.setItem('darkMode', isDarkMode);
                 alert('Your session has expired due to 30 minutes of inactivity. Please log in again.');
 
-                if (window.location.pathname.includes('/Admin/') || window.location.pathname.includes('/SuperAdmin/')) {
+                if (window.getResolvedPath().includes('/Admin/') || window.getResolvedPath().includes('/SuperAdmin/')) {
                     window.location.href = '../../Admin-login.html';
                 } else {
                     window.location.href = '../login.html';
@@ -396,6 +550,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 z-index: 99999 !important;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
                 backdrop-filter: blur(10px);
+            }
+            /* Flex layout for menu links + icon support */
+            .dropdown-content a {
+                display: flex !important;
+                align-items: center !important;
+                gap: 10px !important;
+            }
+            .dropdown-content a[style*="display: none"], .dropdown-content a[style*="display:none"] {
+                display: none !important;
+            }
+            .dropdown-content a span:first-child svg {
+                width: 18px !important;
+                height: 18px !important;
+                display: block !important;
+                flex-shrink: 0 !important;
             }
             /* Beautiful custom scrollbars */
             .dropdown-content::-webkit-scrollbar, .notification-dropdown::-webkit-scrollbar, .announcements-scroll-container::-webkit-scrollbar { width: 6px; }
@@ -450,13 +619,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 cursor: pointer; font-size: 22px; margin-right: 20px; user-select: none;
                 transition: transform 0.3s ease, background-color 0.3s ease; display: flex;
                 align-items: center; justify-content: center; width: 40px; height: 40px;
-                border-radius: 50%; background-color: rgba(0,0,0,0.05);
+                border-radius: 50%; background-color: rgba(0,0,0,0.05); color: #334155;
             }
             .header-theme-toggle:hover {
                 transform: scale(1.1); background-color: rgba(0,0,0,0.1);
             }
             .dark-mode .header-theme-toggle {
-                background-color: rgba(255,255,255,0.1);
+                background-color: rgba(255,255,255,0.1); color: #f1f5f9;
             }
             .dark-mode .header-theme-toggle:hover { background-color: rgba(255,255,255,0.2); }
         `;
@@ -501,12 +670,21 @@ document.addEventListener("DOMContentLoaded", () => {
             // Insert the toggle button right before the notification bell (or profile icon) in the header
             const insertTarget = document.querySelector('.notification-bell') || document.querySelector('.profile-menu');
             const navLinks = document.querySelector('.nav-links'); // Targets the index.html navigation
+            const container = document.querySelector('.container'); // Targets public card screens (Login, Signup, Legacy Signup, etc.)
 
             if (insertTarget && insertTarget.parentNode) {
                 insertTarget.parentNode.insertBefore(toggleBtn, insertTarget);
             } else if (navLinks) {
                 // Inject perfectly next to the Login button on the landing page
                 navLinks.insertBefore(toggleBtn, navLinks.firstChild);
+            } else if (container) {
+                // Absolute position inside the card container to stay inside bounds
+                toggleBtn.style.position = 'absolute';
+                toggleBtn.style.top = '15px';
+                toggleBtn.style.right = '15px';
+                toggleBtn.style.margin = '0';
+                toggleBtn.style.zIndex = '100';
+                container.appendChild(toggleBtn);
             } else {
                 // Fallback for public auth screens (Login, Signup, etc.)
                 toggleBtn.style.position = 'fixed';
@@ -531,12 +709,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        const path = window.location.pathname.toLowerCase();
-        if (path.includes('login') || path.includes('signup') || path.includes('forgot') || path.includes('verify') || path === '/' || path.endsWith('index.html') || path.includes('about-us')) {
-            // Inject immediately on public pages without waiting for the dashboard header
-            injectThemeToggle();
-        } else {
+        if (document.getElementById('header-placeholder')) {
             document.addEventListener('HeaderLoaded', injectThemeToggle);
+        } else {
+            injectThemeToggle();
         }
     };
     setupDarkMode();
@@ -547,8 +723,8 @@ window.vouchBatchmate = async function (userId, knows, event) {
     if (event) event.stopPropagation();
 
     let token = localStorage.getItem('token');
-    if (window.location.pathname.includes('/SuperAdmin') || window.location.pathname.includes('Super-Admin')) token = localStorage.getItem('superAdminToken');
-    else if (window.location.pathname.includes('/Admin')) token = localStorage.getItem('adminToken');
+    if (window.getResolvedPath().includes('/SuperAdmin') || window.getResolvedPath().includes('Super-Admin')) token = localStorage.getItem('superAdminToken');
+    else if (window.getResolvedPath().includes('/Admin')) token = localStorage.getItem('adminToken');
 
     try {
         const res = await fetch(`${window.API_URL}/legacy-vouch`, {
@@ -570,17 +746,17 @@ window.vouchBatchmate = async function (userId, knows, event) {
     }
 };
 
-// Global logic to highlight the currently active page in the dropdown menu
+// // Global logic to highlight the currently active page in the dropdown menu
 document.addEventListener('HeaderLoaded', () => {
-    const currentPage = window.location.pathname.split('/').pop();
+    const currentPage = window.getResolvedPath().split('/').pop();
     if (!currentPage) return;
 
     const dropdownLinks = document.querySelectorAll('.dropdown-content a');
 
     let activeColor = '#0D8ABC'; // Default Alumni blue
-    if (window.location.pathname.includes('/SuperAdmin') || window.location.pathname.includes('Super-Admin')) {
+    if (window.getResolvedPath().includes('/SuperAdmin') || window.getResolvedPath().includes('Super-Admin')) {
         activeColor = '#4a148c'; // Super Admin purple
-    } else if (window.location.pathname.includes('/Admin')) {
+    } else if (window.getResolvedPath().includes('/Admin')) {
         activeColor = '#c62828'; // Admin red
     }
 
@@ -597,200 +773,273 @@ document.addEventListener('HeaderLoaded', () => {
     // ==========================================
     // MENU ICONS INJECTION (Light & Dark Mode Sync)
     // ==========================================
+    const menuIconMap = {
+        'dashboard': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>',
+        'my profile': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
+        'admin profile': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
+        'admin dashboard': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>',
+        'post events': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>',
+        'view the events': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
+        'invite batchmates': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>',
+        'invite alumni': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>',
+        'verify batchmates': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+        'verify alumni': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+        'gallery': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>',
+        'manage alumni': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
+        'event creation': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><line x1="12" y1="14" x2="12" y2="18"></line><line x1="10" y1="16" x2="14" y2="16"></line></svg>',
+        'alumni approval': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>',
+        'event approval': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+        'announcements': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>',
+        'manage id cards': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
+        'manage gallery': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>',
+        'manage videos': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>',
+        'logout': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>',
+    };
+
     const allMenuLinks = document.querySelectorAll('.dropdown-content a, .profile-dropdown a, #logoutBtn');
     allMenuLinks.forEach(link => {
         if (link.querySelector('svg')) return; // Prevent duplicates
 
-        const text = link.textContent.trim().toLowerCase();
-        let iconSvg = '';
+        const label = link.textContent.trim().toLowerCase();
+        let iconSvg = menuIconMap[label];
 
-        if (text.includes('profile') || text.includes('information')) {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
-        } else if (text.includes('dashboard') || text.includes('home')) {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
-        } else if (text.includes('logout') || text.includes('log out') || link.id === 'logoutBtn') {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>`;
-        } else if (text.includes('manage alumni') || text.includes('manage admins') || text.includes('directory')) {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`;
-        } else if (text.includes('event creation') || text.includes('post event')) {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><line x1="12" y1="14" x2="12" y2="18"></line><line x1="10" y1="16" x2="14" y2="16"></line></svg>`;
-        } else if (text.includes('alumni approval') || text.includes('verify')) {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>`;
-        } else if (text.includes('event approval')) {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line><polyline points="9 16 12 19 18 13"></polyline></svg>`;
-        } else if (text.includes('announcement') || text.includes('alert')) {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"></path></svg>`;
-        } else if (text.includes('gallery') || text.includes('picture')) {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`;
-        } else if (text.includes('invite')) {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>`;
-        } else if (text.includes('magazine') || text.includes('newsletter')) {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
-        } else if (text.includes('id card')) {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect><line x1="7" y1="15" x2="17" y2="15"></line><circle cx="12" cy="10" r="2"></circle></svg>`;
-        } else if (text.includes('video')) {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`;
-        } else if (text.includes('event')) {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`;
-        } else {
-            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
+        // Fallbacks for sub-string matches if not exact
+        if (!iconSvg) {
+            if (label.includes('profile') || label.includes('information')) {
+                iconSvg = menuIconMap['my profile'];
+            } else if (label.includes('dashboard') || label.includes('home')) {
+                iconSvg = menuIconMap['dashboard'];
+            } else if (label.includes('logout') || label.includes('log out')) {
+                iconSvg = menuIconMap['logout'];
+            } else if (label.includes('manage alumni') || label.includes('manage admins') || label.includes('directory')) {
+                iconSvg = menuIconMap['manage alumni'];
+            } else if (label.includes('event creation') || label.includes('post event') || label.includes('postevents')) {
+                iconSvg = menuIconMap['event creation'];
+            } else if (label.includes('alumni approval') || label.includes('verify')) {
+                iconSvg = menuIconMap['alumni approval'];
+            } else if (label.includes('event approval')) {
+                iconSvg = menuIconMap['event approval'];
+            } else if (label.includes('announcement') || label.includes('alert')) {
+                iconSvg = menuIconMap['announcements'];
+            } else if (label.includes('gallery') || label.includes('picture')) {
+                iconSvg = menuIconMap['gallery'];
+            } else if (label.includes('id card')) {
+                iconSvg = menuIconMap['manage id cards'];
+            } else if (label.includes('video')) {
+                iconSvg = menuIconMap['manage videos'];
+            } else {
+                iconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+            }
         }
 
         if (iconSvg) {
-            if (link.style.display !== 'none') {
-                link.style.display = 'flex';
+            const wasHidden = link.style.display === 'none';
+            const originalText = link.textContent.trim();
+            // Clear and rebuild content
+            link.textContent = '';
+            const svgWrapper = document.createElement('span');
+            svgWrapper.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:18px;height:18px;min-width:18px;opacity:0.75;transition:opacity 0.2s;';
+            svgWrapper.innerHTML = iconSvg;
+            // Make the inner SVG explicitly sized
+            const svgEl = svgWrapper.querySelector('svg');
+            if (svgEl) {
+                svgEl.setAttribute('width', '18');
+                svgEl.setAttribute('height', '18');
+                svgEl.style.display = 'block';
             }
-            link.style.alignItems = 'center';
-            link.style.gap = '10px';
-            link.insertAdjacentHTML('afterbegin', iconSvg);
+            link.appendChild(svgWrapper);
+            link.appendChild(document.createTextNode(originalText));
+            // Use setProperty with 'important' flag
+            if (wasHidden) {
+                link.style.setProperty('display', 'none', 'important');
+            } else {
+                link.style.setProperty('display', 'flex', 'important');
+                link.style.setProperty('align-items', 'center', 'important');
+                link.style.setProperty('gap', '10px', 'important');
+            }
+            // Hover effects on icon
+            link.addEventListener('mouseenter', () => { svgWrapper.style.opacity = '1'; });
+            link.addEventListener('mouseleave', () => { svgWrapper.style.opacity = '0.75'; });
         }
     });
+
 
     // ==========================================
     // ROLE-BASED DROPDOWN MENU LOGIC
     // ==========================================
-    const userStr = localStorage.getItem('user');
-    const adminUserStr = localStorage.getItem('adminUser');
+    const applyRolePermissions = () => {
+        const setLinkDisplay = (el, val) => {
+            if (el) el.style.setProperty('display', val, 'important');
+        };
 
-    // Handle Alumni Header (Faculty View)
-    if (userStr && document.getElementById('navProfileLink')) {
+        const userStr = localStorage.getItem('user');
+        const adminUserStr = localStorage.getItem('adminUser');
+
+        // Sync welcome name display and profile image if present
         try {
-            const user = JSON.parse(userStr);
-            const isCustomRole = !['super_admin', 'admin', 'faculty', 'alumni'].includes(user.role);
-            if (isCustomRole) {
-                const dashboardLink = document.getElementById('navDashboardLink');
-                if (dashboardLink) {
-                    dashboardLink.style.display = 'flex';
-                    dashboardLink.href = '/Alumni/Alumni-Main-Screen.html';
+            const activeUserObj = JSON.parse(localStorage.getItem('adminUser') || localStorage.getItem('user'));
+            if (activeUserObj && activeUserObj.name) {
+                const alumniNameEl = document.getElementById('alumniNameDisplay');
+                if (alumniNameEl) alumniNameEl.textContent = activeUserObj.name;
+                const adminNameEl = document.getElementById('adminNameDisplay');
+                if (adminNameEl) adminNameEl.textContent = activeUserObj.name;
+                const headerProfilePic = document.getElementById('headerProfilePic');
+                if (headerProfilePic) {
+                    let avatarColor = '0D8ABC';
+                    if (activeUserObj.role === 'super_admin') avatarColor = '4a148c';
+                    else if (activeUserObj.role === 'admin') avatarColor = 'c62828';
+                    headerProfilePic.src = activeUserObj.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeUserObj.name)}&background=${avatarColor}&color=fff`;
                 }
-                const profileLink = document.getElementById('navProfileLink');
-                if (profileLink) {
-                    profileLink.style.display = 'flex';
-                    profileLink.href = '/Admin/Admin/Admin-Information.html';
-                }
-
-                // Hide all standard alumni links (not admin-menu)
-                const alumniLinks = document.querySelectorAll('.dropdown-content a:not(.admin-menu):not(#navDashboardLink):not(#navProfileLink):not(#logoutBtn)');
-                alumniLinks.forEach(link => link.style.display = 'none');
-
-                // Handle admin menus based on permissions
-                const menusToUse = Array.isArray(user.accessibleMenus) ? user.accessibleMenus : [];
-                const adminMenus = document.querySelectorAll('.dropdown-content a.admin-menu');
-                adminMenus.forEach(link => {
-                    const menuAttr = link.getAttribute('data-menu');
-                    if (menuAttr === 'Dashboard' || menuAttr === 'My Profile') {
-                        link.style.display = 'none'; // Replaced by navDashboardLink and navProfileLink
-                    } else {
-                        const isAllowed = menusToUse.includes(menuAttr);
-                        link.style.display = isAllowed ? 'flex' : 'none';
-                    }
-                });
-
-                // Adjust logo link if present
-                const logoLink = document.querySelector('header a[href*="Alumni-Main-Screen.html"]');
-                if (logoLink) {
-                    logoLink.href = '/Alumni/Alumni-Main-Screen.html';
-                }
-            } else if (user.role === 'faculty') {
-                const menusToUse = Array.isArray(user.accessibleMenus) ? user.accessibleMenus : [];
-                const adminMenus = document.querySelectorAll('.dropdown-content a.admin-menu');
-                adminMenus.forEach(link => {
-                    const menuAttr = link.getAttribute('data-menu');
-                    const isAllowed = menusToUse.includes(menuAttr);
-                    link.style.display = isAllowed ? 'flex' : 'none';
-                });
-                const profileLink = document.getElementById('navProfileLink');
-
-                if (profileLink) profileLink.href = '../Admin/Admin/Admin-Information.html';
-
-                const inviteLink = document.getElementById('navInviteLink');
-                if (inviteLink) inviteLink.innerHTML = inviteLink.innerHTML.replace('Invite Batchmates', 'Invite Alumni');
-
-                const verifyLink = document.getElementById('navVerifyLink');
-                if (verifyLink) verifyLink.innerHTML = verifyLink.innerHTML.replace('Verify Batchmates', 'Verify Alumni');
             }
         } catch (e) { }
-    }
 
-    // Handle Admin Header (Faculty & Admin View)
-    if (adminUserStr && !document.getElementById('navProfileLink')) {
-        try {
-            const user = JSON.parse(adminUserStr);
-
-            const nameDisplay = document.getElementById('adminNameDisplay');
-            if (nameDisplay && user.name) nameDisplay.textContent = user.name;
-
-            // Get all potentially controlled links
-            const allDataMenuLinks = document.querySelectorAll('.dropdown-content a[data-menu]');
-            const facultyMenuLinks = document.querySelectorAll('.dropdown-content a.faculty-menu');
-            const adminDashboardLink = document.getElementById('adminDashboardLink');
-            const adminProfileLink = document.getElementById('adminProfileLink');
-
-            const isCustomRole = !['super_admin', 'admin', 'faculty'].includes(user.role);
-
-            if (isCustomRole) {
-                if (adminDashboardLink) {
-                    adminDashboardLink.style.display = 'flex';
-                    adminDashboardLink.href = '/Alumni/Alumni-Main-Screen.html';
-                }
-                if (adminProfileLink) {
-                    adminProfileLink.style.display = 'flex';
-                    adminProfileLink.href = '/Admin/Admin/Admin-Information.html';
-                }
-
-                // Hide any faculty-specific links
-                facultyMenuLinks.forEach(link => link.style.display = 'none');
-
-                // Handle data-menu links based on permissions
-                const menusToUse = Array.isArray(user.accessibleMenus) ? user.accessibleMenus : [];
-                allDataMenuLinks.forEach(link => {
-                    const menuAttr = link.getAttribute('data-menu');
-                    const isAllowed = menusToUse.includes(menuAttr);
-                    link.style.display = isAllowed ? 'flex' : 'none';
-                });
-
-                // Adjust logo link if present
-                const logoLink = document.querySelector('header a[href*="Admin-Main-Screen.html"]');
-                if (logoLink) {
-                    logoLink.href = '/Alumni/Alumni-Main-Screen.html';
-                }
-            } else if (user.role === 'super_admin') {
-                // Super admin sees everything, so do nothing (links are visible by default in HTML)
-            } else if (user.role === 'faculty') {
-                if (adminDashboardLink) adminDashboardLink.style.display = 'none';
-                if (adminProfileLink) adminProfileLink.style.display = 'none';
-                // Show faculty-specific links
-                facultyMenuLinks.forEach(link => {
-                    link.style.display = 'flex';
-                    if (link.innerHTML.includes('Invite Batchmates')) {
-                        link.innerHTML = link.innerHTML.replace('Invite Batchmates', 'Invite Alumni');
+        // Handle Alumni Header (Faculty View)
+        if (userStr && document.getElementById('navProfileLink')) {
+            try {
+                const user = JSON.parse(userStr);
+                if (!user.role) user.role = 'alumni';
+                const isCustomRole = !['super_admin', 'admin', 'faculty', 'alumni'].includes(user.role);
+                if (isCustomRole) {
+                    const dashboardLink = document.getElementById('navDashboardLink');
+                    if (dashboardLink) {
+                        setLinkDisplay(dashboardLink, 'flex');
+                        dashboardLink.href = '/Alumni/Alumni-Main-Screen';
                     }
-                    if (link.innerHTML.includes('Verify Batchmates')) {
-                        link.innerHTML = link.innerHTML.replace('Verify Batchmates', 'Verify Alumni');
+                    const profileLink = document.getElementById('navProfileLink');
+                    if (profileLink) {
+                        setLinkDisplay(profileLink, 'flex');
+                        profileLink.href = '/Admin/Admin/Admin-Information';
                     }
-                });
-                // Handle data-menu links based on permissions
-                const menusToUse = Array.isArray(user.accessibleMenus) ? user.accessibleMenus : [];
-                allDataMenuLinks.forEach(link => {
-                    const isAllowed = menusToUse.includes(link.getAttribute('data-menu'));
-                    link.style.display = isAllowed ? 'flex' : 'none';
-                });
-            } else { // Standard 'admin'
-                // Hide any faculty-specific links
-                facultyMenuLinks.forEach(link => link.style.display = 'none');
-                // Handle data-menu links based on permissions
-                const defaultAdminMenus = ['Manage Alumni', 'Event Creation', 'Alumni Approval', 'Event Approval', 'Announcements', 'Manage Gallery', 'Manage ID Cards'];
-                const menusToUse = Array.isArray(user.accessibleMenus) ? user.accessibleMenus : defaultAdminMenus;
-                allDataMenuLinks.forEach(link => {
-                    if (menusToUse.includes(link.getAttribute('data-menu'))) {
-                        link.style.display = 'flex';
-                    } else {
-                        link.style.display = 'none';
+                    const galleryLink = document.getElementById('navGalleryLink');
+                    if (galleryLink) {
+                        setLinkDisplay(galleryLink, 'flex');
+                        galleryLink.href = '/Alumni/gallary';
                     }
-                });
-            }
-        } catch (e) { console.error("Error processing admin menu roles:", e); }
-    }
+
+                    // Hide all standard alumni links (not admin-menu) except dashboard, profile, gallery, and logout
+                    const alumniLinks = document.querySelectorAll('.dropdown-content a:not(.admin-menu):not(#navDashboardLink):not(#navProfileLink):not(#navGalleryLink):not(#logoutBtn)');
+                    alumniLinks.forEach(link => setLinkDisplay(link, 'none'));
+
+                    // Handle admin menus based on permissions
+                    const menusToUse = Array.isArray(user.accessibleMenus) ? user.accessibleMenus : [];
+                    const adminMenus = document.querySelectorAll('.dropdown-content a.admin-menu');
+                    adminMenus.forEach(link => {
+                        const menuAttr = link.getAttribute('data-menu');
+                        if (menuAttr === 'Dashboard' || menuAttr === 'My Profile') {
+                            setLinkDisplay(link, 'none'); // Replaced by navDashboardLink and navProfileLink
+                        } else {
+                            const isAllowed = menusToUse.includes(menuAttr);
+                            setLinkDisplay(link, isAllowed ? 'flex' : 'none');
+                        }
+                    });
+                } else if (user.role === 'faculty') {
+                    const menusToUse = Array.isArray(user.accessibleMenus) ? user.accessibleMenus : [];
+                    const adminMenus = document.querySelectorAll('.dropdown-content a.admin-menu');
+                    adminMenus.forEach(link => {
+                        const menuAttr = link.getAttribute('data-menu');
+                        if (menuAttr === 'Dashboard' || menuAttr === 'My Profile') {
+                            setLinkDisplay(link, 'none'); // Replaced by navDashboardLink and navProfileLink
+                        } else {
+                            const isAllowed = menusToUse.includes(menuAttr);
+                            setLinkDisplay(link, isAllowed ? 'flex' : 'none');
+                        }
+                    });
+                    const profileLink = document.getElementById('navProfileLink');
+
+                    if (profileLink) profileLink.href = '/Admin/Admin/Admin-Information';
+
+                    const inviteLink = document.getElementById('navInviteLink');
+                    if (inviteLink) inviteLink.innerHTML = inviteLink.innerHTML.replace('Invite Batchmates', 'Invite Alumni');
+
+                    const verifyLink = document.getElementById('navVerifyLink');
+                    if (verifyLink) verifyLink.innerHTML = verifyLink.innerHTML.replace('Verify Batchmates', 'Verify Alumni');
+                }
+            } catch (e) { }
+        }
+
+        // Handle Admin Header (Faculty & Admin View)
+        if (adminUserStr && !document.getElementById('navProfileLink')) {
+            try {
+                const user = JSON.parse(adminUserStr);
+
+                const nameDisplay = document.getElementById('adminNameDisplay');
+                if (nameDisplay && user.name) nameDisplay.textContent = user.name;
+
+                // Get all potentially controlled links
+                const allDataMenuLinks = document.querySelectorAll('.dropdown-content a[data-menu]');
+                const facultyMenuLinks = document.querySelectorAll('.dropdown-content a.faculty-menu');
+                const adminDashboardLink = document.getElementById('adminDashboardLink');
+                const adminProfileLink = document.getElementById('adminProfileLink');
+
+                const isCustomRole = !['super_admin', 'admin', 'faculty'].includes(user.role);
+
+                if (isCustomRole) {
+                    if (adminDashboardLink) {
+                        setLinkDisplay(adminDashboardLink, 'flex');
+                        adminDashboardLink.href = '/Alumni/Alumni-Main-Screen';
+                    }
+                    if (adminProfileLink) {
+                        setLinkDisplay(adminProfileLink, 'flex');
+                        adminProfileLink.href = '/Admin/Admin/Admin-Information';
+                    }
+
+                    // Hide any faculty-specific links
+                    facultyMenuLinks.forEach(link => setLinkDisplay(link, 'none'));
+
+                    // Handle data-menu links based on permissions
+                    const menusToUse = Array.isArray(user.accessibleMenus) ? user.accessibleMenus : [];
+                    allDataMenuLinks.forEach(link => {
+                        const menuAttr = link.getAttribute('data-menu');
+                        const isAllowed = menusToUse.includes(menuAttr);
+                        setLinkDisplay(link, isAllowed ? 'flex' : 'none');
+                    });
+
+                    // Adjust logo link if present
+                    const logoLink = document.querySelector('header a[href*="Admin-Main-Screen"]');
+                    if (logoLink) {
+                        logoLink.href = '/Alumni/Alumni-Main-Screen';
+                    }
+                } else if (user.role === 'super_admin') {
+                    // Super admin sees everything, so do nothing (links are visible by default in HTML)
+                } else if (user.role === 'faculty') {
+                    if (adminDashboardLink) setLinkDisplay(adminDashboardLink, 'none');
+                    if (adminProfileLink) setLinkDisplay(adminProfileLink, 'none');
+                    // Show faculty-specific links
+                    facultyMenuLinks.forEach(link => {
+                        setLinkDisplay(link, 'flex');
+                        if (link.innerHTML.includes('Invite Batchmates')) {
+                            link.innerHTML = link.innerHTML.replace('Invite Batchmates', 'Invite Alumni');
+                        }
+                        if (link.innerHTML.includes('Verify Batchmates')) {
+                            link.innerHTML = link.innerHTML.replace('Verify Batchmates', 'Verify Alumni');
+                        }
+                    });
+                    // Handle data-menu links based on permissions
+                    const menusToUse = Array.isArray(user.accessibleMenus) ? user.accessibleMenus : [];
+                    allDataMenuLinks.forEach(link => {
+                        const isAllowed = menusToUse.includes(link.getAttribute('data-menu'));
+                        setLinkDisplay(link, isAllowed ? 'flex' : 'none');
+                    });
+                } else { // Standard 'admin'
+                    // Hide any faculty-specific links
+                    facultyMenuLinks.forEach(link => setLinkDisplay(link, 'none'));
+                    // Handle data-menu links based on permissions
+                    const defaultAdminMenus = ['Manage Alumni', 'Event Creation', 'Alumni Approval', 'Event Approval', 'Announcements', 'Manage Gallery', 'Manage ID Cards'];
+                    const menusToUse = Array.isArray(user.accessibleMenus) ? user.accessibleMenus : defaultAdminMenus;
+                    allDataMenuLinks.forEach(link => {
+                        if (menusToUse.includes(link.getAttribute('data-menu'))) {
+                            setLinkDisplay(link, 'flex');
+                        } else {
+                            setLinkDisplay(link, 'none');
+                        }
+                    });
+                }
+            } catch (e) { console.error("Error processing admin menu roles:", e); }
+        }
+    };
+
+    document.addEventListener('HeaderLoaded', applyRolePermissions);
+    document.addEventListener('PermissionsRefreshed', applyRolePermissions);
 
     // ==========================================
     // DYNAMIC NOTIFICATION FETCHING LOGIC
@@ -804,10 +1053,10 @@ document.addEventListener('HeaderLoaded', () => {
         let storedUser = null;
         let currentUser = null;
 
-        if (window.location.pathname.includes('/SuperAdmin') || window.location.pathname.includes('Super-Admin')) {
+        if (window.getResolvedPath().includes('/SuperAdmin') || window.getResolvedPath().includes('Super-Admin')) {
             token = localStorage.getItem('superAdminToken');
             storedUser = localStorage.getItem('superAdminUser');
-        } else if (window.location.pathname.includes('/Admin')) {
+        } else if (window.getResolvedPath().includes('/Admin')) {
             token = localStorage.getItem('adminToken');
             storedUser = localStorage.getItem('adminUser');
         } else {
@@ -914,9 +1163,9 @@ document.addEventListener('HeaderLoaded', () => {
                 };
 
                 // Determine correct "View All" link relative to current path
-                const isSuper = window.location.pathname.includes('/SuperAdmin') || window.location.pathname.includes('Super-Admin');
-                const isAdmin = !isSuper && window.location.pathname.includes('/Admin');
-                let notifPagePath = '/notifications.html';
+                const isSuper = window.getResolvedPath().includes('/SuperAdmin') || window.getResolvedPath().includes('Super-Admin');
+                const isAdmin = !isSuper && window.getResolvedPath().includes('/Admin');
+                let notifPagePath = '/notifications';
                 if (isSuper) notifPagePath = '../../notifications.html';
                 else if (isAdmin) notifPagePath = '../../notifications.html';
 
@@ -1017,7 +1266,7 @@ window.toggleProfilePanel = function () {
 };
 
 window.showAccessDenied = () => {
-    const isAlumni = !window.location.pathname.toLowerCase().includes('/admin/');
+    const isAlumni = !window.getResolvedPath().toLowerCase().includes('/admin/');
     const loginUrl = isAlumni ? '../login.html' : '../../Admin-login.html';
 
     document.body.innerHTML = `
@@ -1045,12 +1294,20 @@ window.checkAccess = (isPersisted = false) => {
     let userKey = 'user';
     let loginUrl = '../login.html';
 
-    const path = window.location.pathname.toLowerCase();
+    let path = window.getResolvedPath().toLowerCase();
+    const hash = window.location.hash;
+    if (hash) {
+        const hashRoute = hash.split('?')[0];
+        if (window.routes && window.routes[hashRoute]) {
+            path = window.routes[hashRoute].toLowerCase();
+        }
+    }
+
     if (path.includes('/superadmin') || path.includes('super-admin')) {
-        userKey = 'superAdminUser';
+        userKey = localStorage.getItem('superAdminUser') ? 'superAdminUser' : 'adminUser';
         loginUrl = '../../Admin-login.html';
     } else if (path.includes('/admin')) {
-        userKey = 'adminUser';
+        userKey = localStorage.getItem('superAdminUser') ? 'superAdminUser' : 'adminUser';
         loginUrl = '../../Admin-login.html';
     }
 
@@ -1065,7 +1322,7 @@ window.checkAccess = (isPersisted = false) => {
     return true;
 };
 
-if (!window.location.pathname.toLowerCase().includes('login') && !window.location.pathname.toLowerCase().includes('signup') && !window.location.pathname.toLowerCase().includes('forgot-password')) {
+if (!window.getResolvedPath().toLowerCase().includes('login') && !window.getResolvedPath().toLowerCase().includes('signup') && !window.getResolvedPath().toLowerCase().includes('forgot-password')) {
     window.addEventListener('pageshow', (event) => { if (event.persisted) window.checkAccess(true); });
 }
 
@@ -1083,8 +1340,8 @@ window.updateEventsTicker = async function () {
     if (tickerAnimation) tickerAnimation.cancel();
 
     let token = localStorage.getItem('token');
-    if (window.location.pathname.includes('/SuperAdmin') || window.location.pathname.includes('Super-Admin')) token = localStorage.getItem('superAdminToken');
-    else if (window.location.pathname.includes('/Admin')) token = localStorage.getItem('adminToken');
+    if (window.getResolvedPath().includes('/SuperAdmin') || window.getResolvedPath().includes('Super-Admin')) token = localStorage.getItem('superAdminToken');
+    else if (window.getResolvedPath().includes('/Admin')) token = localStorage.getItem('adminToken');
 
     try {
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -1099,7 +1356,7 @@ window.updateEventsTicker = async function () {
             if (approvedEvents.length > 0) {
                 const originalContent = approvedEvents.map(e => {
                     // Format the date to be more readable
-                    const eventUrl = `/Alumni/view-events.html#event-${e._id}`;
+                    const eventUrl = `/Alumni/view-events#event-${e._id}`;
                     const eventDate = new Date(e.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
                     return `<a href="${eventUrl}" style="color: inherit; text-decoration: none; display: inline-block;">⭐ ${window.escapeHtml(e.title)} - ${eventDate}</a>`;
                 }).join(' &nbsp; | &nbsp; ');

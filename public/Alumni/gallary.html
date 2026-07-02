@@ -202,22 +202,26 @@
         document.addEventListener('DOMContentLoaded', () => {
             if (!window.checkAccess()) return;
 
-            // User Data Handling
-            const storedUser = localStorage.getItem('user');
-
-            document.addEventListener('HeaderLoaded', () => {
-                if (storedUser) {
+            const updateHeaderInfo = () => {
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
                     try {
-                        const user = JSON.parse(storedUser);
+                        const user = JSON.parse(userStr);
                         if (user && user.name) {
-                            document.getElementById('alumniNameDisplay').textContent = user.name;
-                            document.getElementById('headerProfilePic').src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff`;
+                            const nameEl = document.getElementById('alumniNameDisplay');
+                            if (nameEl) nameEl.textContent = user.name;
+                            const picEl = document.getElementById('headerProfilePic');
+                            if (picEl) picEl.src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff`;
                         }
-                    } catch (e) {
+                    } catch(e) {
                         console.error("Error parsing user data", e);
                     }
                 }
-            });
+            };
+            
+            document.addEventListener('HeaderLoaded', updateHeaderInfo);
+            document.addEventListener('PermissionsRefreshed', updateHeaderInfo);
+            updateHeaderInfo();
 
             const galleryGrid = document.getElementById('galleryGrid');
             const categoryToggles = document.getElementById('categoryToggles');

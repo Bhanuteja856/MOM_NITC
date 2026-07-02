@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -170,27 +170,28 @@
         document.addEventListener('DOMContentLoaded', () => {
             if (!window.checkAccess()) return;
 
-            // Retrieve User from LocalStorage
-            const storedUser = localStorage.getItem('user');
             let currentUserEmail = null;
-            
-            // Header logic runs ONLY AFTER the header HTML is successfully fetched and injected
-            document.addEventListener('HeaderLoaded', () => {
 
-                if (storedUser) {
+            const updateHeaderInfo = () => {
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
                     try {
-                        const user = JSON.parse(storedUser);
+                        const user = JSON.parse(userStr);
                         if (user && user.email) currentUserEmail = user.email;
                         if (user && user.name) {
-                            document.getElementById('alumniNameDisplay').textContent = user.name;
-                            document.getElementById('headerProfilePic').src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff`;
+                            const nameEl = document.getElementById('alumniNameDisplay');
+                            if (nameEl) nameEl.textContent = user.name;
+                            const picEl = document.getElementById('headerProfilePic');
+                            if (picEl) picEl.src = user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff`;
                         }
                     } catch(e) {
                         console.error("Error parsing user data", e);
                     }
                 }
-
-            });
+            };
+            
+            document.addEventListener('HeaderLoaded', updateHeaderInfo);
+            document.addEventListener('PermissionsRefreshed', updateHeaderInfo);
 
             // ==========================================
             // LOAD ALUMNI DIRECTORY
@@ -214,11 +215,22 @@
                     if (response.ok && data.success) {
                         const validAlumni = data.alumni.filter(a => !a.rollNumber || !a.rollNumber.startsWith('PENDING-'));
                         
+                        const currentUserObj = JSON.parse(localStorage.getItem('user') || '{}');
                         validAlumni.forEach(alumni => {
                             if (currentUserEmail && alumni.email === currentUserEmail) {
-                                document.getElementById('alumniNameDisplay').textContent = alumni.name;
-                                document.getElementById('headerProfilePic').src = alumni.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(alumni.name)}&background=0D8ABC&color=fff`;
-                                localStorage.setItem('user', JSON.stringify(alumni));
+                                if (currentUserObj.role === 'alumni' || !currentUserObj.role) {
+                                    const nameEl = document.getElementById('alumniNameDisplay');
+                                    if (nameEl) nameEl.textContent = alumni.name;
+                                    const picEl = document.getElementById('headerProfilePic');
+                                    if (picEl) picEl.src = alumni.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(alumni.name)}&background=0D8ABC&color=fff`;
+                                    
+                                    const updatedUser = {
+                                        ...currentUserObj,
+                                        name: alumni.name,
+                                        profileImage: alumni.profileImage
+                                    };
+                                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                                }
                             }
                         });
                         
@@ -255,7 +267,7 @@
                         <h3 style="margin: 5px 0; font-size: 1.1em; text-align: center; display: flex; align-items: center; justify-content: center;">${escapeHtml(alumni.name)} <svg style="width: 16px; height: 16px; margin-left: 5px;" viewBox="0 0 24 24" fill="#28a745" title="Verified Alumni"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></h3>
                         <p style="margin: 3px 0; font-size: 0.85em; text-align: center; color: #555;">Batch: ${escapeHtml(alumni.batchYear)}</p>
                         <p style="margin: 3px 0; font-size: 0.85em; text-align: center; color: #0D8ABC; word-break: break-all;">${escapeHtml(alumni.email)}</p>
-                        <button class="details-btn" onclick="window.location.href='Alumni-View-Details.html?id=${alumni._id}'" style="margin-top: 12px; width: 100%;">View Details</button>
+                        <button class="details-btn" onclick="window.location.href='/Alumni/Alumni-View-Details?id=${alumni._id}'" style="margin-top: 12px; width: 100%;">View Details</button>
                     `;
                     alumniGrid.appendChild(card);
                 });    
