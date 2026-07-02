@@ -45,6 +45,37 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(mongoSanitize({ allowDots: true }));
 app.use(hpp());
 
+// Clean URLs middleware: Redirects trailing slashes and .html requests to clean paths, and serves static HTML
+app.use((req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    return next();
+  }
+
+  const urlPath = req.path;
+
+  // 1. Strip trailing slashes (except for home page '/') to prevent relative path breakages
+  if (urlPath !== '/' && urlPath.endsWith('/')) {
+    const cleanUrl = urlPath.slice(0, -1) + (req.url.slice(urlPath.length) || '');
+    return res.redirect(301, cleanUrl);
+  }
+
+  // 2. Redirect explicit .html requests to clean URLs
+  if (urlPath.endsWith('.html')) {
+    const cleanUrl = urlPath.slice(0, -5) + (req.url.slice(urlPath.length) || '');
+    return res.redirect(301, cleanUrl);
+  }
+
+  // 3. Serve corresponding static html file if it exists in the public directory
+  const fs = require('fs');
+  const htmlFilePath = path.join(__dirname, 'public', urlPath + '.html');
+  fs.stat(htmlFilePath, (err, stats) => {
+    if (!err && stats.isFile()) {
+      return res.sendFile(htmlFilePath);
+    }
+    next();
+  });
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // EJS Setup

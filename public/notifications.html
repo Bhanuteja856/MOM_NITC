@@ -461,12 +461,34 @@
 
             if (!ph) return;
 
+            // Check if the user is faculty or custom role
+            let isFaculty = false;
+            let isCustomRole = false;
+            try {
+                const userObj = JSON.parse(localStorage.getItem('adminUser') || localStorage.getItem('user'));
+                if (userObj) {
+                    if (userObj.role === 'faculty') {
+                        isFaculty = true;
+                    } else if (userObj.role && !['super_admin', 'admin', 'faculty', 'alumni'].includes(userObj.role)) {
+                        isCustomRole = true;
+                    }
+                }
+            } catch (e) {}
+
             if (localStorage.getItem('superAdminToken')) {
                 ph.setAttribute('data-header', '/Headers_Footers_common/header-superadmin.html');
                 stylesheetPath = 'Admin/CSS/SuperAdminStyling.css';
             } else if (localStorage.getItem('adminToken')) {
-                ph.setAttribute('data-header', '/Headers_Footers_common/header-admin.html');
-                stylesheetPath = 'Admin/CSS/AdminStyling.css';
+                if (isFaculty) {
+                    ph.setAttribute('data-header', '/Headers_Footers_common/header-faculty.html');
+                    stylesheetPath = 'Alumni/CSS/AlumniStyling.css';
+                } else if (isCustomRole) {
+                    ph.setAttribute('data-header', '/Headers_Footers_common/header-custom.html');
+                    stylesheetPath = 'Alumni/CSS/AlumniStyling.css';
+                } else {
+                    ph.setAttribute('data-header', '/Headers_Footers_common/header-admin.html');
+                    stylesheetPath = 'Admin/CSS/AdminStyling.css';
+                }
             } else {
                 ph.setAttribute('data-header', '/Headers_Footers_common/header-alumni.html');
             }
@@ -480,13 +502,27 @@
     <script>
         document.addEventListener('HeaderLoaded', () => {
             let user = null;
-            let userKey = 'user'; // default to alumni
+            let userKey = 'user'; // default to alumni/faculty/custom
             let avatarBg = '0D8ABC';
+
+            // Check if the user is faculty or custom role
+            let isFaculty = false;
+            let isCustomRole = false;
+            try {
+                const userObj = JSON.parse(localStorage.getItem('adminUser') || localStorage.getItem('user'));
+                if (userObj) {
+                    if (userObj.role === 'faculty') {
+                        isFaculty = true;
+                    } else if (userObj.role && !['super_admin', 'admin', 'faculty', 'alumni'].includes(userObj.role)) {
+                        isCustomRole = true;
+                    }
+                }
+            } catch (e) {}
 
             if (localStorage.getItem('superAdminToken')) {
                 userKey = 'superAdminUser';
                 avatarBg = '4a148c';
-            } else if (localStorage.getItem('adminToken')) {
+            } else if (localStorage.getItem('adminToken') && !isFaculty && !isCustomRole) {
                 userKey = 'adminUser';
                 avatarBg = 'c62828';
             }

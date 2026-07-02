@@ -82,7 +82,7 @@ document.getElementById('signupBtn').addEventListener('click', async () => {
       localStorage.setItem('pendingEmail', email);
       localStorage.setItem('pendingRollNumber', verifiedRollNumber);
       setTimeout(() => {
-        window.location.href = 'verify-otp.html';
+        window.location.href = 'verify-otp';
       }, 1500);
     } else {
       showMessage(data.message, 'error');

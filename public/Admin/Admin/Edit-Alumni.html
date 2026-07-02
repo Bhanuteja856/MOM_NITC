@@ -33,7 +33,7 @@
         <div class="center-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; max-width: 600px; margin-left: auto; margin-right: auto;">
                 <h2 style="margin: 0;">Update Information</h2>
-                <a href="Admin-Main-Screen.html" style="text-decoration: none; color: #0D8ABC; font-weight: bold;">← Back to Dashboard</a>
+                <a href="Admin-Main-Screen" style="text-decoration: none; color: #0D8ABC; font-weight: bold;">← Back to Dashboard</a>
             </div>
             <div class="form-section">
                 <div id="editAlumniMessage" class="message-box"></div>
@@ -114,7 +114,7 @@
                         <button type="button" class="add-btn" id="addProjectBtn" style="background-color: #6f42c1; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-top: 5px;">+ Add Key Project</button>
                     </div>
                     <button type="submit" class="submit-btn" id="submitEditAlumniBtn">Update Alumni Details</button>
-                    <a href="Admin-Main-Screen.html" class="cancel-btn">Cancel</a>
+                    <a href="Admin-Main-Screen" class="cancel-btn">Cancel</a>
                 </form>
             </div>
         </div>
@@ -150,7 +150,7 @@
                                 document.head.appendChild(style);
                                 
                                 // Update breadcrumb link
-                                const backLinks = document.querySelectorAll('a[href="Admin-Main-Screen.html"]');
+                                const backLinks = document.querySelectorAll('a[href="Admin-Main-Screen"]');
                                 backLinks.forEach(link => {
                                     link.href = '../../Alumni/Alumni-Main-Screen.html';
                                     if (!link.classList.contains('cancel-btn')) {

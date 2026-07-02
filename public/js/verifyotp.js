@@ -6,7 +6,7 @@ const email = localStorage.getItem('pendingEmail');
 const rollNumber = localStorage.getItem('pendingRollNumber');
 
 if (!email) {
-  window.location.href = 'signup.html';
+  window.location.href = 'signup';
 } else {
   document.getElementById('emailDisplay').textContent = email;
 }
@@ -77,7 +77,7 @@ document.getElementById('verifyBtn').addEventListener('click', async () => {
       localStorage.removeItem('pendingRollNumber');
       showMessage('Email verified! Redirecting to login...', 'success');
       setTimeout(() => {
-        window.location.href = 'login.html';
+        window.location.href = 'login';
       }, 1200);
       return;
     }
@@ -90,13 +90,36 @@ document.getElementById('verifyBtn').addEventListener('click', async () => {
   }
 });
 
-const resendBtn = document.getElementById('resendOtp');
+const resendBtn = document.getElementById('resendOtpBtn');
 if (resendBtn) {
-  resendBtn.addEventListener('click', async () => {
-    const email = localStorage.getItem('pendingEmail') || sessionStorage.getItem('signupEmail');
-    if (!email) return;
-    
-    const res = await fetch(`${API_URL}/signup`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email, resend: true }) });
-    alert('New OTP sent to your email');
+  resendBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (!email || !rollNumber) {
+      return showMessage('Missing signup details. Please sign up again.', 'error');
+    }
+
+    resendBtn.style.pointerEvents = 'none';
+    resendBtn.style.opacity = '0.5';
+    resendBtn.textContent = 'Resending...';
+
+    try {
+      const res = await fetch(`${API_URL}/resend-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, rollNumber })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showMessage('A new OTP has been sent to your email!', 'success');
+      } else {
+        showMessage(data.message || 'Failed to resend OTP.', 'error');
+      }
+    } catch (err) {
+      showMessage('Network error. Try again.', 'error');
+    } finally {
+      resendBtn.style.pointerEvents = 'auto';
+      resendBtn.style.opacity = '1';
+      resendBtn.textContent = 'Resend OTP';
+    }
   });
 }

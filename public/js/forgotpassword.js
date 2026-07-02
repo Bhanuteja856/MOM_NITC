@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         emailInput.value = '';
         otpInput.value = '';
         newPasswordInput.value = '';
-        setTimeout(() => { window.location.href = '/login.html'; }, 2000);
+        setTimeout(() => { window.location.href = '/login'; }, 2000);
       } else {
         showMessage(data.message || 'Failed to reset password', true);
       }

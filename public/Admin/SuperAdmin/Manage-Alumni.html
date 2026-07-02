@@ -110,7 +110,7 @@
         <div class="center-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin: 0;">Manage Alumni</h2>
-                <a href="Super-Admin-Main-Screen.html" id="backToDashboardBtn" style="text-decoration: none; color: #0D8ABC; font-weight: bold;">← Back to Home</a>
+                <a href="Super-Admin-Main-Screen" id="backToDashboardBtn" style="text-decoration: none; color: #0D8ABC; font-weight: bold;">← Back to Home</a>
             </div>
 
             <div class="top-forms-container">
@@ -308,7 +308,7 @@
                             <button onclick="editAlumni('${alumni._id}')" style="background-color: #ffc107; color: #333; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">Edit</button>
                         </td>
                         <td style="padding: 15px; vertical-align: middle; text-align: center;">
-                            <button onclick="window.location.href='../../Alumni/Alumni-View-Details.html?id=${alumni._id}'" style="background-color: #17a2b8; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">View</button>
+                            <button onclick="window.location.href='/Alumni/Alumni-View-Details?id=${alumni._id}'" style="background-color: #17a2b8; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">View</button>
                         </td>
                         <td style="padding: 15px; vertical-align: middle; text-align: center;">
                             <button onclick="deleteAlumni('${alumni._id}')" style="background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">Delete</button>

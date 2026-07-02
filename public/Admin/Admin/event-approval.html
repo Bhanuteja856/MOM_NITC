@@ -155,7 +155,7 @@
         <div class="center-content" style="flex: 1; max-width: 900px; margin: 0 auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin: 0;">Pending Events</h2>
-                <a href="Admin-Main-Screen.html" style="text-decoration: none; color: #0D8ABC; font-weight: bold;">←
+                <a href="Admin-Main-Screen" style="text-decoration: none; color: #0D8ABC; font-weight: bold;">←
                     Back to Home</a>
             </div>
 
@@ -276,7 +276,7 @@
                                 document.head.appendChild(style);
 
                                 // Update breadcrumb link
-                                const backLinks = document.querySelectorAll('a[href="Admin-Main-Screen.html"]');
+                                const backLinks = document.querySelectorAll('a[href="Admin-Main-Screen"]');
                                 backLinks.forEach(link => {
                                     link.href = '../../Alumni/Alumni-Main-Screen.html';
                                     if (!link.classList.contains('cancel-btn')) {

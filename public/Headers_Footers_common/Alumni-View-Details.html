@@ -164,7 +164,11 @@
         document.addEventListener('DOMContentLoaded', async () => {
             if (!window.checkAccess()) return;
 
-            const urlParams = new URLSearchParams(window.location.search);
+            let searchParams = window.location.search;
+            if (!searchParams && window.location.hash.includes('?')) {
+                searchParams = '?' + window.location.hash.split('?')[1];
+            }
+            const urlParams = new URLSearchParams(searchParams);
             const alumniId = urlParams.get('id');
             const profileContainer = document.getElementById('profileContainer');
 

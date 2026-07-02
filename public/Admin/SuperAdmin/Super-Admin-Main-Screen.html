@@ -1101,7 +1101,7 @@
                                     <p style="margin: 3px 0; font-size: 0.85em; text-align: center; color: #555;">Batch: ${escapeHtml(user.batchYear)}</p>
                                     <p style="margin: 3px 0; font-size: 0.85em; text-align: center; color: #0D8ABC; word-break: break-all;">${escapeHtml(user.email)}</p>
                                     <div class="card-actions" style="margin-top: 10px; display: flex; flex-direction: column; gap: 5px;">
-                                        <button class="details-btn" style="padding: 6px; font-size: 0.85em; width: 100%; margin: 0;" onclick="window.location.href='../../Alumni/Alumni-View-Details.html?id=${user._id}'">View Details</button>
+                                        <button class="details-btn" style="padding: 6px; font-size: 0.85em; width: 100%; margin: 0;" onclick="window.location.href='/Alumni/Alumni-View-Details?id=${user._id}'">View Details</button>
                                         <div class="btn-group-horizontal" style="display: flex; gap: 5px;">
                                             <button class="edit-btn" style="flex: 1; padding: 6px; font-size: 0.85em;" onclick="window.location.href='Edit-Alumni.html?id=${user._id}'">Edit</button>
                                             <button class="delete-btn" style="flex: 1; padding: 6px; font-size: 0.85em;" onclick="deleteAlumni('${user._id}')">Remove</button>

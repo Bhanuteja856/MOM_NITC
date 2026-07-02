@@ -78,7 +78,7 @@ const authenticateToken = (req, res, next) => {
 // MIDDLEWARE: Role Authorization
 // ============================
 const authorizeRoles = (...allowedRoles) => {
-  return (req, res, next) => {
+  return async (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ success: false, message: 'Access Denied. No token provided.' });
     }
@@ -86,6 +86,29 @@ const authorizeRoles = (...allowedRoles) => {
     const isCustomRole = !['super_admin', 'admin', 'faculty', 'alumni'].includes(userRole);
     if (allowedRoles.includes(userRole) || (allowedRoles.includes('admin') && isCustomRole)) {
       return next();
+    }
+    if (userRole === 'faculty' || isCustomRole) {
+      try {
+        const adminUser = await Admin.findById(req.user.id);
+        if (adminUser && adminUser.isActive) {
+          const userMenus = adminUser.accessibleMenus || [];
+          let requiredMenu = null;
+          if (req.path.includes('/users') || req.path.includes('/add-alumni') || req.path.match(/^\/alumni\/[a-f0-9]+$/i)) {
+            requiredMenu = 'Manage Alumni';
+          } else if (req.path.includes('/admins') || req.path.includes('/add-admin')) {
+            requiredMenu = 'Manage Admins';
+          } else if (req.path.includes('/id-card-status') || req.path.includes('/bulk-id-card-status')) {
+            requiredMenu = 'Manage ID Cards';
+          } else if (req.path.includes('/gallery-categories')) {
+            requiredMenu = 'Manage Gallery';
+          }
+          if (requiredMenu && userMenus.includes(requiredMenu)) {
+            return next();
+          }
+        }
+      } catch (err) {
+        console.error("Error in authorizeRoles database permission check:", err);
+      }
     }
     return res.status(403).json({ success: false, message: 'Forbidden. Insufficient permissions.' });
   };
@@ -412,6 +435,64 @@ router.post('/verify-otp', otpLimiter, async (req, res) => {
 });
 
 // ============================
+// 3.b RESEND OTP
+// ============================
+router.post('/resend-otp', otpLimiter, async (req, res) => {
+  try {
+    const { email, rollNumber } = req.body;
+
+    if (!email || !rollNumber) {
+      return res.status(400).json({ success: false, message: 'Email and Roll Number are required.' });
+    }
+    const normalizedRoll = rollNumber.trim().toUpperCase();
+
+    const alumni = await Alumni.findOne({ email, rollNumber: normalizedRoll, isRegistered: false });
+    if (!alumni) {
+      return res.status(404).json({ success: false, message: 'User not found or already verified.' });
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+    console.log("=== DEV RESEND OTP ===", otp);
+    const hashedOTP = await bcrypt.hash(otp, 10);
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+
+    alumni.otp = hashedOTP;
+    alumni.otpExpiry = otpExpiry;
+    alumni.otpAttempts = 0; // Reset attempts on resend
+    await alumni.save();
+
+    // Send OTP email
+    const emailHtml = `
+      <div style="font-family: Arial; padding: 20px;">
+        <h2>NITC Alumni Portal - Email Verification</h2>
+        <p>Hi <b>${escapeHtml(alumni.name)}</b>,</p>
+        <p>Your new OTP for email verification is:</p>
+        <h1 style="color: #2563eb; letter-spacing: 5px;">${otp}</h1>
+        <p>This OTP is valid for <b>10 minutes</b>.</p>
+        <p style="color: #666; font-size: 0.9em; margin-top: 20px;">If you didn't request this, please ignore this email.</p>
+      </div>
+    `;
+
+    const emailSent = await sendEmail(email, 'NITC Alumni Portal - Resend Email Verification OTP', emailHtml);
+    if (!emailSent) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send OTP email. Check SMTP settings.'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'A new OTP has been sent to your email.'
+    });
+  } catch (error) {
+    console.error('Resend OTP Error:', error);
+    res.status(500).json({ success: false, message: 'An internal server error occurred. Please try again later.' });
+  }
+});
+
+// ============================
 // 4. SMART LOGIN (Auto-detects Alumni / Admin / SuperAdmin)
 // ============================
 router.post('/smart-login', authLimiter, async (req, res) => {
@@ -465,6 +546,7 @@ router.post('/smart-login', authLimiter, async (req, res) => {
           name: alumni.name,
           email: alumni.email,
           rollNumber: alumni.rollNumber,
+          role: 'alumni',
           batchYear: alumni.batchYear,
           phone: alumni.phone,
           gender: alumni.gender,
@@ -596,6 +678,7 @@ router.post('/login', authLimiter, async (req, res) => {
         name: alumni.name,
         email: alumni.email,
         rollNumber: alumni.rollNumber,
+        role: 'alumni',
         batchYear: alumni.batchYear,
         phone: alumni.phone,
         gender: alumni.gender,
@@ -1333,6 +1416,26 @@ router.put('/roles/permissions', authenticateToken, async (req, res) => {
 });
 
 // ============================
+// 10.c GET CURRENT LOGGED IN USER PROFILE (SELF)
+// ============================
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    let user = await Admin.findById(userId).select('-password');
+    if (!user) {
+      user = await Alumni.findById(userId).select('-password -otp -otpExpiry');
+    }
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+    res.json({ success: true, user });
+  } catch (error) {
+    console.error("Get Current User Error:", error);
+    res.status(500).json({ success: false, message: 'Server error fetching user profile.' });
+  }
+});
+
+// ============================
 // 11. GET ALL USERS (SUPER ADMIN ONLY)
 // ============================
 router.get('/users', authenticateToken, authorizeRoles('admin', 'super_admin'), async (req, res) => {
@@ -1364,7 +1467,7 @@ router.get('/users', authenticateToken, authorizeRoles('admin', 'super_admin'), 
 // ============================
 // 12. UPDATE ADMIN PROFILE
 // ============================
-router.put('/admin/:id/profile', authenticateToken, authorizeRoles('admin', 'super_admin'), async (req, res) => {
+router.put('/admin/:id/profile', authenticateToken, authorizeRoles('admin', 'super_admin', 'faculty'), async (req, res) => {
   try {
     const { name, department, phone, officeLocation, bio, profileImage, aboutUsContent, aboutUsSliderImages, sideImages } = req.body;
 

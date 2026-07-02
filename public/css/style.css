@@ -14,11 +14,11 @@ body {
   background-size: 400% 400%;
   animation: gradientShift 12s ease infinite;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 20px;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 @keyframes gradientShift {
@@ -87,6 +87,7 @@ body::after {
   animation: cardIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   position: relative;
   z-index: 1;
+  margin: 40px auto;
 }
 
 @keyframes cardIn {
@@ -401,4 +402,9 @@ h2+.subtitle {
     height: 45px;
     font-size: 18px;
   }
+}
+
+#footer-placeholder {
+  width: 100%;
+  margin-top: auto;
 }

@@ -169,7 +169,7 @@
                     <div class="cross-mark">❌</div>
                     <h1>Access Denied</h1>
                     <p>You are not logged in or your session has expired.</p>
-                    <a href="../login.html" class="btn-home">Go to Login</a>
+                    <a href="../login" class="btn-home">Go to Login</a>
                 </div>
             `;
             document.title = "Access Denied";
@@ -192,7 +192,11 @@
         document.addEventListener('DOMContentLoaded', async () => {
             if (!checkAccess()) return;
 
-            const urlParams = new URLSearchParams(window.location.search);
+            let searchParams = window.location.search;
+            if (!searchParams && window.location.hash.includes('?')) {
+                searchParams = '?' + window.location.hash.split('?')[1];
+            }
+            const urlParams = new URLSearchParams(searchParams);
             const alumniId = urlParams.get('id');
             const profileContainer = document.getElementById('profileContainer');
 

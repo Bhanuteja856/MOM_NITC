@@ -143,8 +143,8 @@
             const accountCreatedInput = document.getElementById('accountCreated');
             
             // Try loading user from local storage
-            const storedUser = localStorage.getItem('adminUser');
-            const token = localStorage.getItem('adminToken');
+            const storedUser = localStorage.getItem('adminUser') || localStorage.getItem('superAdminUser');
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('superAdminToken');
             let currentUser = null;
             
             if (storedUser) {

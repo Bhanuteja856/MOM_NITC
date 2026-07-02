@@ -56,12 +56,12 @@ document.getElementById('loginBtn').addEventListener('click', async (e) => {
       if (accountType === 'alumni') {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(user));
-        setTimeout(() => { window.location.href = 'Alumni/Alumni-Main-Screen.html'; }, 1500);
+        setTimeout(() => { window.location.href = 'Alumni/Alumni-Main-Screen'; }, 1500);
 
       } else if (accountType === 'super_admin') {
         localStorage.setItem('superAdminToken', data.token);
         localStorage.setItem('superAdminUser', JSON.stringify(user));
-        setTimeout(() => { window.location.href = 'Admin/SuperAdmin/Super-Admin-Main-Screen.html'; }, 1500);
+        setTimeout(() => { window.location.href = 'Admin/SuperAdmin/Super-Admin-Main-Screen'; }, 1500);
 
       } else if (accountType === 'faculty') {
         // Faculty gets dual-session to access both admin and alumni pages
@@ -69,7 +69,7 @@ document.getElementById('loginBtn').addEventListener('click', async (e) => {
         localStorage.setItem('adminUser', JSON.stringify(user));
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(user));
-        setTimeout(() => { window.location.href = 'Alumni/Alumni-Main-Screen.html'; }, 1500);
+        setTimeout(() => { window.location.href = 'Alumni/Alumni-Main-Screen'; }, 1500);
 
       } else if (isCustomRole) {
         // Custom roles get dual-session to access both admin and alumni pages
@@ -77,13 +77,13 @@ document.getElementById('loginBtn').addEventListener('click', async (e) => {
         localStorage.setItem('adminUser', JSON.stringify(user));
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(user));
-        setTimeout(() => { window.location.href = 'Alumni/Alumni-Main-Screen.html'; }, 1500);
+        setTimeout(() => { window.location.href = 'Alumni/Alumni-Main-Screen'; }, 1500);
 
       } else {
         // Regular admin
         localStorage.setItem('adminToken', data.token);
         localStorage.setItem('adminUser', JSON.stringify(user));
-        setTimeout(() => { window.location.href = 'Admin/Admin/Admin-Main-Screen.html'; }, 1500);
+        setTimeout(() => { window.location.href = 'Admin/Admin/Admin-Main-Screen'; }, 1500);
       }
 
     } else {

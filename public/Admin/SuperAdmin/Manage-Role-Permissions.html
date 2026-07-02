@@ -118,7 +118,7 @@
         <div class="center-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; max-width: 800px; margin-left: auto; margin-right: auto;">
                 <h2 style="margin: 0; font-size: 2em; color: #333;">Manage Role Permissions</h2>
-                <a href="Super-Admin-Main-Screen.html" style="text-decoration: none; color: #4a148c; font-weight: bold;">← Back to Home</a>
+                <a href="Super-Admin-Main-Screen" style="text-decoration: none; color: #4a148c; font-weight: bold;">← Back to Home</a>
             </div>
 
             <div class="form-section">
@@ -157,6 +157,8 @@
                                 <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-gallery" data-value="Manage Gallery">Manage Gallery</div>
                                 <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-id-cards" data-value="Manage ID Cards">Manage ID Cards</div>
                                 <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-videos" data-value="Manage Videos">Manage Videos</div>
+                                <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-manage-admins" data-value="Manage Admins">Manage Admins</div>
+                                <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-role-permissions" data-value="Role Permissions">Role Permissions</div>
                             </div>
                             <div class="dnd-box" id="selectedMenus" ondrop="drop(event)" ondragover="allowDrop(event)">
                                 <h4 style="margin-top: 0; text-align: center; color: #28a745;">Selected Menus (Access Granted)</h4>
@@ -182,14 +184,14 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             if (!window.checkAccess()) return;
-            const token = localStorage.getItem('superAdminToken');
+            const token = localStorage.getItem('superAdminToken') || localStorage.getItem('adminToken');
             const roleSelector = document.getElementById('roleSelector');
             const permissionsArea = document.getElementById('permissionsArea');
             const statusMessage = document.getElementById('statusMessage');
             let allAdmins = [];
 
             document.addEventListener('HeaderLoaded', () => {
-                const storedUser = localStorage.getItem('superAdminUser');
+                const storedUser = localStorage.getItem('superAdminUser') || localStorage.getItem('adminUser');
                 if (storedUser) {
                     try {
                         const user = JSON.parse(storedUser);

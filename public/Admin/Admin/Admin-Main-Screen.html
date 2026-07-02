@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -238,7 +238,7 @@
                                 <p style="margin: 3px 0; font-size: 0.85em; text-align: center; color: #555;">Batch: ${escapeHtml(alumni.batchYear)}</p>
                                 <p style="margin: 3px 0; font-size: 0.85em; text-align: center; color: #0D8ABC; word-break: break-all;">${escapeHtml(alumni.email)}</p>
                                 <div class="card-actions" style="margin-top: 12px;">
-                                    <button class="details-btn" onclick="window.location.href='../../Alumni/Alumni-View-Details.html?id=${alumni._id}'">View Details</button>
+                                    <button class="details-btn" onclick="window.location.href='/Alumni/Alumni-View-Details?id=${alumni._id}'">View Details</button>
                                     <div class="btn-group-horizontal">
                                         <button class="edit-btn" onclick="window.location.href='Edit-Alumni.html?id=${alumni._id}'">Edit</button>
                                         <button class="delete-btn" onclick="deleteAlumni('${alumni._id}')">Remove</button>

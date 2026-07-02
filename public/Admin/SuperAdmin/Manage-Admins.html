@@ -60,7 +60,7 @@
         <div class="center-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin: 0;">Manage Admins & Faculty</h2>
-                <a href="Super-Admin-Main-Screen.html" style="text-decoration: none; color: #4a148c; font-weight: bold;">← Back to Home</a>
+                <a href="Super-Admin-Main-Screen" style="text-decoration: none; color: #4a148c; font-weight: bold;">← Back to Home</a>
             </div>
 
             <div class="top-forms-container">
@@ -127,6 +127,8 @@
                                     <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-gallery" data-value="Manage Gallery">Manage Gallery</div>
                                     <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-id-cards" data-value="Manage ID Cards">Manage ID Cards</div>
                                     <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-videos" data-value="Manage Videos">Manage Videos</div>
+                                    <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-manage-admins" data-value="Manage Admins">Manage Admins</div>
+                                    <div class="dnd-item" draggable="true" ondragstart="drag(event)" id="menu-role-permissions" data-value="Role Permissions">Role Permissions</div>
                                 </div>
                                 <div class="dnd-box" id="selectedMenus" ondrop="drop(event)" ondragover="allowDrop(event)">
                                     <h4 style="margin-top: 0; text-align: center; color: #0D8ABC;">Selected Menus (Access Granted)</h4>
@@ -220,7 +222,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             if (!window.checkAccess()) return;
             // Retrieve User from LocalStorage
-            const storedUser = localStorage.getItem('superAdminUser');
+            const storedUser = localStorage.getItem('superAdminUser') || localStorage.getItem('adminUser');
+            const token = localStorage.getItem('superAdminToken') || localStorage.getItem('adminToken');
             document.addEventListener('HeaderLoaded', () => {
                 if (storedUser) {
                     try {
@@ -336,7 +339,7 @@
                 try {
                     const response = await fetch(`${API_URL}/bulk-add-admins`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}` },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                         body: JSON.stringify({ adminsList: parsedAdminData })
                     });
 
@@ -468,7 +471,7 @@
                     const response = await fetch(`${API_URL}/admins`, {
                         method: 'GET',
                         headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}`
+                            'Authorization': `Bearer ${token}`
                         }
                     });
                     const data = await response.json();     
@@ -541,7 +544,7 @@
                         method: method,
                         headers: { 
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}`
+                            'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify({ name, email, password, department, role, phone, officeLocation, accessibleMenus })
                     });
@@ -657,7 +660,7 @@
                     const response = await fetch(`${API_URL}/admins/${adminId}/status`, {
                         method: 'PATCH',
                         headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}`
+                            'Authorization': `Bearer ${token}`
                         }
                     });
                     const data = await response.json();
