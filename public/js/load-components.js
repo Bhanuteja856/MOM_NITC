@@ -875,9 +875,14 @@ document.addEventListener('HeaderLoaded', () => {
         const userStr = localStorage.getItem('user');
         const adminUserStr = localStorage.getItem('adminUser');
 
+        let userObj = null;
+        let adminUserObj = null;
+        try { if (userStr) userObj = JSON.parse(userStr); } catch(e){}
+        try { if (adminUserStr) adminUserObj = JSON.parse(adminUserStr); } catch(e){}
+
         // Sync welcome name display and profile image if present
         try {
-            const activeUserObj = JSON.parse(localStorage.getItem('adminUser') || localStorage.getItem('user'));
+            const activeUserObj = adminUserObj || userObj;
             if (activeUserObj && activeUserObj.name) {
                 const alumniNameEl = document.getElementById('alumniNameDisplay');
                 if (alumniNameEl) alumniNameEl.textContent = activeUserObj.name;
@@ -893,11 +898,15 @@ document.addEventListener('HeaderLoaded', () => {
             }
         } catch (e) { }
 
+        // Determine effective user for faculty/custom role checks
+        const effectiveUser = (adminUserObj && (adminUserObj.role === 'faculty' || !['super_admin', 'admin', 'faculty', 'alumni'].includes(adminUserObj.role))) 
+            ? adminUserObj 
+            : userObj;
+
         // Handle Alumni Header (Faculty View)
-        if (userStr && document.getElementById('navProfileLink')) {
+        if (effectiveUser && document.getElementById('navProfileLink')) {
             try {
-                const user = JSON.parse(userStr);
-                if (!user.role) user.role = 'alumni';
+                const user = effectiveUser;
                 const isCustomRole = !['super_admin', 'admin', 'faculty', 'alumni'].includes(user.role);
                 if (isCustomRole) {
                     const dashboardLink = document.getElementById('navDashboardLink');
@@ -1037,6 +1046,7 @@ document.addEventListener('HeaderLoaded', () => {
             } catch (e) { console.error("Error processing admin menu roles:", e); }
         }
     };
+    window.applyRolePermissions = applyRolePermissions;
 
     document.addEventListener('HeaderLoaded', applyRolePermissions);
     document.addEventListener('PermissionsRefreshed', applyRolePermissions);
@@ -1459,6 +1469,10 @@ document.addEventListener('click', (e) => {
     if (profileMenu.contains(e.target)) {
         if (!e.target.closest('.dropdown-content')) {
             profileDropdown.classList.toggle('show');
+            // Refresh/Apply role permissions when opening the dropdown to reflect updates immediately
+            if (profileDropdown.classList.contains('show') && typeof window.applyRolePermissions === 'function') {
+                window.applyRolePermissions();
+            }
         } else {
             profileDropdown.classList.remove('show');
         }
