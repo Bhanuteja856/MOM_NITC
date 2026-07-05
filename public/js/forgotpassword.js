@@ -3,14 +3,14 @@ const API_URL = '/api/auth';
 document.addEventListener('DOMContentLoaded', () => {
   const sendOtpBtn = document.getElementById('sendOtpBtn');
   const resetPasswordBtn = document.getElementById('resetPasswordBtn');
-  
+
   const step1 = document.getElementById('step1');
   const step2 = document.getElementById('step2');
-  
+
   const emailInput = document.getElementById('email');
   const otpInput = document.getElementById('otp');
   const newPasswordInput = document.getElementById('newPassword');
-  
+
   const messageDiv = document.getElementById('message');
 
   function showMessage(msg, isError = false) {
