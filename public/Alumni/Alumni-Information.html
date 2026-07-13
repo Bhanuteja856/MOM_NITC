@@ -869,25 +869,78 @@
 
         // Print ID Card functionality
         window.printDigitalId = function() {
-            const printContents = document.getElementById('printableIdCard').outerHTML;
-            const originalContents = document.body.innerHTML;
-            document.body.innerHTML = `
-                <style>
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const card = document.getElementById('printableIdCard');
+
+            if (isMobile) {
+                const btn = document.querySelector('button[onclick="printDigitalId()"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '⌛ Generating...';
+                btn.disabled = true;
+
+                if (typeof html2canvas === 'undefined') {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                    script.onload = () => generateCardImage(card, btn, originalText);
+                    script.onerror = () => {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                        alert('Could not load card generator library.');
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    generateCardImage(card, btn, originalText);
+                }
+            } else {
+                const style = document.createElement('style');
+                style.id = 'print-card-styles';
+                style.innerHTML = `
                     @media print {
-                        * {
+                        body * {
+                            visibility: hidden !important;
+                        }
+                        #printableIdCard, #printableIdCard * {
+                            visibility: visible !important;
+                        }
+                        #printableIdCard {
+                            position: fixed !important;
+                            left: 50% !important;
+                            top: 50% !important;
+                            transform: translate(-50%, -50%) !important;
+                            width: 540px !important;
+                            height: 320px !important;
+                            box-shadow: none !important;
+                            border: none !important;
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;
                         }
                     }
-                </style>
-                <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #fff;">
-                    ${printContents}
-                </div>
-            `;
-            window.print();
-            document.body.innerHTML = originalContents;
-            window.location.reload(); // Reload to re-attach events
+                `;
+                document.head.appendChild(style);
+                window.print();
+                document.head.removeChild(style);
+            }
         };
+
+        function generateCardImage(card, btn, originalText) {
+            html2canvas(card, {
+                scale: 3, 
+                useCORS: true,
+                allowTaint: false,
+                backgroundColor: null
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Alumni_ID_Card.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                console.error('Error generating card image:', err);
+                alert('Could not download card image. Try taking a screenshot.');
+            }).finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
 
         });
     </script>
