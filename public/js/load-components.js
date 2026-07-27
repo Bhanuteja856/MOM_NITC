@@ -197,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         }
-    } catch (e) {}
+    } catch (e) { }
 
     // Dynamically route faculty or custom roles to their specific headers
     try {
@@ -577,7 +577,7 @@ document.addEventListener("DOMContentLoaded", () => {
             body.dark-mode { background-color: #0f172a !important; color: #f1f5f9 !important; background-image: none !important; }
             .dark-mode .form-section, .dark-mode .profile-card, .dark-mode .approval-card, .dark-mode .vouch-card, .dark-mode .left-sidebar, .dark-mode .right-sidebar, .dark-mode .event-card, .dark-mode .announcement-card, .dark-mode .modal-content, .dark-mode .gallery-upload-sidebar, .dark-mode .info-box, .dark-mode .detail-item, .dark-mode .my-event-card, .dark-mode .chart-box, .dark-mode .instructions, .dark-mode .file-upload-wrapper, .dark-mode .dnd-box, .dark-mode .empty-state, .dark-mode .profile-card-left, .dark-mode .post-event-container, .dark-mode .event-meta, .dark-mode .no-events, .dark-mode .container, .dark-mode .profile-header, .dark-mode .profile-card-view, .dark-mode .sub-list li, .dark-mode .upload-section, .dark-mode .gallery-item, .dark-mode .image-modal-content, .dark-mode #enlargedCaption, .dark-mode .magazine-card, .dark-mode .announcement-box, .dark-mode .video-card { background-color: #1e293b !important; color: #f8fafc !important; border-color: #334155 !important; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3) !important; }
             .dark-mode [style*="background: white"], .dark-mode [style*="background-color: white"], .dark-mode [style*="background: #fff"], .dark-mode [style*="background-color: #fff"], .dark-mode [style*="background: #f9f9f9"], .dark-mode [style*="background-color: #f9f9f9"], .dark-mode [style*="background: #e9ecef"], .dark-mode [style*="background-color: #e9ecef"], .dark-mode [style*="background: #f8f9fa"], .dark-mode [style*="background-color: #f8f9fa"], .dark-mode [style*="background: #f4f6f8"], .dark-mode [style*="background-color: #f4f6f8"], .dark-mode [style*="background: #f0f0f0"], .dark-mode [style*="background-color: #f0f0f0"] { background-color: #1e293b !important; color: #f8fafc !important; border-color: #334155 !important; }
-            .dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4, .dark-mode p:not(.error-text):not(.success-text), .dark-mode span:not(.notification-badge):not(.category-badge):not(.meta):not(.date), .dark-mode label, .dark-mode td { color: #e0e0e0 !important; }
+            .dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4, .dark-mode p:not(.error-text):not(.success-text), .dark-mode span:not(.notification-badge):not(.category-badge):not(.meta):not(.date):not(.card-badge):not(.batch-badge), .dark-mode label, .dark-mode td { color: #e0e0e0 !important; }
             .dark-mode .form-group input, .dark-mode .form-group textarea, .dark-mode .form-group select, .dark-mode textarea { background-color: #0f172a !important; color: #f8fafc !important; border-color: #475569 !important; }
             .dark-mode input:focus, .dark-mode textarea:focus, .dark-mode select:focus { border-color: #60a5fa !important; box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3) !important; }
             .dark-mode .category-badge { background-color: #0c4a6e !important; color: #bae6fd !important; }
@@ -625,6 +625,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             .header-theme-toggle:hover {
                 transform: scale(1.1); background-color: rgba(0,0,0,0.1);
+            }
+            header .header-theme-toggle {
+                background-color: rgba(255,255,255,0.1); color: #f1f5f9;
+            }
+            header .header-theme-toggle:hover {
+                background-color: rgba(255,255,255,0.2);
             }
             .dark-mode .header-theme-toggle {
                 background-color: rgba(255,255,255,0.1); color: #f1f5f9;
@@ -882,8 +888,8 @@ document.addEventListener('HeaderLoaded', () => {
 
         let userObj = null;
         let adminUserObj = null;
-        try { if (userStr) userObj = JSON.parse(userStr); } catch(e){}
-        try { if (adminUserStr) adminUserObj = JSON.parse(adminUserStr); } catch(e){}
+        try { if (userStr) userObj = JSON.parse(userStr); } catch (e) { }
+        try { if (adminUserStr) adminUserObj = JSON.parse(adminUserStr); } catch (e) { }
 
         // Sync welcome name display and profile image if present
         try {
@@ -905,8 +911,8 @@ document.addEventListener('HeaderLoaded', () => {
 
         // Determine effective user for faculty/custom role checks
         const adminRole = adminUserObj ? (adminUserObj.role || adminUserObj.userType || 'admin') : '';
-        const effectiveUser = (adminUserObj && (adminRole === 'faculty' || !['super_admin', 'admin', 'faculty', 'alumni'].includes(adminRole))) 
-            ? adminUserObj 
+        const effectiveUser = (adminUserObj && (adminRole === 'faculty' || !['super_admin', 'admin', 'faculty', 'alumni'].includes(adminRole)))
+            ? adminUserObj
             : userObj;
 
         // Handle Alumni Header (Faculty View)

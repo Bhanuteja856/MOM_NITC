@@ -2723,6 +2723,184 @@ router.get('/stats', async (req, res) => {
   }
 });
 
+// ==========================================
+// CHAT ENDPOINTS (Storing conversations in text files)
+// ==========================================
+const conversationsDir = path.join(__dirname, '../conversations');
+if (!fs.existsSync(conversationsDir)) {
+  fs.mkdirSync(conversationsDir, { recursive: true });
+}
+
+// In-memory map to track online users (userId -> timestamp of last request)
+const onlineUsers = new Map();
+
+const updateOnlineStatus = (userId) => {
+  if (userId) {
+    onlineUsers.set(userId.toString(), Date.now());
+  }
+};
+
+// 1. Get contacts for chat (Only batchmates, sorted by recent activity)
+router.get('/chat/contacts', authenticateToken, async (req, res) => {
+  try {
+    const currentUserId = req.user.id;
+    updateOnlineStatus(currentUserId);
+
+    // Get current user's batch year
+    const currentUser = await Alumni.findById(currentUserId).select('batchYear');
+    if (!currentUser || !currentUser.batchYear) {
+      return res.json({ success: true, contacts: [] }); // No batchmates if no batch year
+    }
+
+    const userBatchYear = currentUser.batchYear;
+
+    // Find verified alumni in the same batch (excluding the current user)
+    const alumniList = await Alumni.find({
+      _id: { $ne: currentUserId },
+      isRegistered: true,
+      isVerified: true,
+      batchYear: userBatchYear,
+      $or: [{ userType: 'alumni' }, { userType: { $exists: false } }]
+    }).select('name email profileImage batchYear currentCompany designation').lean();
+
+    const contacts = alumniList.map(alum => {
+      const sortedIds = [currentUserId.toString(), alum._id.toString()].sort();
+      const chatFile = path.join(conversationsDir, `chat_${sortedIds[0]}_${sortedIds[1]}.txt`);
+      
+      let lastMessage = '';
+      let lastMessageTime = null;
+
+      if (fs.existsSync(chatFile)) {
+        try {
+          const fileContent = fs.readFileSync(chatFile, 'utf-8');
+          const lines = fileContent.split('\n').filter(line => line.trim());
+          if (lines.length > 0) {
+            const lastLineObj = JSON.parse(lines[lines.length - 1]);
+            lastMessage = lastLineObj.message || '';
+            lastMessageTime = lastLineObj.timestamp || null;
+          }
+        } catch (err) {
+          console.error(`Error reading chat file for ${alum._id}:`, err);
+        }
+      }
+
+      // Check if user has been active in the last 10 seconds
+      const lastActive = onlineUsers.get(alum._id.toString()) || 0;
+      const isOnline = (Date.now() - lastActive) < 10000;
+
+      return {
+        ...alum,
+        lastMessage,
+        lastMessageTime,
+        isOnline
+      };
+    });
+
+    // Sort contacts: recent chats first, then alphabetically by name
+    contacts.sort((a, b) => {
+      if (a.lastMessageTime && b.lastMessageTime) {
+        return new Date(b.lastMessageTime) - new Date(a.lastMessageTime);
+      }
+      if (a.lastMessageTime) return -1;
+      if (b.lastMessageTime) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    res.json({ success: true, contacts });
+  } catch (error) {
+    console.error("Get Chat Contacts Error:", error);
+    res.status(500).json({ success: false, message: 'Server error while fetching chat contacts.' });
+  }
+});
+
+// 2. Get chat history with a specific partner (Must be a batchmate)
+router.get('/chat/history/:partnerId', authenticateToken, async (req, res) => {
+  try {
+    const partnerId = req.params.partnerId;
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(partnerId)) {
+      return res.status(400).json({ success: false, message: 'Invalid partner ID.' });
+    }
+
+    const currentUserId = req.user.id;
+    updateOnlineStatus(currentUserId);
+
+    // Verify both users share the same batch year
+    const currentUser = await Alumni.findById(currentUserId).select('batchYear');
+    const partnerUser = await Alumni.findById(partnerId).select('batchYear');
+
+    if (!currentUser || !partnerUser || currentUser.batchYear !== partnerUser.batchYear) {
+      return res.status(403).json({ success: false, message: 'Access Denied. You can only chat with batchmates.' });
+    }
+
+    const sortedIds = [currentUserId.toString(), partnerId.toString()].sort();
+    const chatFile = path.join(conversationsDir, `chat_${sortedIds[0]}_${sortedIds[1]}.txt`);
+
+    let messages = [];
+    if (fs.existsSync(chatFile)) {
+      const fileContent = fs.readFileSync(chatFile, 'utf-8');
+      messages = fileContent.split('\n')
+        .filter(line => line.trim())
+        .map(line => {
+          try {
+            return JSON.parse(line);
+          } catch (e) {
+            return null;
+          }
+        })
+        .filter(msg => msg !== null);
+    }
+
+    res.json({ success: true, messages });
+  } catch (error) {
+    console.error("Get Chat History Error:", error);
+    res.status(500).json({ success: false, message: 'Server error while fetching chat history.' });
+  }
+});
+
+// 3. Send a message to a specific partner (Must be a batchmate)
+router.post('/chat/message', authenticateToken, async (req, res) => {
+  try {
+    const { partnerId, message } = req.body;
+    if (!partnerId || !message || !message.trim()) {
+      return res.status(400).json({ success: false, message: 'Partner ID and message are required.' });
+    }
+
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(partnerId)) {
+      return res.status(400).json({ success: false, message: 'Invalid partner ID.' });
+    }
+
+    const currentUserId = req.user.id;
+    updateOnlineStatus(currentUserId);
+
+    // Verify both users share the same batch year
+    const currentUser = await Alumni.findById(currentUserId).select('name batchYear');
+    const partnerUser = await Alumni.findById(partnerId).select('batchYear');
+
+    if (!currentUser || !partnerUser || currentUser.batchYear !== partnerUser.batchYear) {
+      return res.status(403).json({ success: false, message: 'Access Denied. You can only chat with batchmates.' });
+    }
+
+    const sortedIds = [currentUserId.toString(), partnerId.toString()].sort();
+    const chatFile = path.join(conversationsDir, `chat_${sortedIds[0]}_${sortedIds[1]}.txt`);
+
+    const msgObj = {
+      timestamp: new Date().toISOString(),
+      senderId: currentUserId,
+      senderName: currentUser.name,
+      message: message.trim()
+    };
+
+    fs.appendFileSync(chatFile, JSON.stringify(msgObj) + '\n');
+
+    res.json({ success: true, message: msgObj });
+  } catch (error) {
+    console.error("Send Chat Message Error:", error);
+    res.status(500).json({ success: false, message: 'Server error while sending message.' });
+  }
+});
+
 // ============================
 // BACKGROUND MIGRATION: Auto-Generate Missing Alumni IDs
 // ============================

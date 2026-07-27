@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alumni Chat - NITC</title>
+    <link rel="stylesheet" href="CSS/AlumniStyling.css">
+    <style>
+        /* Custom Modern Styling for Chat Window */
+        body {
+            background-color: #f1f5f9;
+        }
+
+        .chat-main-container {
+            display: flex;
+            max-width: 1400px;
+            width: 96%;
+            height: calc(100vh - 130px);
+            margin: 10px auto 20px auto;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        /* Sidebar Contacts Panel */
+        .chat-sidebar {
+            width: 380px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #fafafa;
+        }
+
+        .sidebar-header h2 {
+            margin: 0 0 15px 0;
+            color: #0d8abc;
+            font-size: 1.4rem;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .search-box-wrapper {
+            position: relative;
+        }
+
+        .search-box-wrapper input {
+            width: 100%;
+            padding: 10px 15px 10px 40px;
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            outline: none;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        .search-box-wrapper input:focus {
+            border-color: #0d8abc;
+            box-shadow: 0 0 0 3px rgba(13, 138, 188, 0.15);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        .contacts-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .contacts-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .contacts-list::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            transition: all 0.2s ease;
+            gap: 15px;
+        }
+
+        .contact-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .contact-item.active {
+            background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-left: 4px solid #0d8abc;
+            padding-left: 16px;
+        }
+
+        .contact-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e2e8f0;
+            background-color: #fff;
+        }
+
+        .contact-info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .contact-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .contact-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .contact-time {
+            font-size: 0.75rem;
+            color: #64748b;
+            flex-shrink: 0;
+        }
+
+        .contact-preview-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .contact-message-preview {
+            font-size: 0.82rem;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-grow: 1;
+        }
+
+        .contact-batch {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #0d8abc;
+            background-color: #e0f2fe;
+            padding: 2px 8px;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+
+        /* Right Panel: Chat Stream */
+        .chat-stream-panel {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #f8fafc;
+            position: relative;
+        }
+
+        /* Default Placeholder UI */
+        .no-chat-selected {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #64748b;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .no-chat-icon {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+            opacity: 0.85;
+            color: #0d8abc;
+        }
+
+        .no-chat-selected h3 {
+            font-size: 1.6rem;
+            color: #1e293b;
+            margin: 0 0 10px 0;
+            font-weight: 700;
+        }
+
+        .no-chat-selected p {
+            font-size: 0.95rem;
+            max-width: 400px;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* Active Chat Container */
+        .chat-active-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-window-header {
+            padding: 15px 25px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .partner-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .partner-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e2e8f0;
+        }
+
+        .partner-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .partner-name {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1rem;
+        }
+
+        .partner-meta {
+            font-size: 0.78rem;
+            color: #64748b;
+        }
+
+        .chat-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .chat-status.offline {
+            color: #64748b;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+        }
+
+        .status-dot.offline {
+            background-color: #94a3b8;
+        }
+
+        /* Avatar Container Status Dot (Sidebar) */
+        .avatar-container {
+            position: relative;
+            flex-shrink: 0;
+            display: inline-block;
+        }
+
+        .contact-status-dot {
+            position: absolute;
+            bottom: 1px;
+            right: 1px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            z-index: 2;
+        }
+
+        .contact-status-dot.online {
+            background-color: #10b981;
+        }
+
+        .contact-status-dot.offline {
+            background-color: #94a3b8;
+        }
+
+        .dark-mode .contact-status-dot {
+            border-color: #1e1e1e;
+        }
+
+        /* Message Stream */
+        .messages-area {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: #efeae2; /* Classic WhatsApp Background */
+            background-image: radial-gradient(#dfdcd6 10%, transparent 10%),
+                              radial-gradient(#dfdcd6 10%, transparent 10%);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+
+        .messages-area::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages-area::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.15);
+            border-radius: 3px;
+        }
+
+        .message-bubble-wrapper {
+            display: flex;
+            width: 100%;
+        }
+
+        .message-bubble-wrapper.incoming {
+            justify-content: flex-start;
+        }
+
+        .message-bubble-wrapper.outgoing {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 65%;
+            padding: 10px 16px;
+            border-radius: 12px;
+            position: relative;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+            line-height: 1.45;
+            font-size: 0.92rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .message-bubble-wrapper.incoming .message-bubble {
+            background-color: #ffffff;
+            color: #1e293b;
+            border-top-left-radius: 2px;
+        }
+
+        .message-bubble-wrapper.outgoing .message-bubble {
+            background-color: #d9fdd3; /* Classic WhatsApp outgoing color */
+            color: #1e293b;
+            border-top-right-radius: 2px;
+        }
+
+        .message-text {
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            color: #8696a0;
+            align-self: flex-end;
+            margin-top: 2px;
+        }
+
+        /* Message Input Area */
+        .chat-input-footer {
+            padding: 15px 25px;
+            background-color: #f0f2f5;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .message-input-field {
+            flex-grow: 1;
+            padding: 12px 20px;
+            border: 1px solid #ffffff;
+            border-radius: 24px;
+            outline: none;
+            font-size: 0.92rem;
+            background-color: #ffffff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+        }
+
+        .message-input-field:focus {
+            border-color: #0d8abc;
+        }
+
+        .send-message-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background-color: #0d8abc;
+            color: #ffffff;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+        }
+
+        .send-message-btn:hover {
+            transform: scale(1.05);
+            background-color: #0b739e;
+        }
+
+        .send-message-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Dark Mode Support */
+        .dark-mode .chat-main-container {
+            background-color: #1e1e1e;
+            border-color: #333333;
+        }
+
+        .dark-mode .chat-sidebar {
+            background-color: #1e1e1e;
+            border-right-color: #333333;
+        }
+
+        .dark-mode .sidebar-header {
+            background-color: #181818;
+            border-bottom-color: #333333;
+        }
+
+        .dark-mode .search-box-wrapper input {
+            background-color: #2d2d2d;
+            border-color: #444444;
+            color: #e0e0e0;
+        }
+
+        .dark-mode .contact-item {
+            border-bottom-color: #2d2d2d;
+        }
+
+        .dark-mode .contact-item:hover {
+            background-color: #2d2d2d;
+        }
+
+        .dark-mode .contact-item.active {
+            background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
+            border-left-color: #60a5fa;
+        }
+
+        .dark-mode .contact-name {
+            color: #e2e8f0;
+        }
+
+        .dark-mode .contact-time {
+            color: #94a3b8;
+        }
+
+        .dark-mode .contact-batch {
+            background-color: #1e293b;
+            color: #60a5fa;
+        }
+
+        .dark-mode .chat-window-header {
+            background-color: #1e1e1e;
+            border-bottom-color: #333333;
+        }
+
+        .dark-mode .partner-name {
+            color: #e2e8f0;
+        }
+
+        .dark-mode .messages-area {
+            background-color: #0b141a; /* Dark WhatsApp Background */
+            background-image: radial-gradient(#222d34 10%, transparent 10%),
+                              radial-gradient(#222d34 10%, transparent 10%);
+        }
+
+        .dark-mode .message-bubble-wrapper.incoming .message-bubble {
+            background-color: #202c33;
+            color: #e9edef;
+        }
+
+        .dark-mode .message-bubble-wrapper.outgoing .message-bubble {
+            background-color: #005c4b; /* WhatsApp dark mode outgoing */
+            color: #e9edef;
+        }
+
+        .dark-mode .chat-input-footer {
+            background-color: #182229;
+            border-top-color: #2d2d2d;
+        }
+
+        .dark-mode .message-input-field {
+            background-color: #2a3942;
+            color: #e0e0e0;
+            border-color: #2a3942;
+        }
+
+        .dark-mode .send-message-btn {
+            background-color: #00a884;
+        }
+
+        .dark-mode .send-message-btn:hover {
+            background-color: #008f70;
+        }
+
+        /* Responsiveness */
+        @media (max-width: 768px) {
+            .chat-sidebar {
+                width: 100%;
+                display: flex;
+            }
+
+            .chat-stream-panel {
+                display: none;
+            }
+
+            .chat-main-container.mobile-active .chat-sidebar {
+                display: none;
+            }
+
+            .chat-main-container.mobile-active .chat-stream-panel {
+                display: flex;
+                width: 100%;
+            }
+
+            .back-btn {
+                display: flex !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- MASTER PAGE PLACEHOLDERS -->
+    <div id="header-placeholder" data-header="/Headers_Footers_common/header-alumni.html"></div>
+
+    <!-- Scrolling Ticker -->
+    <div class="scrolling-ticker">
+        <div class="ticker-content" id="eventsTicker">
+            ⭐ Chat System Live: Re-connect with your class of NITC! &nbsp; | &nbsp; ⭐ Messages are private and secure.
+        </div>
+    </div>
+
+    <!-- Chat Workspace Container -->
+    <div class="chat-main-container" id="chatMainContainer">
+        
+        <!-- Sidebar: Contact List -->
+        <div class="chat-sidebar">
+            <div class="sidebar-header">
+                <h2>Alumni Chats</h2>
+                <div class="search-box-wrapper">
+                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Search batchmates by name or class...">
+                </div>
+            </div>
+            <div class="contacts-list" id="contactsList">
+                <div style="padding: 20px; text-align: center; color: #888;">Loading batchmates...</div>
+            </div>
+        </div>
+
+        <!-- Main Stream: Messages Panel -->
+        <div class="chat-stream-panel">
+            
+            <!-- Default Placeholder (No chat selected) -->
+            <div class="no-chat-selected" id="noChatPanel">
+                <svg class="no-chat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+                <h3>NITC Alumni Messenger</h3>
+                <p>Select a verified batchmate from the left sidebar to start catching up and view your conversation history.</p>
+            </div>
+
+            <!-- Active Chat View -->
+            <div class="chat-active-panel" id="chatPanel" style="display: none;">
+                <!-- Header -->
+                <div class="chat-window-header">
+                    <div class="partner-profile">
+                        <!-- Mobile back button -->
+                        <button class="back-btn" onclick="toggleMobileSidebar()" style="display: none; background: none; border: none; cursor: pointer; padding: 4px; margin-right: 8px; color: #0d8abc;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <img id="partnerAvatar" class="partner-avatar" src="" alt="Avatar">
+                        <div class="partner-details">
+                            <span id="partnerName" class="partner-name">Classmate Name</span>
+                            <span id="partnerMeta" class="partner-meta">Class info</span>
+                        </div>
+                    </div>
+                    <div class="chat-status" id="chatStatusContainer">
+                        <span class="status-dot" id="partnerStatusDot"></span>
+                        <span id="partnerStatusText">Offline</span>
+                    </div>
+                </div>
+
+                <!-- Messages Stream Area -->
+                <div class="messages-area" id="chatMessages">
+                    <!-- Messages render here -->
+                </div>
+
+                <!-- Input Footer -->
+                <div class="chat-input-footer">
+                    <input type="text" id="messageInput" class="message-input-field" placeholder="Type a message..." onkeydown="if(event.key === 'Enter') sendMessage()">
+                    <button class="send-message-btn" onclick="sendMessage()" aria-label="Send message">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Footer dynamically loaded -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Script imports -->
+    <script src="../js/load-components.js"></script>
+    <script>
+        const API_URL = window.API_URL || '/api/auth';
+        let currentPartnerId = null;
+        let contacts = [];
+        let pollInterval = null;
+        let initialSelectionMade = false;
+
+        // Redirect if token doesn't exist
+        if (!localStorage.getItem('token')) {
+            window.location.href = '/login.html';
+        }
+
+        let contactsPollInterval = null;
+
+        // Fetch contacts on load
+        async function fetchContacts() {
+            try {
+                const res = await fetch(`${API_URL}/chat/contacts`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    contacts = data.contacts;
+                    renderContacts(document.getElementById('searchInput').value);
+                    
+                    // Auto-select classmate from URL parameter once on page load
+                    if (!initialSelectionMade) {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const queryUserId = urlParams.get('userId');
+                        if (queryUserId) {
+                            const matchedContact = contacts.find(c => c._id === queryUserId);
+                            if (matchedContact) {
+                                selectContact(matchedContact);
+                            }
+                        }
+                        initialSelectionMade = true;
+                    }
+                    
+                    // Update active chat partner's status dynamically if selected
+                    if (currentPartnerId) {
+                        const activeContact = contacts.find(c => c._id === currentPartnerId);
+                        if (activeContact) {
+                            updateHeaderStatus(activeContact.isOnline);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching contacts:", err);
+            }
+        }
+
+        // Render contacts list
+        function renderContacts(filterQuery = '') {
+            const listEl = document.getElementById('contactsList');
+            listEl.innerHTML = '';
+
+            const query = filterQuery.toLowerCase().trim();
+            const filtered = contacts.filter(c => 
+                c.name.toLowerCase().includes(query) || 
+                (c.batchYear && c.batchYear.toString().includes(query))
+            );
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">No classmates found.</div>';
+                return;
+            }
+
+            filtered.forEach(c => {
+                const item = document.createElement('div');
+                item.className = `contact-item ${currentPartnerId === c._id ? 'active' : ''}`;
+                item.onclick = () => selectContact(c);
+
+                const avatar = c.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=0D8ABC&color=fff`;
+                
+                let timeStr = '';
+                if (c.lastMessageTime) {
+                    const date = new Date(c.lastMessageTime);
+                    timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+
+                item.innerHTML = `
+                    <div class="avatar-container">
+                        <img src="${avatar}" class="contact-avatar" alt="${c.name}">
+                        <span class="contact-status-dot ${c.isOnline ? 'online' : 'offline'}"></span>
+                    </div>
+                    <div class="contact-info">
+                        <div class="contact-header-row">
+                            <span class="contact-name">${c.name}</span>
+                            <span class="contact-time">${timeStr}</span>
+                        </div>
+                        <div class="contact-preview-row">
+                            <span class="contact-message-preview">${c.lastMessage || 'Click to start chat...'}</span>
+                            <span class="contact-batch">Batch of ${c.batchYear || 'N/A'}</span>
+                        </div>
+                    </div>
+                `;
+                listEl.appendChild(item);
+            });
+        }
+
+        // Update active partner status details in chat header
+        function updateHeaderStatus(isOnline) {
+            const statusDot = document.getElementById('partnerStatusDot');
+            const statusText = document.getElementById('partnerStatusText');
+            const statusContainer = document.getElementById('chatStatusContainer');
+            if (statusDot && statusText && statusContainer) {
+                if (isOnline) {
+                    statusDot.className = 'status-dot';
+                    statusText.textContent = 'Active now';
+                    statusContainer.className = 'chat-status';
+                } else {
+                    statusDot.className = 'status-dot offline';
+                    statusText.textContent = 'Offline';
+                    statusContainer.className = 'chat-status offline';
+                }
+            }
+        }
+
+        // Select contact
+        function selectContact(contact) {
+            currentPartnerId = contact._id;
+
+            // Highlight in sidebar
+            renderContacts(document.getElementById('searchInput').value);
+
+            // Responsive view handling
+            if (window.innerWidth <= 768) {
+                document.getElementById('chatMainContainer').classList.add('mobile-active');
+            }
+
+            // Show active chat panel
+            document.getElementById('noChatPanel').style.display = 'none';
+            document.getElementById('chatPanel').style.display = 'flex';
+
+            // Set Header details
+            const avatar = contact.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(contact.name)}&background=0D8ABC&color=fff`;
+            document.getElementById('partnerAvatar').src = avatar;
+            document.getElementById('partnerName').textContent = contact.name;
+            document.getElementById('partnerMeta').textContent = `Class of ${contact.batchYear || 'N/A'} ${contact.designation ? '• ' + contact.designation : ''}`;
+            
+            // Set Header online status
+            updateHeaderStatus(contact.isOnline);
+
+            // Load history
+            document.getElementById('chatMessages').innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">Retrieving message history...</div>';
+            lastMsgCount = 0;
+            fetchHistory();
+
+            // Refresh message stream every 3 seconds
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(fetchHistory, 3000);
+        }
+
+        // Fetch message log
+        async function fetchHistory() {
+            if (!currentPartnerId) return;
+            try {
+                const res = await fetch(`${API_URL}/chat/history/${currentPartnerId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    renderMessages(data.messages);
+                }
+            } catch (err) {
+                console.error("Error loading history:", err);
+            }
+        }
+
+        // Render message log
+        let lastMsgCount = 0;
+        function renderMessages(messages) {
+            const container = document.getElementById('chatMessages');
+            
+            // Only update DOM if message count changed
+            if (messages.length === lastMsgCount) return;
+            container.innerHTML = '';
+            lastMsgCount = messages.length;
+
+            if (messages.length === 0) {
+                container.innerHTML = '<div style="padding: 40px; text-align: center; color: #64748b;">No messages yet. Send a greeting to start catching up!</div>';
+                return;
+            }
+
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const currentUserId = currentUser.id || currentUser._id;
+
+            messages.forEach(msg => {
+                const isOutgoing = msg.senderId === currentUserId;
+                const bubbleWrapper = document.createElement('div');
+                bubbleWrapper.className = `message-bubble-wrapper ${isOutgoing ? 'outgoing' : 'incoming'}`;
+                
+                const date = new Date(msg.timestamp);
+                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                bubbleWrapper.innerHTML = `
+                    <div class="message-bubble">
+                        <div class="message-text">${escapeHTML(msg.message)}</div>
+                        <div class="message-time">${timeStr}</div>
+                    </div>
+                `;
+                container.appendChild(bubbleWrapper);
+            });
+
+            // Scroll to the bottom of message stream
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Send a message
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message || !currentPartnerId) return;
+
+            input.value = '';
+            input.focus();
+
+            try {
+                const res = await fetch(`${API_URL}/chat/message`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ partnerId: currentPartnerId, message })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    // Update screen immediately
+                    fetchHistory();
+                    fetchContacts();
+                }
+            } catch (err) {
+                console.error("Error sending message:", err);
+            }
+        }
+
+        // Toggle back sidebar on mobile
+        function toggleMobileSidebar() {
+            document.getElementById('chatMainContainer').classList.remove('mobile-active');
+        }
+
+        // Escape helper
+        function escapeHTML(str) {
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#039;");
+        }
+
+        // Filter contact lists
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            renderContacts(e.target.value);
+        });
+
+        // Refresh on load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchContacts();
+            
+            // Poll contacts list every 6 seconds to update online status dots
+            contactsPollInterval = setInterval(fetchContacts, 6000);
+        });
+
+        window.onbeforeunload = () => {
+            if (pollInterval) clearInterval(pollInterval);
+            if (contactsPollInterval) clearInterval(contactsPollInterval);
+        };
+    </script>
+</body>
+
+</html>
