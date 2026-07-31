@@ -165,11 +165,6 @@
                 <!-- Category Filter Toggles -->
                 <div class="category-toggle-container" id="categoryToggles">
                     <button class="category-toggle-btn active" data-category="All">All Categories</button>
-                    <button class="category-toggle-btn" data-category="Batch">Batch</button>
-                    <button class="category-toggle-btn" data-category="Occasion">Occasion</button>
-                    <button class="category-toggle-btn" data-category="Campus Life">Campus Life</button>
-                    <button class="category-toggle-btn" data-category="Achievements">Achievements</button>
-                    <button class="category-toggle-btn" data-category="Others">Others</button>
                 </div>
                 <div class="gallery-grid" id="galleryGrid">
                     <!-- Images will be displayed here dynamically -->
@@ -367,8 +362,33 @@
                 }
             }
 
+            async function loadCategories() {
+                try {
+                    const response = await fetch(`${API_URL}/gallery-categories`);
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        renderCategoryToggles(data.categories);
+                    }
+                } catch (error) {
+                    console.error('Failed to load categories', error);
+                }
+            }
+
+            function renderCategoryToggles(catObjects) {
+                categoryToggles.innerHTML = `<button class="category-toggle-btn ${selectedCategory === 'All' ? 'active' : ''}" data-category="All">All Categories</button>`;
+                catObjects.forEach(cat => {
+                    const btn = document.createElement('button');
+                    btn.className = `category-toggle-btn ${selectedCategory === cat.name ? 'active' : ''}`;
+                    btn.setAttribute('data-category', cat.name);
+                    btn.textContent = cat.name;
+                    categoryToggles.appendChild(btn);
+                });
+            }
+
             // Initial render
-            loadGallery();
+            loadCategories().then(() => {
+                loadGallery();
+            });
             updateEventsTicker();
         });
     </script>

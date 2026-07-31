@@ -745,8 +745,57 @@
             let currentGalleryDataUrl = null;
 
             galleryImageCategory.addEventListener('change', function() {
-                // This logic remains the same
+                const val = this.value;
+                if (val === 'Batch') {
+                    galleryCategoryDetailInput.style.display = 'block';
+                    galleryCategoryDetailInput.placeholder = 'Enter Batch Year (e.g., 2020-2023) *';
+                } else if (val === 'Occasion') {
+                    galleryCategoryDetailInput.style.display = 'block';
+                    galleryCategoryDetailInput.placeholder = 'Enter Occasion Name *';
+                } else if (val === 'Campus Life') {
+                    galleryCategoryDetailInput.style.display = 'block';
+                    galleryCategoryDetailInput.placeholder = 'Enter Campus Life Details *';
+                } else if (val === 'Achievements') {
+                    galleryCategoryDetailInput.style.display = 'block';
+                    galleryCategoryDetailInput.placeholder = 'Enter Achievement Details *';
+                } else if (val === 'Others') {
+                    galleryCategoryDetailInput.style.display = 'block';
+                    galleryCategoryDetailInput.placeholder = 'Enter Custom Category Name *';
+                } else {
+                    galleryCategoryDetailInput.style.display = 'block';
+                    galleryCategoryDetailInput.placeholder = 'Enter details (optional)...';
+                }
             });
+
+            async function loadGalleryCategories() {
+                try {
+                    const response = await fetch(`${API_URL}/gallery-categories`);
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        populateCategoryDropdown(data.categories);
+                    }
+                } catch (error) {
+                    console.error('Failed to load categories', error);
+                }
+            }
+
+            function populateCategoryDropdown(catObjects) {
+                const selectedVal = galleryImageCategory.value;
+                galleryImageCategory.innerHTML = '<option value="" disabled selected>-- Select a Category * --</option>';
+                
+                catObjects.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat.name;
+                    opt.textContent = cat.name;
+                    galleryImageCategory.appendChild(opt);
+                });
+                
+                if (selectedVal && Array.from(galleryImageCategory.options).some(opt => opt.value === selectedVal)) {
+                    galleryImageCategory.value = selectedVal;
+                }
+            }
+
+            loadGalleryCategories();
 
             galleryImageInput.addEventListener('change', function(e) {
                 const file = e.target.files[0];
