@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,33 +10,67 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <style>
-        .dynamic-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-        .dynamic-row .form-group { margin-bottom: 0; flex: 1; }
-        .remove-btn { background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .dynamic-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .dynamic-row .form-group {
+            margin-bottom: 0;
+            flex: 1;
+        }
+
+        .remove-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
     </style>
 </head>
+
 <body>
-    
+
     <!-- Loading Spinner Overlay -->
-    <div id="loadingOverlay" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.9); flex-direction: column; justify-content: center; align-items: center;">
-        <div class="spinner" style="border: 6px solid #f3f3f3; border-top: 6px solid #0D8ABC; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px;"></div>
+    <div id="loadingOverlay"
+        style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.9); flex-direction: column; justify-content: center; align-items: center;">
+        <div class="spinner"
+            style="border: 6px solid #f3f3f3; border-top: 6px solid #0D8ABC; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px;">
+        </div>
         <h3 id="loadingText" style="color: #0D8ABC; margin: 0;">Processing...</h3>
     </div>
     <style>
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
-    
+
     <!-- Crop Modal -->
-    <div id="cropModal" class="modal" role="dialog" aria-modal="true" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); overflow: auto;">
-        <div class="modal-content" style="background-color: #fff; margin: 5% auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px; text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.5);">
+    <div id="cropModal" class="modal" role="dialog" aria-modal="true"
+        style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); overflow: auto;">
+        <div class="modal-content"
+            style="background-color: #fff; margin: 5% auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px; text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.5);">
             <h3 id="cropModalTitle" style="margin-top: 0; color: #0D8ABC;">Adjust Picture</h3>
             <p id="cropModalText" style="color: #666; font-size: 0.9em; margin-bottom: 15px;"></p>
             <div style="max-height: 50vh; overflow: hidden; margin-bottom: 20px; background: #f0f0f0;">
                 <img id="cropperImage" src="#" style="max-width: 100%;">
             </div>
             <div style="display: flex; gap: 15px; justify-content: center;">
-                <button type="button" id="cancelCropBtn" class="btn btn-secondary" style="padding: 10px 25px;">Cancel</button>
-                <button type="button" id="confirmCropBtn" class="btn btn-primary" style="background-color: #0D8ABC; padding: 10px 25px;">Confirm Crop</button>
+                <button type="button" id="cancelCropBtn" class="btn btn-secondary"
+                    style="padding: 10px 25px;">Cancel</button>
+                <button type="button" id="confirmCropBtn" class="btn btn-primary"
+                    style="background-color: #0D8ABC; padding: 10px 25px;">Confirm Crop</button>
             </div>
         </div>
     </div>
@@ -45,13 +80,16 @@
     <script src="../js/load-components.js"></script>
 
     <!-- Preserved Back Button -->
-    <div style="padding: 12px 20px; background: white; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px;">
-        <h3 style="margin: 0; margin-left: 20px; color: #333; font-size: 1.2em;">Profile Setup</h3>
-        <a href="/Alumni/Alumni-Main-Screen" style="text-decoration: none; font-weight: bold; font-size: 1.1em; color: #0D8ABC; transition: opacity 0.3s; margin-right: 20px;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">← Back to Dashboard</a>
+    <div
+        style="padding: 12px 20px; background: white; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px;">
+        <h3 style="margin: 0; margin-left: 20px; color: #333; font-size: 1.2em;">My Profile</h3>
+        <a href="/Alumni/Alumni-Main-Screen"
+            style="text-decoration: none; font-weight: bold; font-size: 1.1em; color: #0D8ABC; transition: opacity 0.3s; margin-right: 20px;"
+            onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">← Back to Dashboard</a>
     </div>
 
     <div class="container">
-        
+
         <div id="statusMessage"></div>
 
         <!-- Name at the top -->
@@ -61,7 +99,8 @@
             <!-- Top Section: Image Area -->
             <div class="profile-header">
                 <div>
-                    <img src="https://ui-avatars.com/api/?name=Alumni&background=0D8ABC&color=fff&size=150" alt="Profile Picture Preview" class="image-preview" id="previewImg">
+                    <img src="https://ui-avatars.com/api/?name=Alumni&background=0D8ABC&color=fff&size=150"
+                        alt="Profile Picture Preview" class="image-preview" id="previewImg">
                 </div>
                 <div class="upload-section">
                     <label for="profileImage">Choose New Image</label>
@@ -80,13 +119,18 @@
                         <input type="text" id="fullName" placeholder="e.g. John Doe" required>
                     </div>
                     <div class="form-group">
-                        <label for="email" style="display: flex; align-items: center; gap: 5px;">Email Address <span title="Locked by system">🔒</span></label>
+                        <label for="email" style="display: flex; align-items: center; gap: 5px;">Email Address <span
+                                title="Locked by system">🔒</span></label>
                         <!-- Keep email read-only if it's used as the primary identifier -->
-                        <input type="email" id="email" placeholder="Loading email..." readonly title="Email is tied to your account and cannot be changed.">
+                        <input type="email" id="email" placeholder="Loading email..." readonly
+                            title="Email is tied to your account and cannot be changed.">
                     </div>
                     <div class="form-group">
-                        <label for="alumniId" style="display: flex; align-items: center; gap: 5px;">Alumni ID <span title="Locked by system">🔒</span></label>
-                        <input type="text" id="alumniId" placeholder="Loading ID..." readonly title="System generated Alumni ID" style="background-color: #f0f0f0; cursor: not-allowed; font-weight: bold; color: #0D8ABC;">
+                        <label for="alumniId" style="display: flex; align-items: center; gap: 5px;">Alumni ID <span
+                                title="Locked by system">🔒</span></label>
+                        <input type="text" id="alumniId" placeholder="Loading ID..." readonly
+                            title="System generated Alumni ID"
+                            style="background-color: #f0f0f0; cursor: not-allowed; font-weight: bold; color: #0D8ABC;">
                     </div>
                     <div class="form-group">
                         <label for="phone">Phone Number</label>
@@ -108,7 +152,9 @@
                     </div>
                     <div class="form-group">
                         <label for="accountCreated">Account Created</label>
-                        <input type="text" id="accountCreated" placeholder="Loading date..." readonly style="background-color: #f0f0f0; cursor: not-allowed;" title="Date this account was created">
+                        <input type="text" id="accountCreated" placeholder="Loading date..." readonly
+                            style="background-color: #f0f0f0; cursor: not-allowed;"
+                            title="Date this account was created">
                     </div>
                 </div>
             </div>
@@ -132,17 +178,19 @@
                         <label for="startups">Startups Running Now</label>
                         <input type="text" id="startups" placeholder="e.g. Tech Innovators Inc.">
                     </div>
-                    
+
                     <div class="form-group full-width" id="skillsContainer">
                         <label>Key Skills (One word per field)</label>
                         <div id="skillsList" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
                             <!-- Dynamic skill fields will be added here -->
                         </div>
                         <div>
-                            <button type="button" class="add-btn" id="addSkillBtn" style="background-color: #17a2b8; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer;">+ Add Skill</button>
+                            <button type="button" class="add-btn" id="addSkillBtn"
+                                style="background-color: #17a2b8; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer;">+
+                                Add Skill</button>
                         </div>
                     </div>
-                    
+
                     <div class="form-group full-width" id="previousCompaniesContainer">
                         <label>Previous Companies</label>
                         <div id="companyList">
@@ -159,7 +207,8 @@
                             <!-- Dynamic rows will be added here -->
                         </div>
                         <div>
-                            <button type="button" class="add-btn" id="addProjectBtn" style="background-color: #6f42c1;">+ Add Key Project</button>
+                            <button type="button" class="add-btn" id="addProjectBtn"
+                                style="background-color: #6f42c1;">+ Add Key Project</button>
                         </div>
                     </div>
                 </div>
@@ -187,58 +236,81 @@
                 </div>
             </div>
 
-        <div class="form-section" id="digitalIdCardSection" style="display: none;">
-            <h3 style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px;">
-                Digital Alumni Card
-                <button type="button" onclick="printDigitalId()" style="background: #28a745; color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🖨️ Download / Print</button>
-            </h3>
-            <div style="display: flex; justify-content: center; padding: 20px; background: #f8fbff; border-radius: 8px; border: 1px dashed #cce0ff; margin-top: 20px;">
-                <div id="printableIdCard" style="width: 540px; height: 320px; background: linear-gradient(135deg, #0D8ABC, #003366); border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); overflow: hidden; position: relative; color: white; font-family: 'Arial', sans-serif; display: flex; flex-direction: column;">
-                    <div style="background: rgba(255,255,255,0.1); padding: 12px 65px; text-align: center; border-bottom: 2px solid #ffd54f; position: relative;">
-                        <img src="/favicon.png" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); height: 45px; width: auto; object-fit: contain;">
-                        <h2 style="margin: 0; font-size: 1.2em; letter-spacing: 1px; color: #fff;">NITC MCA ALUMNI</h2>
-                        <p style="margin: 2px 0 0 0; font-size: 0.7em; color: #bae6fd; font-weight: bold;">NATIONAL INSTITUTE OF TECHNOLOGY CALICUT</p>
-                        <img src="/logo.png" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); height: 45px; width: auto; object-fit: contain;">
-                    </div>
-                    <div style="display: flex; flex: 1; padding: 20px; align-items: center; gap: 25px;">
-                        <div style="text-align: center;">
-                            <img id="idCardImage" src="#" style="width: 130px; height: 130px; border-radius: 10px; border: 3px solid #ffd54f; object-fit: cover; background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-                            <div style="margin-top: 15px;">
-                                <small style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Alumni ID</small>
-                                <strong id="idCardNumber" style="font-size: 1.1em; letter-spacing: 1px; color: #ffd54f;">MCAXXXXX</strong>
-                            </div>
+            <div class="form-section" id="digitalIdCardSection" style="display: none;">
+                <h3
+                    style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                    Digital Alumni Card
+                    <button type="button" onclick="printDigitalId()"
+                        style="background: #28a745; color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">🖨️
+                        Download / Print</button>
+                </h3>
+                <div
+                    style="display: flex; justify-content: center; padding: 20px; background: #f8fbff; border-radius: 8px; border: 1px dashed #cce0ff; margin-top: 20px;">
+                    <div id="printableIdCard"
+                        style="width: 540px; height: 320px; background: linear-gradient(135deg, #0D8ABC, #003366); border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); overflow: hidden; position: relative; color: white; font-family: 'Arial', sans-serif; display: flex; flex-direction: column;">
+                        <div
+                            style="background: rgba(255,255,255,0.1); padding: 12px 65px; text-align: center; border-bottom: 2px solid #ffd54f; position: relative;">
+                            <img src="/favicon.png"
+                                style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); height: 45px; width: auto; object-fit: contain;">
+                            <h2 style="margin: 0; font-size: 1.2em; letter-spacing: 1px; color: #fff;">NITC MCA ALUMNI
+                            </h2>
+                            <p style="margin: 2px 0 0 0; font-size: 0.7em; color: #bae6fd; font-weight: bold;">NATIONAL
+                                INSTITUTE OF TECHNOLOGY CALICUT</p>
+                            <img src="/logo.png"
+                                style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); height: 45px; width: auto; object-fit: contain;">
                         </div>
-                        <div style="flex: 1;">
-                            <h3 id="idCardName" style="margin: 0 0 10px 0; font-size: 1.5em; color: #fff; text-transform: uppercase; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 10px;">Name</h3>
-                            <div style="margin-bottom: 15px;">
-                                <small style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Program</small>
-                                <strong style="font-size: 1em; color: #fff;">Master of Computer Applications</strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                                <div>
-                                    <small style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Batch</small>
-                                    <strong id="idCardBatch" style="font-size: 1em; color: #fff;">XXXX</strong>
-                                </div>
-                                <div style="text-align: right;">
-                                    <small style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Validity</small>
-                                    <strong style="font-size: 1em; color: #fff;">LIFETIME</strong>
+                        <div style="display: flex; flex: 1; padding: 20px; align-items: center; gap: 25px;">
+                            <div style="text-align: center;">
+                                <img id="idCardImage" src="#"
+                                    style="width: 130px; height: 130px; border-radius: 10px; border: 3px solid #ffd54f; object-fit: cover; background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                                <div style="margin-top: 15px;">
+                                    <small
+                                        style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Alumni
+                                        ID</small>
+                                    <strong id="idCardNumber"
+                                        style="font-size: 1.1em; letter-spacing: 1px; color: #ffd54f;">MCAXXXXX</strong>
                                 </div>
                             </div>
+                            <div style="flex: 1;">
+                                <h3 id="idCardName"
+                                    style="margin: 0 0 10px 0; font-size: 1.5em; color: #fff; text-transform: uppercase; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 10px;">
+                                    Name</h3>
+                                <div style="margin-bottom: 15px;">
+                                    <small
+                                        style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Program</small>
+                                    <strong style="font-size: 1em; color: #fff;">Master of Computer
+                                        Applications</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                                    <div>
+                                        <small
+                                            style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Batch</small>
+                                        <strong id="idCardBatch" style="font-size: 1em; color: #fff;">XXXX</strong>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <small
+                                            style="color: #93c5fd; font-size: 0.7em; text-transform: uppercase; display: block; margin-bottom: 2px;">Validity</small>
+                                        <strong style="font-size: 1em; color: #fff;">LIFETIME</strong>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div style="position: absolute; bottom: 42px; right: 20px; font-size: 0.65em; color: #ffd54f; font-weight: bold; font-style: italic; opacity: 0.85; letter-spacing: 0.5px;">
-                        ID Sanctioned by CSE HOD
-                    </div>
-                    <div style="background: #ffd54f; color: #003366; text-align: center; padding: 8px 0; font-weight: bold; font-size: 0.85em; letter-spacing: 3px;">
-                        OFFICIAL ALUMNI CARD
+                        <div
+                            style="position: absolute; bottom: 42px; right: 20px; font-size: 0.65em; color: #ffd54f; font-weight: bold; font-style: italic; opacity: 0.85; letter-spacing: 0.5px;">
+                            ID Sanctioned by CSE HOD
+                        </div>
+                        <div
+                            style="background: #ffd54f; color: #003366; text-align: center; padding: 8px 0; font-weight: bold; font-size: 0.85em; letter-spacing: 3px;">
+                            OFFICIAL ALUMNI CARD
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
             <div class="actions">
                 <a href="/Alumni/Alumni-Main-Screen" class="btn btn-secondary">Cancel</a>
-                <button type="button" id="changePasswordBtn" class="btn btn-secondary" style="background-color: #f57c00; color: white;">Change Password</button>
+                <button type="button" id="changePasswordBtn" class="btn btn-secondary"
+                    style="background-color: #f57c00; color: white;">Change Password</button>
                 <button type="submit" class="btn btn-primary">Save Information</button>
             </div>
         </form>
@@ -248,11 +320,16 @@
         <div class="form-section">
             <h3>Share a Picture with the Network</h3>
             <div style="padding: 20px; border: 1px dashed #ccc; border-radius: 8px;">
-                <input type="file" id="galleryImageInput" accept="image/*" style="width: 100%; margin-bottom: 15px; padding: 10px; border: 1px dashed #ccc; border-radius: 4px; box-sizing: border-box; background-color: #f9f9f9; cursor: pointer;">
-                <div class="image-preview-container" id="galleryPreviewContainer" style="display: none; text-align: center; margin-bottom: 15px;">
-                    <img id="galleryImagePreview" src="#" alt="Image Preview" style="max-width: 100%; max-height: 300px; border-radius: 4px; object-fit: contain;">
+                <input type="file" id="galleryImageInput" accept="image/*"
+                    style="width: 100%; margin-bottom: 15px; padding: 10px; border: 1px dashed #ccc; border-radius: 4px; box-sizing: border-box; background-color: #f9f9f9; cursor: pointer;">
+                <div class="image-preview-container" id="galleryPreviewContainer"
+                    style="display: none; text-align: center; margin-bottom: 15px;">
+                    <img id="galleryImagePreview" src="#" alt="Image Preview"
+                        style="max-width: 100%; max-height: 300px; border-radius: 4px; object-fit: contain;">
                 </div>
-                <select id="galleryImageCategory" style="width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;" required>
+                <select id="galleryImageCategory"
+                    style="width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"
+                    required>
                     <option value="" disabled selected>-- Select a Category * --</option>
                     <option value="Batch">Batch</option>
                     <option value="Occasion">Occasion</option>
@@ -260,25 +337,35 @@
                     <option value="Achievements">Achievements</option>
                     <option value="Others">Others</option>
                 </select>
-                <input type="text" id="galleryCategoryDetailInput" placeholder="Enter category details..." style="display: none; width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-                <input type="text" id="galleryImageCaption" placeholder="Enter a caption for your image..." style="width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                <input type="text" id="galleryCategoryDetailInput" placeholder="Enter category details..."
+                    style="display: none; width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                <input type="text" id="galleryImageCaption" placeholder="Enter a caption for your image..."
+                    style="width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
                 <div style="display: flex; gap: 10px; margin-top: 5px;">
-                    <button id="galleryUploadBtn" type="button" class="btn btn-primary" style="flex: 1; background-color: #0D8ABC;">Upload Picture to Gallery</button>
+                    <button id="galleryUploadBtn" type="button" class="btn btn-primary"
+                        style="flex: 1; background-color: #0D8ABC;">Upload Picture to Gallery</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Change Password Modal -->
-    <div id="changePasswordModal" class="modal" role="dialog" aria-modal="true" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6);">
-        <div class="modal-content" style="background-color: white; margin: 10% auto; padding: 25px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-            <span class="close" id="closeCpModalBtn" style="color: #888; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+    <div id="changePasswordModal" class="modal" role="dialog" aria-modal="true"
+        style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6);">
+        <div class="modal-content"
+            style="background-color: white; margin: 10% auto; padding: 25px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <span class="close" id="closeCpModalBtn"
+                style="color: #888; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
             <h3 style="margin-top: 0; color: #0D8ABC;">Change Password</h3>
-            <div id="cpMessage" style="margin-bottom: 15px; font-size: 0.9em; display: none; padding: 10px; border-radius: 4px;"></div>
+            <div id="cpMessage"
+                style="margin-bottom: 15px; font-size: 0.9em; display: none; padding: 10px; border-radius: 4px;"></div>
 
             <div id="cpStep1">
-                <p style="font-size: 0.9em; color: #555; margin-bottom: 15px;">Click below to send an OTP to your registered email address.</p>
-                <button type="button" id="sendCpOtpBtn" class="btn btn-primary" style="width: 100%; padding: 12px; background-color: #0D8ABC; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Send OTP</button>
+                <p style="font-size: 0.9em; color: #555; margin-bottom: 15px;">Click below to send an OTP to your
+                    registered email address.</p>
+                <button type="button" id="sendCpOtpBtn" class="btn btn-primary"
+                    style="width: 100%; padding: 12px; background-color: #0D8ABC; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Send
+                    OTP</button>
             </div>
 
             <div id="cpStep2" style="display: none;">
@@ -286,19 +373,37 @@
                 <form id="changePasswordForm">
                     <div class="form-group" style="margin-bottom: 15px;">
                         <label style="font-weight: bold; font-size: 0.9em; color: #333;">Enter 6-digit OTP</label>
-                        <input type="text" id="cpOtp" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                        <input type="text" id="cpOtp" required
+                            style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
                     </div>
                     <div class="form-group" style="margin-bottom: 25px;">
                         <label style="font-weight: bold; font-size: 0.9em; color: #333;">New Password</label>
                         <div style="position: relative;">
-                            <input type="password" id="cpNewPassword" required style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; padding-right: 40px;">
-                            <span onclick="var input = this.previousElementSibling; var isPass = input.type === 'password'; input.type = isPass ? 'text' : 'password'; this.querySelector('.eye-open').style.display = isPass ? 'none' : 'block'; this.querySelector('.eye-closed').style.display = isPass ? 'block' : 'none';" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center; color: #666;">
-                                <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                <svg class="eye-closed" style="display: none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            <input type="password" id="cpNewPassword" required
+                                style="width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; padding-right: 40px;">
+                            <span
+                                onclick="var input = this.previousElementSibling; var isPass = input.type === 'password'; input.type = isPass ? 'text' : 'password'; this.querySelector('.eye-open').style.display = isPass ? 'none' : 'block'; this.querySelector('.eye-closed').style.display = isPass ? 'block' : 'none';"
+                                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center; color: #666;">
+                                <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg class="eye-closed" style="display: none;" width="18" height="18"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                                    </path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
                             </span>
                         </div>
                     </div>
-                    <button type="submit" id="submitCpBtn" class="btn btn-primary" style="width: 100%; padding: 12px; background-color: #0D8ABC; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Verify & Change Password</button>
+                    <button type="submit" id="submitCpBtn" class="btn btn-primary"
+                        style="width: 100%; padding: 12px; background-color: #0D8ABC; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Verify
+                        & Change Password</button>
                 </form>
             </div>
         </div>
@@ -328,7 +433,7 @@
             function addCompanyRow(companyName = '', yearsWorked = '') {
                 const row = document.createElement('div');
                 row.className = 'dynamic-row';
-                
+
                 row.innerHTML = `
                     <div class="form-group">
                         <label>Company Name</label>
@@ -356,7 +461,7 @@
             function addProjectRow(projectName = '', roleDescription = '') {
                 const row = document.createElement('div');
                 row.className = 'dynamic-row';
-                
+
                 row.innerHTML = `
                     <div class="form-group">
                         <label>Project Name</label>
@@ -382,7 +487,7 @@
                 const wrapper = document.createElement('div');
                 wrapper.style.display = 'flex';
                 wrapper.style.gap = '5px';
-                wrapper.style.alignItems = 'center';            
+                wrapper.style.alignItems = 'center';
                 wrapper.innerHTML = `
                     <input type="text" placeholder="e.g. Java" value="${escapeHtml(skillValue)}" pattern="^\\S+$" title="Please enter only one word. No spaces allowed." style="width: 150px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
                     <button type="button" class="remove-btn" style="background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">X</button>
@@ -392,7 +497,7 @@
             }
             addSkillBtn.addEventListener('click', () => {
                 addSkillField();
-            });        
+            });
             // Try loading user from local storage
             const storedUser = localStorage.getItem('user');
             const token = localStorage.getItem('token') || localStorage.getItem('adminToken') || localStorage.getItem('superAdminToken');
@@ -455,7 +560,7 @@
                             addProjectRow(proj.projectName, proj.roleDescription);
                         });
                     }
-                    
+
                     // Show ID Card if sanctioned
                     if (user && user.idCardStatus === 'Sanctioned') {
                         document.getElementById('digitalIdCardSection').style.display = 'block';
@@ -464,7 +569,7 @@
                         document.getElementById('idCardBatch').textContent = user.batchYear || 'N/A';
                         document.getElementById('idCardNumber').textContent = user.alumniId || 'PENDING';
                     }
-                } catch(e) {
+                } catch (e) {
                     console.error("Error parsing user data");
                 }
             }
@@ -476,11 +581,11 @@
                     const nameDisplay = document.getElementById('alumniNameDisplay');
                     if (nameDisplay) nameDisplay.textContent = currentUser.name;
                 }
-                
+
             });
             // Image Preview Logic
             let base64Image = currentUser?.profileImage || null;
-            fileInput.addEventListener('change', function(event) {
+            fileInput.addEventListener('change', function (event) {
                 const file = event.target.files[0];
                 if (file) {
                     if (file.size > 5 * 1024 * 1024) {
@@ -490,7 +595,7 @@
                     }
 
                     const reader = new FileReader();
-                    reader.onload = function(e) {
+                    reader.onload = function (e) {
                         document.getElementById('cropperImage').src = e.target.result;
                         document.getElementById('cropModalTitle').textContent = 'Adjust Profile Picture';
                         document.getElementById('cropModalText').textContent = 'Please crop your image to focus on your face (1:1 Square aspect ratio).';
@@ -508,9 +613,9 @@
             // Form Submit Logic (Mock)
             document.getElementById('alumniInfoForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
-                
+
                 let userId = currentUser ? (currentUser.id || currentUser._id) : null;
-                
+
                 // Bulletproof fallback: Extract ID directly from the JWT Token if missing from localStorage
                 if (!userId && token) {
                     try {
@@ -521,7 +626,7 @@
                         }
                         let payload = JSON.parse(window.atob(base64));
                         userId = payload.id || payload._id;
-                    } catch(e) { console.error('Error decoding token', e); }
+                    } catch (e) { console.error('Error decoding token', e); }
                 }
 
                 if (!userId) {
@@ -531,7 +636,7 @@
                 }
 
                 const statusDiv = document.getElementById('statusMessage');
-                
+
                 // Change UI state
                 const submitBtn = e.target.querySelector('button[type="submit"]');
                 const originalText = submitBtn.textContent;
@@ -599,11 +704,11 @@
                     const data = await response.json();
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalText;
-                    
+
                     if (response.ok && data.success) {
                         localStorage.setItem('user', JSON.stringify(data.alumni));
                         pageTitle.textContent = data.alumni.name;
-                        
+
                         const headerPic = document.getElementById('headerProfilePic');
                         if (headerPic) {
                             headerPic.src = data.alumni.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.alumni.name)}&background=0D8ABC&color=fff`;
@@ -679,7 +784,7 @@
                         body: JSON.stringify({ email })
                     });
                     const data = await response.json();
-                    
+
                     if (response.ok && data.success) {
                         showCpMessage('OTP sent to your email!', 'success');
                         cpStep1.style.display = 'none';
@@ -741,10 +846,10 @@
             const galleryImageCategory = document.getElementById('galleryImageCategory');
             const galleryCategoryDetailInput = document.getElementById('galleryCategoryDetailInput');
             const galleryUploadBtn = document.getElementById('galleryUploadBtn');
-            
+
             let currentGalleryDataUrl = null;
 
-            galleryImageCategory.addEventListener('change', function() {
+            galleryImageCategory.addEventListener('change', function () {
                 const val = this.value;
                 if (val === 'Batch') {
                     galleryCategoryDetailInput.style.display = 'block';
@@ -782,14 +887,14 @@
             function populateCategoryDropdown(catObjects) {
                 const selectedVal = galleryImageCategory.value;
                 galleryImageCategory.innerHTML = '<option value="" disabled selected>-- Select a Category * --</option>';
-                
+
                 catObjects.forEach(cat => {
                     const opt = document.createElement('option');
                     opt.value = cat.name;
                     opt.textContent = cat.name;
                     galleryImageCategory.appendChild(opt);
                 });
-                
+
                 if (selectedVal && Array.from(galleryImageCategory.options).some(opt => opt.value === selectedVal)) {
                     galleryImageCategory.value = selectedVal;
                 }
@@ -797,17 +902,17 @@
 
             loadGalleryCategories();
 
-            galleryImageInput.addEventListener('change', function(e) {
+            galleryImageInput.addEventListener('change', function (e) {
                 const file = e.target.files[0];
                 if (file) {
                     if (file.size > 5 * 1024 * 1024) {
                         alert("File is too large! Please select an image under 5MB.");
-                        galleryImageInput.value = ''; 
+                        galleryImageInput.value = '';
                         return;
                     }
-                    
+
                     const reader = new FileReader();
-                    reader.onload = function(event) {
+                    reader.onload = function (event) {
                         currentGalleryDataUrl = event.target.result;
                         galleryImagePreview.src = currentGalleryDataUrl;
                         galleryPreviewContainer.style.display = 'block';
@@ -843,7 +948,7 @@
                     base64Image = canvas.toDataURL('image/jpeg', 0.8);
                     previewImg.src = base64Image;
                 }
-                
+
                 loadingOverlay.style.display = 'none';
                 cropper.destroy();
                 cropper = null;
@@ -872,7 +977,7 @@
                         while (base64.length % 4) { base64 += '='; }
                         let payload = JSON.parse(window.atob(base64));
                         userId = payload.id || payload._id;
-                    } catch(e) { console.error('Error decoding token', e); }
+                    } catch (e) { console.error('Error decoding token', e); }
                 }
 
                 const payload = {
@@ -916,34 +1021,34 @@
                 }
             });
 
-        // Print ID Card functionality
-        window.printDigitalId = function() {
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            const card = document.getElementById('printableIdCard');
+            // Print ID Card functionality
+            window.printDigitalId = function () {
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const card = document.getElementById('printableIdCard');
 
-            if (isMobile) {
-                const btn = document.querySelector('button[onclick="printDigitalId()"]');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '⌛ Generating...';
-                btn.disabled = true;
+                if (isMobile) {
+                    const btn = document.querySelector('button[onclick="printDigitalId()"]');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '⌛ Generating...';
+                    btn.disabled = true;
 
-                if (typeof html2canvas === 'undefined') {
-                    const script = document.createElement('script');
-                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-                    script.onload = () => generateCardImage(card, btn, originalText);
-                    script.onerror = () => {
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
-                        alert('Could not load card generator library.');
-                    };
-                    document.head.appendChild(script);
+                    if (typeof html2canvas === 'undefined') {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                        script.onload = () => generateCardImage(card, btn, originalText);
+                        script.onerror = () => {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                            alert('Could not load card generator library.');
+                        };
+                        document.head.appendChild(script);
+                    } else {
+                        generateCardImage(card, btn, originalText);
+                    }
                 } else {
-                    generateCardImage(card, btn, originalText);
-                }
-            } else {
-                const style = document.createElement('style');
-                style.id = 'print-card-styles';
-                style.innerHTML = `
+                    const style = document.createElement('style');
+                    style.id = 'print-card-styles';
+                    style.innerHTML = `
                     @media print {
                         body * {
                             visibility: hidden !important;
@@ -965,33 +1070,34 @@
                         }
                     }
                 `;
-                document.head.appendChild(style);
-                window.print();
-                document.head.removeChild(style);
-            }
-        };
+                    document.head.appendChild(style);
+                    window.print();
+                    document.head.removeChild(style);
+                }
+            };
 
-        function generateCardImage(card, btn, originalText) {
-            html2canvas(card, {
-                scale: 3, 
-                useCORS: true,
-                allowTaint: false,
-                backgroundColor: null
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'Alumni_ID_Card.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            }).catch(err => {
-                console.error('Error generating card image:', err);
-                alert('Could not download card image. Try taking a screenshot.');
-            }).finally(() => {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            });
-        }
+            function generateCardImage(card, btn, originalText) {
+                html2canvas(card, {
+                    scale: 3,
+                    useCORS: true,
+                    allowTaint: false,
+                    backgroundColor: null
+                }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'Alumni_ID_Card.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                }).catch(err => {
+                    console.error('Error generating card image:', err);
+                    alert('Could not download card image. Try taking a screenshot.');
+                }).finally(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                });
+            }
 
         });
     </script>
 </body>
+
 </html>
