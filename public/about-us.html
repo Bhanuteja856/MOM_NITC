@@ -450,10 +450,37 @@
                 document.getElementById('enlargedViewContainer').style.display = 'none';
             });
 
-            // Load the events ticker using the global function from load-components.js
-            if (typeof window.updateEventsTicker === 'function') {
-                window.updateEventsTicker();
+            async function updateLocalEventsTicker() {
+                const ticker = document.getElementById('eventsTicker');
+                if (!ticker) return;
+                try {
+                    const response = await fetch('/api/auth/events');
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        const now = new Date();
+                        now.setHours(0, 0, 0, 0);
+                        const approvedEvents = data.events.filter(e => {
+                            if (e.status !== 'Approved') return false;
+                            const eventDate = new Date(e.date);
+                            return isNaN(eventDate.getTime()) || eventDate >= now;
+                        });
+                        if (approvedEvents.length > 0) {
+                            ticker.innerHTML = approvedEvents.map(e => {
+                                const eventDate = new Date(e.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                                const eventUrl = `/Alumni/view-events.html#event-${e._id}`;
+                                return `<a href="${eventUrl}" style="color: inherit; text-decoration: none;">⭐ ${eHtml(e.title)} - ${eventDate}</a>`;
+                            }).join(' &nbsp; | &nbsp; ');
+                        } else {
+                            ticker.innerHTML = '⭐ No upcoming events at the moment.';
+                        }
+                    }
+                } catch (error) {
+                    console.error("Failed to load ticker events", error);
+                }
             }
+
+            // Load the events ticker from the database
+            await updateLocalEventsTicker();
         });
     </script>
 </body>
