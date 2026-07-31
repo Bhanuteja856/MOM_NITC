@@ -1679,7 +1679,16 @@ router.post('/bulk-add-alumni', authenticateToken, async (req, res) => {
 
         if (email && email.trim() !== '') newAlumniData.email = email.trim();
         if (batchYear) newAlumniData.batchYear = batchYear;
-        if (gender) newAlumniData.gender = gender;
+        if (gender) {
+          const genStr = String(gender).trim().toLowerCase();
+          if (genStr === 'm' || genStr === 'male') {
+            newAlumniData.gender = 'Male';
+          } else if (genStr === 'f' || genStr === 'female') {
+            newAlumniData.gender = 'Female';
+          } else {
+            newAlumniData.gender = gender;
+          }
+        }
 
         if (hasCredentials) {
           newAlumniData.alumniId = await generateAlumniId(batchYear);

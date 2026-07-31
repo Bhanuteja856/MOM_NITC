@@ -122,8 +122,31 @@ if (!mongoUri) {
 // Using the main database. The Mongoose model will ensure it goes into an 'Admin' collection.
 const mongoDbName = process.env.MONGO_DB_NAME || 'mca_alumni_portal';
 mongoose.connect(mongoUri, { dbName: mongoDbName })
-  .then(() => {
+  .then(async () => {
     console.log('MongoDB Connected');
+
+    // Run one-time database migration to normalize legacy gender values
+    try {
+      const Alumni = require('./models/alumni');
+      const resMale = await Alumni.updateMany(
+        { gender: { $in: ['M', 'm', 'male'] } },
+        { $set: { gender: 'Male' } }
+      );
+      if (resMale.modifiedCount > 0) {
+        console.log(`📡 Gender Migration: Normalized ${resMale.modifiedCount} 'Male' records.`);
+      }
+
+      const resFemale = await Alumni.updateMany(
+        { gender: { $in: ['F', 'f', 'female'] } },
+        { $set: { gender: 'Female' } }
+      );
+      if (resFemale.modifiedCount > 0) {
+        console.log(`📡 Gender Migration: Normalized ${resFemale.modifiedCount} 'Female' records.`);
+      }
+    } catch (err) {
+      console.error('❌ Gender Migration Error:', err);
+    }
+
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
