@@ -1741,6 +1741,26 @@ router.put('/alumni/:id', authenticateToken, authorizeRoles('admin', 'super_admi
     const allowedUpdates = { name, batchYear, email, phone, gender, currentCompany, designation, skills, city, country, bio, isVerified, rollNumber };
     Object.keys(allowedUpdates).forEach(key => allowedUpdates[key] === undefined && delete allowedUpdates[key]);
 
+    // Hash the password if provided during edit/registration
+    if (updateData.password && updateData.password.trim() !== '') {
+      const salt = await bcrypt.genSalt(10);
+      allowedUpdates.password = await bcrypt.hash(updateData.password.trim(), salt);
+    }
+
+    // Check if transitioning from unregistered to registered alumni
+    const isNowRegistering = (originalAlumni.userType === 'unregistered' || !originalAlumni.isRegistered) &&
+                             (email || originalAlumni.email) &&
+                             (updateData.password && updateData.password.trim() !== '');
+
+    if (isNowRegistering) {
+      allowedUpdates.isRegistered = true;
+      allowedUpdates.userType = 'alumni';
+      allowedUpdates.isVerified = true;
+      if (!originalAlumni.alumniId && !allowedUpdates.alumniId) {
+        allowedUpdates.alumniId = await generateAlumniId(batchYear || originalAlumni.batchYear);
+      }
+    }
+
     const alumni = await Alumni.findByIdAndUpdate(
       req.params.id,
       { $set: allowedUpdates },
@@ -1769,6 +1789,45 @@ router.put('/alumni/:id', authenticateToken, authorizeRoles('admin', 'super_admi
         await sendEmail(alumni.email, 'Your NITC Alumni Account is Approved!', emailHtml);
       } catch (mailError) {
         console.error("Failed to send approval email:", mailError);
+      }
+    }
+
+    // Send welcome email if transitioning from unregistered to registered
+    if (isNowRegistering && alumni.email) {
+      try {
+        const loginUrl = `${req.protocol}://${req.get('host')}/login.html`;
+        const emailHtml = `
+          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+            <div style="background: linear-gradient(135deg, #0D8ABC, #075f82); padding: 40px 20px; text-align: center; color: white;">
+              <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: 0.5px;">Welcome to the NITC MCA Alumni Family!</h1>
+              <p style="margin: 10px 0 0 0; opacity: 0.9; font-size: 16px;">We are thrilled to have you join our official network.</p>
+            </div>
+            <div style="padding: 30px 25px; background-color: #ffffff; color: #334155; line-height: 1.6;">
+              <p style="font-size: 16px; margin-top: 0;">Dear <b>${escapeHtml(alumni.name)}</b>,</p>
+              <p>A warm, heartfelt welcome to the official <b>NITC MCA Alumni Portal</b>! Your alumni account has been successfully created and registered by the portal administrator.</p>
+              <p>This platform is designed to help you stay connected with batchmates, participate in mentorship programs, view job opportunities, and engage in campus events.</p>
+              
+              <div style="background-color: #f8fafc; border-left: 4px solid #0D8ABC; padding: 20px; border-radius: 6px; margin: 25px 0;">
+                <h3 style="margin: 0 0 10px 0; color: #0D8ABC; font-size: 15px;">Your Portal Access Credentials</h3>
+                <p style="margin: 0; font-size: 14px;"><strong>Email:</strong> ${escapeHtml(alumni.email)}</p>
+                <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Temporary Password:</strong> <code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 13px;">${escapeHtml(updateData.password.trim())}</code></p>
+                <p style="margin: 10px 0 0 0; font-size: 12px; color: #64748b; font-style: italic;">* Note: For security, we recommend changing this password after your first login.</p>
+              </div>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${loginUrl}" style="background-color: #0D8ABC; color: white; padding: 12px 30px; text-decoration: none; border-radius: 30px; font-weight: bold; display: inline-block; box-shadow: 0 4px 10px rgba(13, 138, 188, 0.25); transition: background 0.3s;">Access the Portal</a>
+              </div>
+              
+              <p style="margin-bottom: 0;">Best Regards,<br><strong>NITC MCA Alumni Association</strong></p>
+            </div>
+            <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
+              National Institute of Technology, Calicut
+            </div>
+          </div>
+        `;
+        await sendEmail(alumni.email, 'Welcome to the NITC MCA Alumni Portal!', emailHtml);
+      } catch (mailError) {
+        console.error("Failed to send welcome email:", mailError);
       }
     }
 
