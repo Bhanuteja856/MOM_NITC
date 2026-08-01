@@ -1797,15 +1797,18 @@ router.put('/alumni/:id', authenticateToken, authorizeRoles('admin', 'super_admi
       try {
         const loginUrl = `${req.protocol}://${req.get('host')}/login.html`;
         const emailHtml = `
-          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
-            <div style="background: linear-gradient(135deg, #0D8ABC, #075f82); padding: 40px 20px; text-align: center; color: white;">
-              <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: 0.5px;">Welcome to the NITC MCA Alumni Family!</h1>
-              <p style="margin: 10px 0 0 0; opacity: 0.9; font-size: 16px;">We are thrilled to have you join our official network.</p>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); line-height: 1.6; color: #333;">
+            <div style="background-color: #0D8ABC; padding: 25px; text-align: center; color: white;">
+              <h2 style="margin: 0; font-size: 20px; font-weight: bold;">NITC MCA Alumni Portal - MOMNITC</h2>
             </div>
-            <div style="padding: 30px 25px; background-color: #ffffff; color: #334155; line-height: 1.6;">
-              <p style="font-size: 16px; margin-top: 0;">Dear <b>${escapeHtml(alumni.name)}</b>,</p>
-              <p>A warm, heartfelt welcome to the official <b>NITC MCA Alumni Portal</b>! Your alumni account has been successfully created and registered by the portal administrator.</p>
-              <p>This platform is designed to help you stay connected with batchmates, participate in mentorship programs, view job opportunities, and engage in campus events.</p>
+            <div style="padding: 30px 25px; background: white;">
+              <p>Dear ${escapeHtml(alumni.name)},</p>
+              <p>I am happy to inform you that the Centre of Excellence in Artificial Intelligence (CoE-AI) of NIT Calicut has developed an alumni portal exclusively for all the esteemed MCA alumni of REC Calicut/NIT Calicut. This portal will act as a digital platform for connecting all the MCA batches to the Alma mater. Many activities including batch get-togethers, family get togethers, an annual MCA alumni conference and many other events are in the pipeline. As a first step, please join in the portal using the link given in this invitation.</p>
+              <p>Name of the Portal is <b>MOMNITC</b> (Member of MCA NITC Alumni Network).</p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${loginUrl}" style="background-color: #0D8ABC; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">Visit MOMNITC Portal</a>
+              </div>
               
               <div style="background-color: #f8fafc; border-left: 4px solid #0D8ABC; padding: 20px; border-radius: 6px; margin: 25px 0;">
                 <h3 style="margin: 0 0 10px 0; color: #0D8ABC; font-size: 15px;">Your Portal Access Credentials</h3>
@@ -1813,19 +1816,28 @@ router.put('/alumni/:id', authenticateToken, authorizeRoles('admin', 'super_admi
                 <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Temporary Password:</strong> <code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 13px;">${escapeHtml(updateData.password.trim())}</code></p>
                 <p style="margin: 10px 0 0 0; font-size: 12px; color: #64748b; font-style: italic;">* Note: For security, we recommend changing this password after your first login.</p>
               </div>
+
+              <p style="margin: 20px 0 0 0;">Dr. S.D Madhu Kumar, Professor, CSED</p>
               
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${loginUrl}" style="background-color: #0D8ABC; color: white; padding: 12px 30px; text-decoration: none; border-radius: 30px; font-weight: bold; display: inline-block; box-shadow: 0 4px 10px rgba(13, 138, 188, 0.25); transition: background 0.3s;">Access the Portal</a>
+              <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 25px 0;">
+              
+              <div style="font-size: 12px; color: #666; line-height: 1.4;">
+                <p style="margin: 0;"><b>Regards,</b></p>
+                <p style="margin: 5px 0 0 0;">डॉ. एस डी मधुकुमार / Dr. S.D Madhu Kumar,<br>
+                प्रोफेसर / Professor,<br>
+                कंप्यूटर साइंस और इंजीनियरिंग विभाग / Dept. of Computer Science & Engineering,<br>
+                चेयर पर्सन - सेंटर  ऑफ़  एक्सीलेंस  इन  आर्टिफीसियल  इंटेलिजेंस (सि ओ इ-  ए ऐ) / Chairperson – Centre of Excellence in Artificial Intelligence (CoE-AI),<br>
+                राष्ट्रीय प्रौद्योगिकी संस्थान कालिकट / National Institute of Technology Calicut<br>
+                फ़ोन: +91-495-228 5072 (कार्यालय) / Ph: +91-495-228 5072 (office)<br>
+                <a href="https://nitc.ac.in" style="color: #0D8ABC; text-decoration: none;">My Institute Homepage</a></p>
               </div>
-              
-              <p style="margin-bottom: 0;">Best Regards,<br><strong>NITC MCA Alumni Association</strong></p>
             </div>
-            <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
+            <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0;">
               National Institute of Technology, Calicut
             </div>
           </div>
         `;
-        await sendEmail(alumni.email, 'Welcome to the NITC MCA Alumni Portal!', emailHtml);
+        await sendEmail(alumni.email, 'Invitation to join the official NITC MCA Alumni Portal- MOMNITC', emailHtml);
       } catch (mailError) {
         console.error("Failed to send welcome email:", mailError);
       }
