@@ -2209,7 +2209,11 @@ router.post('/gallery', authenticateToken, async (req, res) => {
 // ============================
 router.get('/gallery/public', async (req, res) => {
   try {
-    const images = await Gallery.find({ isVisible: { $ne: false } }).select('imageUrl category').sort({ createdAt: -1 }).limit(30);
+    let images = await Gallery.find({ isVisible: { $ne: false } }).select('imageUrl category').sort({ createdAt: -1 }).limit(100);
+    images = images.filter(img => {
+      const cat = (img.category || '').toLowerCase().trim();
+      return !cat.includes('hostel');
+    }).slice(0, 30);
     res.json({ success: true, images });
   } catch (error) {
     console.error("Get Public Gallery Error:", error);
