@@ -258,6 +258,13 @@
                 <div class="gallery-grid" id="galleryGrid">
                     <!-- Images will be displayed here dynamically -->
                 </div>
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 40px 0;">
+                <div style="margin-bottom: 20px;">
+                    <h2 style="margin: 0; color: #0D8ABC;">Videos Gallery</h2>
+                </div>
+                <div class="gallery-grid" id="videosGrid">
+                    <!-- Videos will be displayed here dynamically -->
+                </div>
             </div>
             <!-- Upload section on the right -->
             <div class="gallery-upload-sidebar"
@@ -351,6 +358,7 @@
             const searchInput = document.getElementById('searchInput');
             const API_URL = window.API_URL;
             const token = localStorage.getItem('superAdminToken');
+            const BASE_URL = API_URL.replace('/api/auth', '');
             let galleryImages = [];
             let editingImageId = null;
             let currentUserId = null;
@@ -790,9 +798,51 @@
                 }
             });
 
+            async function loadVideos() {
+                const videosGrid = document.getElementById('videosGrid');
+                if (!videosGrid) return;
+                try {
+                    const response = await fetch(`${API_URL}/videos/public`);
+                    const data = await response.json();
+                    if (response.ok && data.success && data.videos && data.videos.length > 0) {
+                        videosGrid.innerHTML = data.videos.map(v => {
+                            const fullVideoUrl = v.videoUrl.startsWith('http') ? v.videoUrl : BASE_URL + v.videoUrl;
+                            const fullThumbUrl = v.thumbnailUrl ? (v.thumbnailUrl.startsWith('http') ? v.thumbnailUrl : BASE_URL + v.thumbnailUrl) : '';
+                            const posterAttr = fullThumbUrl ? `poster="${fullThumbUrl}"` : '';
+                            return `
+                                <div class="gallery-item">
+                                    <div class="gallery-image-container">
+                                        <video controls ${posterAttr} style="width: 100%; height: 200px; object-fit: cover; background: #000; display: block;">
+                                            <source src="${fullVideoUrl}" type="video/mp4">
+                                            Your browser does not support the video tag.
+                                        </video>
+                                    </div>
+                                    <div style="padding: 15px; background: #f9f9f9; border-top: 1px solid #eee; flex-grow: 1;">
+                                        <h4 style="margin: 0 0 5px 0; color: #333; font-size: 1.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(v.title)}">${escapeHtml(v.title)}</h4>
+                                        <p style="margin: 0; font-size: 0.85em; color: #666; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="${escapeHtml(v.description || '')}">${escapeHtml(v.description || 'No description.')}</p>
+                                        <small style="color: #999; display: block; border-top: 1px solid #eee; padding-top: 8px; margin-top: 8px;">Uploaded by: ${escapeHtml(v.postedBy)}</small>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        videosGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #666;">No videos found.</p>';
+                    }
+                } catch (error) {
+                    console.error('Failed to load videos', error);
+                    videosGrid.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #666;">Error loading videos.</p>';
+                }
+            }
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
+
             // Initial render
             loadCategories().then(() => {
                 loadGallery();
+                loadVideos();
             });
             updateEventsTicker();
         });
