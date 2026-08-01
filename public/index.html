@@ -292,6 +292,31 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
         }
 
+        /* Seamless Infinite Scroll Gallery Styles */
+        .gallery-scroll-container {
+            overflow: hidden;
+            width: 100%;
+            padding: 10px 0;
+            white-space: nowrap;
+            position: relative;
+        }
+        .gallery-scroll-track {
+            display: flex;
+            width: max-content;
+            animation: scroll-left 35s linear infinite;
+        }
+        .gallery-scroll-track:hover {
+            animation-play-state: paused;
+        }
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
         /* Video Horizontal Scroll Styling */
         #publicVideosGrid::-webkit-scrollbar {
             height: 8px;
@@ -709,10 +734,11 @@
             <div class="spinner" style="margin: 0 auto;"></div>
             <h3 style="color: #0D8ABC; margin-top: 15px;">Loading Gallery...</h3>
         </div>
-        <marquee behavior="scroll" direction="left" scrollamount="12" id="publicGalleryMarquee"
-            style="width: 100%; padding: 10px 0; display: none;">
-            <!-- Images injected here -->
-        </marquee>
+        <div id="publicGalleryScrollContainer" class="gallery-scroll-container" style="display: none;">
+            <div class="gallery-scroll-track" id="publicGalleryTrack">
+                <!-- Images injected here -->
+            </div>
+        </div>
     </section>
 
     <!-- Public Videos Section -->
@@ -902,9 +928,10 @@
             }
 
             async function loadPublicGallery() {
-                const marquee = document.getElementById('publicGalleryMarquee');
+                const track = document.getElementById('publicGalleryTrack');
+                const container = document.getElementById('publicGalleryScrollContainer');
                 const loader = document.getElementById('galleryLoader');
-                if (!marquee) return;
+                if (!track) return;
                 try {
                     const response = await fetch(`${API_URL}/gallery/public`);
                     const data = await response.json();
@@ -917,9 +944,12 @@
                             })
                             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                             .slice(0, 9);
-                        marquee.innerHTML = latestImages.map(img => `<img src="${eHtml(img.imageUrl)}" class="public-gallery-img" alt="Gallery Highlight" style="cursor: pointer;" onclick="viewPublicEnlargedImage('${eHtml(img.imageUrl)}')">`).join('');
+                        
+                        // Duplicate images to create a seamless infinite loop
+                        const doubledImages = [...latestImages, ...latestImages];
+                        track.innerHTML = doubledImages.map(img => `<img src="${eHtml(img.imageUrl)}" class="public-gallery-img" alt="Gallery Highlight" style="cursor: pointer;" onclick="viewPublicEnlargedImage('${eHtml(img.imageUrl)}')">`).join('');
                         if (loader) loader.style.display = 'none';
-                        marquee.style.display = 'block';
+                        if (container) container.style.display = 'block';
                     } else {
                         document.getElementById('publicGallerySection').style.display = 'none';
                     }
@@ -929,15 +959,15 @@
                 }
             }
             window.viewPublicEnlargedImage = function (imageUrl) {
-                const marquee = document.getElementById('publicGalleryMarquee');
-                if (marquee) marquee.stop();
+                const track = document.getElementById('publicGalleryTrack');
+                if (track) track.style.animationPlayState = 'paused';
                 document.getElementById('publicEnlargedImage').src = imageUrl;
                 document.getElementById('publicEnlargedViewContainer').style.display = 'block';
             };
             document.getElementById('publicEnlargedViewContainer').addEventListener('click', () => {
                 document.getElementById('publicEnlargedViewContainer').style.display = 'none';
-                const marquee = document.getElementById('publicGalleryMarquee');
-                if (marquee) marquee.start();
+                const track = document.getElementById('publicGalleryTrack');
+                if (track) track.style.animationPlayState = 'running';
             });
 
             async function loadPublicVideos() {
