@@ -300,48 +300,50 @@
             white-space: nowrap;
             position: relative;
         }
+
         .gallery-scroll-track {
             display: flex;
             width: max-content;
             animation: scroll-left 35s linear infinite;
         }
+
         .gallery-scroll-track:hover {
             animation-play-state: paused;
         }
+
         @keyframes scroll-left {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* Video Autoscroll Styles */
+        .videos-scroll-container {
+            overflow: hidden;
+            width: 100%;
+            padding: 10px 0;
+            white-space: nowrap;
+            position: relative;
+        }
+        .videos-scroll-track {
+            display: flex;
+            width: max-content;
+            animation: videos-scroll-left 45s linear infinite;
+        }
+        .videos-scroll-track:hover {
+            animation-play-state: paused;
+        }
+        @keyframes videos-scroll-left {
             0% {
                 transform: translateX(0);
             }
             100% {
                 transform: translateX(-50%);
             }
-        }
-
-        /* Video Horizontal Scroll Styling */
-        #publicVideosGrid::-webkit-scrollbar {
-            height: 8px;
-        }
-
-        #publicVideosGrid::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.05);
-            border-radius: 4px;
-        }
-
-        #publicVideosGrid::-webkit-scrollbar-thumb {
-            background: rgba(13, 138, 188, 0.5);
-            border-radius: 4px;
-        }
-
-        #publicVideosGrid::-webkit-scrollbar-thumb:hover {
-            background: rgba(13, 138, 188, 0.8);
-        }
-
-        .dark-mode #publicVideosGrid::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .dark-mode #publicVideosGrid::-webkit-scrollbar-thumb {
-            background: rgba(96, 165, 250, 0.5);
         }
 
         /* Slider Styles */
@@ -743,11 +745,12 @@
 
     <!-- Public Videos Section -->
     <section id="publicVideosSection" class="fade-in-section"
-        style="padding: 40px 20px; background-color: #f4f6f8; margin-top: 0; box-shadow: 0 -4px 20px rgba(0,0,0,0.05); display: none;">
+        style="padding: 40px 0; background-color: #f4f6f8; margin-top: 0; box-shadow: 0 -4px 20px rgba(0,0,0,0.05); display: none; overflow: hidden;">
         <h2 style="text-align: center; color: #0D8ABC; margin-bottom: 30px; font-size: 2.2em;">Featured Videos</h2>
-        <div id="publicVideosGrid"
-            style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; max-width: 1200px; margin: 0 auto; scroll-snap-type: x mandatory;">
-            <!-- Videos injected here -->
+        <div id="publicVideosScrollContainer" class="videos-scroll-container">
+            <div class="videos-scroll-track" id="publicVideosGrid">
+                <!-- Videos injected here -->
+            </div>
         </div>
     </section>
 
@@ -944,7 +947,7 @@
                             })
                             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                             .slice(0, 9);
-                        
+
                         // Duplicate images to create a seamless infinite loop
                         const doubledImages = [...latestImages, ...latestImages];
                         track.innerHTML = doubledImages.map(img => `<img src="${eHtml(img.imageUrl)}" class="public-gallery-img" alt="Gallery Highlight" style="cursor: pointer;" onclick="viewPublicEnlargedImage('${eHtml(img.imageUrl)}')">`).join('');
@@ -979,19 +982,43 @@
                     const data = await response.json();
                     if (response.ok && data.success && data.videos && data.videos.length > 0) {
                         section.style.display = 'block';
-                        grid.innerHTML = data.videos.map(v => {
+                        
+                        // Duplicate videos to create a seamless infinite loop
+                        const doubledVideos = [...data.videos, ...data.videos];
+                        
+                        grid.innerHTML = doubledVideos.map(v => {
                             const posterAttr = v.thumbnailUrl ? `poster="${eHtml(v.thumbnailUrl)}"` : '';
                             return `
-                        <div style="flex: 0 0 320px; background: #fff; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow: hidden; scroll-snap-align: start;" class="video-card">
+                        <div style="flex: 0 0 320px; background: #fff; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow: hidden; margin: 0 15px;" class="video-card">
                             <video controls ${posterAttr} style="width: 100%; height: 200px; object-fit: cover; background: #000; display: block;">
                                 <source src="${eHtml(v.videoUrl)}" type="video/mp4">
                             </video>
-                            <div style="padding: 15px;">
+                            <div style="padding: 15px; white-space: normal;">
                                 <h4 style="margin: 0 0 5px 0; color: #333; font-size: 1.1em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${eHtml(v.title)}">${eHtml(v.title)}</h4>
                                 <p style="margin: 0; font-size: 0.9em; color: #666; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="${eHtml(v.description || '')}">${eHtml(v.description || '')}</p>
                             </div>
                         </div>`;
                         }).join('');
+
+                        // Pause animation when a video is playing
+                        const videos = grid.querySelectorAll('video');
+                        videos.forEach(vid => {
+                            vid.addEventListener('play', () => {
+                                grid.style.animationPlayState = 'paused';
+                            });
+                            vid.addEventListener('pause', () => {
+                                const anyPlaying = Array.from(videos).some(v => !v.paused && !v.ended);
+                                if (!anyPlaying) {
+                                    grid.style.animationPlayState = 'running';
+                                }
+                            });
+                            vid.addEventListener('ended', () => {
+                                const anyPlaying = Array.from(videos).some(v => !v.paused && !v.ended);
+                                if (!anyPlaying) {
+                                    grid.style.animationPlayState = 'running';
+                                }
+                            });
+                        });
                     }
                 } catch (error) {
                     console.error("Failed to load public videos", error);
