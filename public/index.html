@@ -909,8 +909,12 @@
                     const response = await fetch(`${API_URL}/gallery/public`);
                     const data = await response.json();
                     if (response.ok && data.success && data.images && data.images.length > 0) {
-                        // Sort images by creation date (newest first) and take the top 9
+                        // Sort images by creation date (newest first), filter out hostel images, and take the top 9
                         const latestImages = data.images
+                            .filter(img => {
+                                const cat = (img.category || '').toLowerCase().trim();
+                                return !cat.includes('hostel');
+                            })
                             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                             .slice(0, 9);
                         marquee.innerHTML = latestImages.map(img => `<img src="${eHtml(img.imageUrl)}" class="public-gallery-img" alt="Gallery Highlight" style="cursor: pointer;" onclick="viewPublicEnlargedImage('${eHtml(img.imageUrl)}')">`).join('');
