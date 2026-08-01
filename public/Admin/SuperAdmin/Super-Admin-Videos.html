@@ -72,6 +72,7 @@
             const token = localStorage.getItem('superAdminToken');
             
             let currentUser = JSON.parse(localStorage.getItem('superAdminUser') || '{}');
+            let currentVideos = [];
 
             document.addEventListener('HeaderLoaded', () => {
                 const pic = document.getElementById('headerProfilePic');
@@ -88,6 +89,7 @@
                     const grid = document.getElementById('videosGrid');
                     grid.innerHTML = '';
                     if (data.success && data.videos.length > 0) {
+                        currentVideos = data.videos;
                         data.videos.forEach(v => {
                             const fullVideoUrl = v.videoUrl.startsWith('http') ? v.videoUrl : BASE_URL + v.videoUrl;
                             const fullThumbUrl = v.thumbnailUrl ? (v.thumbnailUrl.startsWith('http') ? v.thumbnailUrl : BASE_URL + v.thumbnailUrl) : '';
@@ -102,7 +104,10 @@
                                     <div class="video-card-body">
                                         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
                                             <h4 style="margin: 0 0 5px 0; color: #333; word-break: break-word;">${v.title}</h4>
-                                            <button onclick="deleteVideo('${v._id}')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold; flex-shrink: 0;">Delete</button>
+                                            <div style="display: flex; gap: 5px; flex-shrink: 0;">
+                                                <button onclick="editVideo('${v._id}')" style="background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold;">Edit</button>
+                                                <button onclick="deleteVideo('${v._id}')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85em; font-weight: bold;">Delete</button>
+                                            </div>
                                         </div>
                                         <p style="margin: 5px 0 10px 0; font-size: 0.85em; color: #666;">${v.description || 'No description provided.'}</p>
                                         <small style="color: #999; display: block; border-top: 1px solid #eee; padding-top: 8px;">Uploaded by: ${v.postedBy}</small>
@@ -111,11 +116,29 @@
                             `;
                         });
                     } else {
+                        currentVideos = [];
                         grid.innerHTML = '<p style="color: #666; font-style: italic;">No videos have been uploaded yet.</p>';
                     }
                 } catch (err) {
                     console.error('Failed to load videos', err);
                 }
+            };
+
+            window.editVideo = function(id) {
+                const video = currentVideos.find(v => v._id === id);
+                if (!video) return;
+
+                document.getElementById('editVideoId').value = video._id;
+                document.getElementById('editVideoTitle').value = video.title;
+                document.getElementById('editVideoDesc').value = video.description || '';
+                document.getElementById('editThumbnailFile').value = '';
+                document.getElementById('editStatus').textContent = '';
+                
+                document.getElementById('editVideoModal').style.display = 'flex';
+            };
+
+            window.closeEditModal = function() {
+                document.getElementById('editVideoModal').style.display = 'none';
             };
 
             window.deleteVideo = async function(id) {
@@ -193,9 +216,94 @@
                     btn.textContent = 'Upload Video File';
                 }
             });
+            document.getElementById('editVideoForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('editVideoId').value;
+                const title = document.getElementById('editVideoTitle').value;
+                const description = document.getElementById('editVideoDesc').value;
+                const thumbnailFile = document.getElementById('editThumbnailFile').files[0];
+                
+                const btn = document.getElementById('editSubmitBtn');
+                const status = document.getElementById('editStatus');
+                
+                if (thumbnailFile && thumbnailFile.size > 5 * 1024 * 1024) {
+                    status.textContent = 'Thumbnail image size exceeds 5MB!';
+                    status.style.color = '#dc3545';
+                    return;
+                }
+                
+                btn.disabled = true;
+                btn.textContent = 'Saving...';
+                status.textContent = '';
+                
+                const formData = new FormData();
+                formData.append('title', title);
+                formData.append('description', description);
+                if (thumbnailFile) {
+                    formData.append('thumbnail', thumbnailFile);
+                }
+                
+                try {
+                    const response = await fetch(`${API_URL}/videos/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        status.textContent = 'Video Updated Successfully!';
+                        status.style.color = '#28a745';
+                        setTimeout(() => {
+                            closeEditModal();
+                            loadVideos();
+                        }, 1000);
+                    } else {
+                        status.textContent = data.message || 'Update failed.';
+                        status.style.color = '#dc3545';
+                    }
+                } catch (err) {
+                    status.textContent = 'Network error or file size issue.';
+                    status.style.color = '#dc3545';
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Save Changes';
+                }
+            });
 
             loadVideos();
         });
     </script>
+
+    <!-- Edit Video Modal -->
+    <div id="editVideoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+        <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; margin: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: #4a148c;">Edit Video Details</h3>
+                <button onclick="closeEditModal()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; color: #666;">&times;</button>
+            </div>
+            <form id="editVideoForm">
+                <input type="hidden" id="editVideoId">
+                <div class="form-group">
+                    <label>Video Title *</label>
+                    <input type="text" id="editVideoTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="editVideoDesc" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Update Thumbnail Image (Optional)</label>
+                    <input type="file" id="editThumbnailFile" accept="image/jpeg,image/png,image/webp">
+                    <small style="color: #666; display: block; margin-top: 4px;">Leave empty to keep current thumbnail.</small>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" id="editSubmitBtn" class="submit-btn" style="flex: 2;">Save Changes</button>
+                    <button type="button" onclick="closeEditModal()" style="background-color: #6c757d; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.3s;">Cancel</button>
+                </div>
+                <div id="editStatus" style="margin-top: 15px; font-weight: bold; text-align: center; font-size: 1.1em;"></div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>

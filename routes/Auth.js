@@ -2597,6 +2597,68 @@ router.get('/videos/public', async (req, res) => {
 });
 
 // ============================
+// 24.5 UPDATE VIDEO DETAILS (Title, Description, and Thumbnail)
+// ============================
+router.put('/videos/:id', authenticateToken, upload.fields([
+  { name: 'thumbnail', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const { title, description } = req.body;
+    const video = await Video.findById(req.params.id);
+    if (!video) return res.status(404).json({ success: false, message: 'Video not found.' });
+
+    if (title !== undefined) video.title = title;
+    if (description !== undefined) video.description = description;
+
+    // Check if new thumbnail is provided
+    if (req.files && req.files['thumbnail']) {
+      const thumbnailFile = req.files['thumbnail'][0];
+
+      if (thumbnailFile.size > 5 * 1024 * 1024) {
+        if (fs.existsSync(thumbnailFile.path)) {
+          try { fs.unlinkSync(thumbnailFile.path); } catch (e) { console.error('Failed to delete temp thumbnail:', e.message); }
+        }
+        return res.status(400).json({ success: false, message: 'Thumbnail image size exceeds 5MB limit.' });
+      }
+
+      // Upload new thumbnail to Cloudinary
+      let newThumbnailUrl;
+      try {
+        newThumbnailUrl = await uploadLocalFileToCloudinary(thumbnailFile.path, 'thumbnails', 'image');
+      } catch (uploadError) {
+        console.error("Cloudinary upload failed during video update:", uploadError);
+        return res.status(500).json({ success: false, message: 'Failed to upload new thumbnail to Cloudinary.' });
+      }
+
+      // Delete old thumbnail if it exists
+      if (video.thumbnailUrl) {
+        if (video.thumbnailUrl.includes('res.cloudinary.com')) {
+          try {
+            await deleteFromCloudinary(video.thumbnailUrl, 'image');
+          } catch (deleteError) {
+            console.error("Failed to delete old thumbnail from Cloudinary:", deleteError);
+          }
+        } else {
+          const publicDir = path.resolve(__dirname, '../public');
+          const thumbnailPath = path.resolve(path.join(__dirname, '../public', video.thumbnailUrl));
+          if (thumbnailPath.startsWith(publicDir) && fs.existsSync(thumbnailPath)) {
+            try { fs.unlinkSync(thumbnailPath); } catch (e) { console.error('Failed to delete local thumbnail:', e.message); }
+          }
+        }
+      }
+
+      video.thumbnailUrl = newThumbnailUrl;
+    }
+
+    await video.save();
+    res.json({ success: true, message: 'Video updated successfully!', video });
+  } catch (error) {
+    console.error("Video Update Error:", error);
+    res.status(500).json({ success: false, message: 'Server error while updating video.' });
+  }
+});
+
+// ============================
 // 25. DELETE VIDEO (Removes Cloudinary / Local Files too)
 // ============================
 router.delete('/videos/:id', authenticateToken, async (req, res) => {
