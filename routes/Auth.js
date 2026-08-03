@@ -22,6 +22,11 @@ const {
   deleteFromCloudinary
 } = require('../utils/cloudinary');
 
+const getAppUrl = (req) => {
+  const url = process.env.APP_URL || 'https://mom-nitc.onrender.com';
+  return url.endsWith('/') ? url.slice(0, -1) : url;
+};
+
 const authLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 15 minutes
   max: 40, //imit each IP to 40 requests per window
@@ -410,19 +415,12 @@ router.post('/verify-otp', otpLimiter, async (req, res) => {
 
     // Send Welcome Email
     try {
-      const loginUrl = `${req.protocol}://${req.get('host')}/login.html`;
-      const emailHtml = `
-        <div style="font-family: Arial; padding: 20px; border: 1px solid #eee; border-radius: 8px; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #0D8ABC;">Welcome to the NITC MCA Alumni Portal!</h2>
-          <p>Hi <b>${escapeHtml(alumni.name)}</b>,</p>
-          <p>Your email has been successfully verified, and your account is now active.</p>
-          <p>You can now log in to connect with your batchmates, view the directory, and stay updated on events.</p>
-          <div style="margin-top: 25px; margin-bottom: 25px; text-align: center;">
-              <a href="${loginUrl}" style="background-color: #0D8ABC; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Login to Your Account</a>
-          </div>
-        </div>
-      `;
-      await sendEmail(alumni.email, 'Welcome to the NITC MCA Alumni Portal!', emailHtml);
+      const loginUrl = `${getAppUrl(req)}/login.html`;
+      await sendEmail.sendWelcomeEmail({
+        to: alumni.email,
+        name: alumni.name,
+        loginUrl
+      });
     } catch (mailError) {
       console.error("Failed to send welcome email:", mailError);
     }
@@ -851,7 +849,7 @@ router.post('/legacy-signup', async (req, res) => {
     const batchmates = await Alumni.find({ isRegistered: true, isVerified: true, batchYear: gradYear, email: { $ne: email } });
     const faculties = await Admin.find({ role: 'faculty', isActive: true });
 
-    const vouchUrlBase = `${req.protocol}://${req.get('host')}/api/auth/email-vouch/${updatedUser._id}`;
+    const vouchUrlBase = `${getAppUrl(req)}/api/auth/email-vouch/${updatedUser._id}`;
 
     const sendVouchEmail = (user, isFaculty) => {
       if (!user.email) return;
@@ -1614,6 +1612,22 @@ router.post('/add-alumni', authenticateToken, authorizeRoles('admin', 'super_adm
     const newAlumni = new Alumni(newAlumniData);
 
     await newAlumni.save();
+
+    if (hasCredentials && newAlumni.email) {
+      try {
+        const loginUrl = `${getAppUrl(req)}/login.html`;
+        await sendEmail.sendWelcomeEmail({
+          to: newAlumni.email,
+          name: newAlumni.name,
+          loginUrl,
+          temporaryPassword: password.trim(),
+          isInvite: true
+        });
+      } catch (mailError) {
+        console.error("Failed to send welcome email to newly added alumni:", mailError);
+      }
+    }
+
     const alumniResponse = newAlumni.toObject();
     delete alumniResponse.password;
     res.json({ success: true, message: 'New Alumni added successfully.', alumni: alumniResponse });
@@ -1697,6 +1711,19 @@ router.post('/bulk-add-alumni', authenticateToken, async (req, res) => {
         const newAlumni = new Alumni(newAlumniData);
         await newAlumni.save();
         results.successful++;
+
+        if (hasCredentials && newAlumni.email) {
+          const loginUrl = `${getAppUrl(req)}/login.html`;
+          sendEmail.sendWelcomeEmail({
+            to: newAlumni.email,
+            name: newAlumni.name,
+            loginUrl,
+            temporaryPassword: password.trim(),
+            isInvite: true
+          }).catch(mailError => {
+            console.error(`Failed to send welcome email to bulk-added alumni ${newAlumni.email}:`, mailError);
+          });
+        }
       } catch (err) {
         console.error('Error:', err);
         results.failed++;
@@ -1765,28 +1792,20 @@ router.put('/alumni/:id', authenticateToken, authorizeRoles('admin', 'super_admi
       req.params.id,
       { $set: allowedUpdates },
       { new: true, runValidators: true }
-    );
-
-    // If they were just approved (legacy signup approval)
+    )    // If they were just approved (legacy signup approval)
     if (updateData.isVerified === true && originalAlumni.isVerified === false && alumni.email) {
       if (!originalAlumni.alumniId) {
         alumni.alumniId = await generateAlumniId(originalAlumni.batchYear || alumni.batchYear);
         await alumni.save();
       }
       try {
-        const loginUrl = `${req.protocol}://${req.get('host')}/login.html`;
-        const emailHtml = `
-          <div style="font-family: Arial; padding: 20px; border: 1px solid #eee; border-radius: 8px; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #28a745;">Account Approved!</h2>
-            <p>Hi <b>${escapeHtml(alumni.name)}</b>,</p>
-            <p>Great news! Your manual registration request for the NITC MCA Alumni Portal has been reviewed and <b>approved</b> by the administrators.</p>
-            <p>You can now log in using the email and password you provided during registration.</p>
-            <div style="margin-top: 25px; margin-bottom: 25px; text-align: center;">
-                <a href="${loginUrl}" style="background-color: #0D8ABC; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Login to Your Account</a>
-            </div>
-          </div>
-        `;
-        await sendEmail(alumni.email, 'Your NITC Alumni Account is Approved!', emailHtml);
+        const loginUrl = `${getAppUrl(req)}/login.html`;
+        await sendEmail.sendWelcomeEmail({
+          to: alumni.email,
+          name: alumni.name,
+          loginUrl,
+          isApproval: true
+        });
       } catch (mailError) {
         console.error("Failed to send approval email:", mailError);
       }
@@ -1795,49 +1814,14 @@ router.put('/alumni/:id', authenticateToken, authorizeRoles('admin', 'super_admi
     // Send welcome email if transitioning from unregistered to registered
     if (isNowRegistering && alumni.email) {
       try {
-        const loginUrl = `${req.protocol}://${req.get('host')}/login.html`;
-        const emailHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); line-height: 1.6; color: #333;">
-            <div style="background-color: #0D8ABC; padding: 25px; text-align: center; color: white;">
-              <h2 style="margin: 0; font-size: 20px; font-weight: bold;">NITC MCA Alumni Portal - MOMNITC</h2>
-            </div>
-            <div style="padding: 30px 25px; background: white;">
-              <p>Dear ${escapeHtml(alumni.name)},</p>
-              <p>I am happy to inform you that the Centre of Excellence in Artificial Intelligence (CoE-AI) of NIT Calicut has developed an alumni portal exclusively for all the esteemed MCA alumni of REC Calicut/NIT Calicut. This portal will act as a digital platform for connecting all the MCA batches to the Alma mater. Many activities including batch get-togethers, family get togethers, an annual MCA alumni conference and many other events are in the pipeline. As a first step, please join in the portal using the link given in this invitation.</p>
-              <p>Name of the Portal is <b>MOMNITC</b> (Member of MCA NITC Alumni Network).</p>
-              
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${loginUrl}" style="background-color: #0D8ABC; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">Visit MOMNITC Portal</a>
-              </div>
-              
-              <div style="background-color: #f8fafc; border-left: 4px solid #0D8ABC; padding: 20px; border-radius: 6px; margin: 25px 0;">
-                <h3 style="margin: 0 0 10px 0; color: #0D8ABC; font-size: 15px;">Your Portal Access Credentials</h3>
-                <p style="margin: 0; font-size: 14px;"><strong>Email:</strong> ${escapeHtml(alumni.email)}</p>
-                <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Temporary Password:</strong> <code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 13px;">${escapeHtml(updateData.password.trim())}</code></p>
-                <p style="margin: 10px 0 0 0; font-size: 12px; color: #64748b; font-style: italic;">* Note: For security, we recommend changing this password after your first login.</p>
-              </div>
-
-              <p style="margin: 20px 0 0 0;">Dr. S.D Madhu Kumar, Professor, CSED</p>
-              
-              <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 25px 0;">
-              
-              <div style="font-size: 12px; color: #666; line-height: 1.4;">
-                <p style="margin: 0;"><b>Regards,</b></p>
-                <p style="margin: 5px 0 0 0;">डॉ. एस डी मधुकुमार / Dr. S.D Madhu Kumar,<br>
-                प्रोफेसर / Professor,<br>
-                कंप्यूटर साइंस और इंजीनियरिंग विभाग / Dept. of Computer Science & Engineering,<br>
-                चेयर पर्सन - सेंटर  ऑफ़  एक्सीलेंस  इन  आर्टिफीसियल  इंटेलिजेंस (सि ओ इ-  ए ऐ) / Chairperson – Centre of Excellence in Artificial Intelligence (CoE-AI),<br>
-                राष्ट्रीय प्रौद्योगिकी संस्थान कालिकट / National Institute of Technology Calicut<br>
-                फ़ोन: +91-495-228 5072 (कार्यालय) / Ph: +91-495-228 5072 (office)<br>
-                <a href="https://nitc.ac.in" style="color: #0D8ABC; text-decoration: none;">My Institute Homepage</a></p>
-              </div>
-            </div>
-            <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0;">
-              National Institute of Technology, Calicut
-            </div>
-          </div>
-        `;
-        await sendEmail(alumni.email, 'Invitation to join the official NITC MCA Alumni Portal- MOMNITC', emailHtml);
+        const loginUrl = `${getAppUrl(req)}/login.html`;
+        await sendEmail.sendWelcomeEmail({
+          to: alumni.email,
+          name: alumni.name,
+          loginUrl,
+          temporaryPassword: updateData.password.trim(),
+          isInvite: true
+        });
       } catch (mailError) {
         console.error("Failed to send welcome email:", mailError);
       }
@@ -2797,7 +2781,7 @@ router.post('/send-invite', authenticateToken, async (req, res) => {
       }
     }
 
-    const signupUrl = `${req.protocol}://${req.get('host')}/signup.html`;
+    const signupUrl = `${getAppUrl(req)}/signup.html`;
     const emailHtml = `
       <div style="font-family: Arial; padding: 20px; border: 1px solid #eee; border-radius: 8px; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #0D8ABC;">Invitation to Join NITC MCA Alumni Portal</h2>
